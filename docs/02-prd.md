@@ -5,7 +5,7 @@
 | **المنتج** | Bayti AI — منصة تحويل مخططات المنازل إلى تصاميم تنفيذية مُسعَّرة |
 | **الإصدار** | v2.0 — يُبنى قسمًا بقسم باعتماد المؤسس |
 | **المالك** | CTO |
-| **الحالة** | 🟡 قيد الكتابة والمراجعة — القسم 4 جاهز للاعتماد |
+| **الحالة** | 🟡 قيد الكتابة والمراجعة — القسم 5 جاهز للاعتماد |
 | **آخر تحديث** | 2026-07-14 |
 
 ---
@@ -17,8 +17,8 @@
 | 1 | **الملخص التنفيذي ونظرة المنتج** + المبادئ الحاكمة الثمانية | ✅ **معتمد من المؤسس** |
 | 2 | السوق والمستخدمون (تحليل السوق، TAM/SAM/SOM، Personas، JTBD، رحلة المستخدم، المنافسون، خطة التوسع) | ✅ **معتمد (بعد تعديلات المؤسس)** |
 | 3 | رحلة المستخدم التفصيلية (شاشة بشاشة — UX) | ✅ **معتمد** |
-| 4 | المواصفة الهندسية: رفع المخطط وتحليله وتحويله إلى Digital Twin | 🔍 **جاهز للمراجعة** |
-| 5 | المتطلبات الوظيفية: الاستبيان واختيار النمط | ⬜ |
+| 4 | المواصفة الهندسية: رفع المخطط وتحليله وتحويله إلى Digital Twin | ✅ **معتمد (مع إضافات المؤسس 4.16–4.24)** |
+| 5 | المواصفة الهندسية: الاستبيان، الذوق، والقيود (Intake & Style) | 🔍 **جاهز للمراجعة** |
 | 6 | المتطلبات الوظيفية: مجلس الوكلاء ومواصفات التصميم | ⬜ |
 | 7 | المتطلبات الوظيفية: التسوق، النسخ الثلاث، والتكلفة | ⬜ |
 | 8 | المتطلبات الوظيفية: المخرجات (صور، فيديو، 3D، PDF) | ⬜ |
@@ -26,8 +26,10 @@
 | 10 | الحسابات، الباقات، والتسعير | ⬜ |
 | 11 | المتطلبات غير الوظيفية (أداء، أمان، لغة، امتثال) | ⬜ |
 | 12 | خارج النطاق، معايير القبول، وبوابات الإطلاق | ⬜ |
+| ملحق A | Future AI Improvements — موثقة ولا تُنفذ الآن (قرار مؤسس) | 📘 حي |
 
 > **منهجية العمل:** لا يُكتب قسم قبل اعتماد الذي يسبقه. كل اعتماد يُسجَّل في جدول الحالة أعلاه. لا برمجة قبل اعتماد الوثائق كاملة.
+> **سجل القرارات:** كل قرار معماري يصعب عكسه يُسجَّل هنا وفي السجل الرسمي المجمع [`docs/ADR.md`](ADR.md).
 
 ---
 
@@ -191,6 +193,17 @@ Rule Engine  →  AI Agents  →  Validation Engine  →  Digital Twin  →  Ren
 ### P15 — ذاكرة المشروع المستقلة (AI Memory)
 كل مشروع يملك ذاكرة مستقلة تتذكر: ألوان المستخدم، متاجره المفضلة، خاماته، ميزانيته، وكل تعديلاته السابقة — **ولا يُسأل المستخدم عن الشيء نفسه مرتين**. ذاكرة المشروع (خاصة بسياقه) تتكامل مع ملف الذوق العام (P5) دون أن تختلط به: ما قرره في هذا المشروع لا يُفرض على غيره إلا كاقتراح.
 **الأثر على النظام:** كيان `ProjectMemory` يُمرَّر لكل وكيل في كل استدعاء؛ أي سؤال للمستخدم يمر بفحص "هل أجاب عنه سابقًا؟" قبل العرض.
+
+## 1.10 معايير التوثيق الهندسي الملزمة (تسري على كل الأقسام من 4 فصاعدًا)
+
+> هذه الوثيقة هي **المرجع الرسمي الوحيد للمشروع** — يجب أن تكفي لبدء فريق من 30 مهندسًا العمل دون الرجوع للمؤسس.
+
+1. **البنية السباعية:** كل قسم/بند هندسي جديد يحتوي: `Purpose · Inputs · Outputs · Rules · Failure Cases · Acceptance Criteria · ADR` (الأخير عند وجود قرار يصعب عكسه).
+2. **Schemas كاملة:** أي Model/Schema جديد يُعرَّف بكل حقوله وأنواع بياناته وعلاقاته — لا أسماء كيانات بلا تعريف.
+3. **معيار الـ Pipeline:** أي pipeline يوثَّق بـ: Sequence Diagram، State Machine، Retry Strategy، Timeout Strategy، Error Codes، Recovery Strategy.
+4. **Rule Engine قبل Prompt:** أي قاعدة هندسية قابلة للتحويل إلى قاعدة حتمية لا تبقى داخل Prompt — بند إلزامي في مراجعة كل prompt (امتداد P12).
+5. **Thresholds في Configuration:** كل عتبة/مهلة/سقف تعيش في ملفات config مُدارة بالإصدارات (`config/*.yaml`) — **ليست ثوابت في الكود** — قابلة للتحديث دون نشر.
+6. **سجل قرارات مستقل:** كل ADR يُسجَّل أيضًا في [`docs/ADR.md`](ADR.md) — السجل الرسمي المجمع لكل القرارات المعمارية.
 
 ---
 
@@ -916,6 +929,521 @@ flowchart LR
 
 > **بوابة القسم:** لا يُبنى فوق هذا الأساس (مجلس الوكلاء) في الإنتاج قبل تحقيق AC-1 حتى AC-8 على الـ Golden Set — هذا هو خطر R1 الوجودي، ونحسمه هنا.
 
+## 4.16 وحدات القياس ونظام الإحداثيات (CoordinateSystem)
+
+- **Purpose:** توحيد كل الهندسة داخليًا، ومنع أي عنصر غامض المرجعية من دخول التوأم النهائي.
+- **Inputs:** `RawExtraction` (وحدات المصدر وهندسته)، إجابات المستخدم (بُعد مرجعي/ارتفاع).
+- **Outputs:** كيان `CoordinateSystem` مؤكد لكل طابق + كل الهندسة محوّلة للمتر.
+
+```typescript
+interface CoordinateSystem {
+  unit: "m";                                   // ثابت داخليًا — float64
+  original_unit: "mm"|"cm"|"m"|"ft_in"|"px"|"unknown";  // تُحفظ دائمًا للتدقيق
+  original_to_m_factor: number | null;
+  origin: "floor_bbox_bottom_left";            // تعريف موحد v1
+  axes: "right_handed_xy_z_up";                // x يمين الورقة، y أعلاها، z للأعلى
+  rotation_north_deg: number | null;           // اتجاه الشمال إن عُرف
+  scale_source: "cad_units"|"written_dims"|"scale_text"|"user_reference"|"missing";
+  scale_confidence: number;                    // معاير (ADR-4.4)
+  status: "confirmed"|"unconfirmed";
+}
+```
+
+- **Rules:** كل الحسابات الداخلية بالمتر (float64) وtolerances في config (`geometry.tolerance_m: 0.005`)؛ الوحدة الأصلية وعاملها يُحفظان في provenance؛ `confirmed` يتطلب `scale_confidence ≥ thresholds.scale_confirm` **و** `scale_source ≠ missing`؛ **قاعدة صلبة: أي عنصر على طابق CS غير مؤكد لا يدخل الـ Digital Twin النهائي** (يبقى في مسودة التحليل فقط).
+- **Failure Cases:** `$INSUNITS` كاذبة في DWG → فحص معقولية المساحة الكلية (40–3000م²)؛ تعارض بُعد مكتوب مع المرسوم > 5% → خفض ثقة وسؤال المستخدم؛ صورة بلا أي مرجع قياس → سؤال البُعد المرجعي إلزامي.
+- **Acceptance Criteria:** 100% من عناصر التوأم النهائي تحت CS مؤكد (فحص آلي)؛ خطأ round-trip لتحويل الوحدات = 0 على الـ Golden Set.
+- **ADR-4.5 — المتر float64 داخليًا:** **مرفوض:** milimeter integers (يمنع أخطاء الفاصلة لكنه يعقّد كل الحسابات المساحية والتكاملات الخارجية)، والإبقاء على وحدات المصدر في الحسابات (أخطاء تحويل متراكمة — درس معروف من صناعة CAD).
+
+## 4.17 الجدران والأسقف والارتفاعات (Wall / Ceiling / FloorLevel)
+
+- **Purpose:** تمثيل الجدار بجسمه الحقيقي (سماكة + ارتفاع) لا بخط أوسط فقط، ودعم اختلاف ارتفاعات الأسقف.
+- **Inputs:** هندسة المسارات الثلاثة؛ تأكيدات المستخدم للارتفاعات.
+- **Outputs:** كيانات `Wall/Ceiling/FloorLevel` كاملة داخل التوأم.
+
+```typescript
+interface Wall {
+  id: string;
+  centerline: { from: Vec2; to: Vec2 };        // متر
+  thickness_m: number;                          // ممثلة دائمًا — لا خط مجرد
+  height_m: number | null;                      // null = بانتظار تأكيد المستخدم
+  kind: "exterior"|"interior"|"partition"|"parapet";
+  load_bearing: boolean | null;                 // null = غير معروف (لا نخمّن — P9)
+  opening_ids: string[];
+  confidence: number;
+  provenance: Provenance;
+}
+interface Ceiling {
+  room_id: string;
+  height_m: number;
+  kind: "flat"|"double_height"|"dropped_gypsum"|"sloped";
+  height_source: "plan"|"user_confirmed"|"default_confirmed";
+}
+interface FloorLevel {
+  level: number;                                // 0 أرضي
+  elevation_m: number;
+  default_ceiling_height_m: number;
+  room_ids: string[];
+  coordinate_system: CoordinateSystem;
+}
+```
+
+- **Rules:** السماكة من المصدر (CAD/CV) لا قيمة افتراضية صامتة؛ **الارتفاع لا يُخمَّن أبدًا:** غيابه في المخطط → سؤال تأكيد واحد لكل طابق (خيارات شائعة: 2.7/3.0/3.3م + إدخال حر) مع overrides لغرف بارتفاع مختلف (مجلس double height)؛ `default_confirmed` تعني أن المستخدم أكد الافتراضي صراحة — التمييز محفوظ للتدقيق.
+- **Failure Cases:** مخطط خطّي بلا سماكات (رسم بخط مفرد) → تقدير من عرض الخط مع علم `thickness_estimated=true` وإدراجه في المراجعة؛ سماكة خارج 5–60سم → مراجعة.
+- **Acceptance Criteria:** صفر جدران `height_m=null` في توأم مؤكد؛ 100% غرف لها `Ceiling` بمصدر معلن.
+
+## 4.18 الفتحات والتعارضات (Opening / Door / Window + Conflict Rules)
+
+- **Purpose:** تمثيل كامل لكل فتحة بموضعها واتجاه فتحها ومساحة حركتها، وكشف حتمي لكل تعارض.
+- **Inputs:** كشوف الفتحات من المسارات الثلاثة + هندسة الجدران.
+- **Outputs:** كيانات `Door/Window` + `clearance_polygon` محسوبة + تقارير تعارض.
+
+```typescript
+interface Opening {
+  id: string;
+  kind: "door"|"window"|"arch"|"pass_through";
+  wall_id: string;                              // الجدار المرتبط — إلزامي
+  offset_m: number;                             // من بداية centerline الجدار
+  width_m: number;
+  height_m: number | null;
+  confidence: number;
+  provenance: Provenance;
+}
+interface Door extends Opening {
+  kind: "door";
+  door_type: "hinged"|"double"|"sliding"|"pocket"|"folding";
+  swing: { direction: "inward"|"outward"; hinge: "left"|"right" } | null;  // null للمنزلق
+  clearance_polygon_m: Vec2[];                  // يُحسب آليًا: قوس الفتح + منطقة العبور
+  connects: [string, string | "exterior"];      // room_id ↔ room_id/خارج
+}
+interface Window extends Opening {
+  kind: "window";
+  sill_height_m: number;
+  window_type: "fixed"|"sliding"|"casement"|"awning";
+  clearance_polygon_m: Vec2[];                  // منطقة يُمنع حجبها بأثاث مرتفع
+}
+```
+
+- **Rules — قواعد التعارض (Rule Engine، العتبات في `config/opening_rules.yaml`):**
+
+| Code | القاعدة | Severity |
+|------|---------|----------|
+| OPN-C1 | قوس باب يتقاطع مع جدار/عمود ثابت | error |
+| OPN-C2 | قوسا بابين يتداخلان | error |
+| OPN-C3 | عنصر أثاث داخل `clearance_polygon` لباب (يُفحص بعد كل توزيع أثاث) | error |
+| OPN-C4 | أثاث أعلى من `sill_height` يحجب شباكًا | warning |
+| OPN-C5 | فتحة تتجاوز نهاية جدارها أو تتداخل مع فتحة أخرى | error |
+| OPN-C6 | عرض باب دون الحد: رئيسي < 0.9م، داخلي < 0.7م، حمام < 0.6م | warning |
+
+- **Failure Cases:** قوس فتح غير مرسوم → `swing=null` بثقة منخفضة → سؤال المستخدم، وإلى حين الجواب تُفحص التعارضات بافتراض **أسوأ حالة** (حجز أكبر clearance ممكن — لا تفاؤل صامت).
+- **Acceptance Criteria:** F1 للكشف وفق AC-3؛ 100% أبواب التوأم النهائي لها `connects` محسوبة؛ صفر تعارضات `error` غير محلولة في أي تصميم يصل للمستخدم.
+
+## 4.19 بوابة جودة التصحيح اليدوي (Correction Quality Gate)
+
+- **Purpose:** لا يقبل النظام تعديلًا بشريًا ينتج مخططًا هندسيًا مكسورًا — الإنسان مرجع أعلى للحقيقة، لا للهندسة المكسورة.
+- **Inputs:** `CorrectionOp[]` من S5. **Outputs:** توأم rev جديد أو رفض مُعلَّل.
+- **Pipeline (بعد كل حفظ):**
+
+```
+CorrectionOp ──► [1] Geometry validation   (مضلعات صالحة، لا تقاطع ذاتي)
+             ──► [2] Topology validation   (لا تداخل غرف، كل فتحة على جدارها)
+             ──► [3] Scale validation      (الأبعاد الجديدة معقولة ولا تكسر مقياسًا مؤكدًا)
+             ──► [4] Room closure validation (كل غرفة مغلقة، مساحة ≥ 1.5م²)
+     قبول ► Twin rev N+1 + Audit    |    رفض ► RJC-code + شرح بصري + اقتراح snap بضغطة
+```
+
+- **Rules:** كل `CorrectionOp` معاملة ذرية (تُقبل كاملة أو تُرفض كاملة)؛ الرفض يظلل موضع الكسر على المخطط ويقترح إصلاحًا تلقائيًا (snap لأقرب زاوية/جدار).
+- **Error Codes:** `RJC-GEO-01` تقاطع ذاتي · `RJC-TOP-01` تداخل غرف · `RJC-TOP-02` فتحة بلا جدار · `RJC-SCL-01` بُعد غير معقول · `RJC-CLS-01` غرفة غير مغلقة.
+- **Acceptance Criteria:** يستحيل حفظ توأم مكسور من أي مسار — يُثبت بـ **property-based testing** يولّد آلاف التعديلات العشوائية ويتحقق أن الـ invariants لا تُكسر أبدًا.
+
+## 4.20 مواصفات الـ Golden Set (معتمدة)
+
+- **Purpose:** المرجع الوحيد لقياس الدقة ومعايرة الثقة (ADR-4.4) وبوابات الإطلاق.
+- **التركيبة (70 مخططًا سعوديًا حقيقيًا: 50 تطوير/معايرة + 20 اختبار أعمى):**
+
+| البُعد | التوزيع |
+|--------|---------|
+| النوع | فلل 40% · شقق 35% · دوبلكس/أدوار متعددة 15% · ملاحق/أخرى 10% |
+| الصيغة | Vector PDF 30% · DWG/DXF 20% · PDF ممسوح 20% · **صور جوال 30%** |
+| التسميات | عربية 60% · إنجليزية 20% · **بلا تسميات 20%** |
+| الجودة | واضحة 60% · **رديئة (ميلان/ظلال/ضغط) 40%** |
+
+- **Ground Truth:** مختصان مستقلان (مهندس معماري + مصمم داخلي) يوسّمان كلٌّ على حدة؛ الخلاف يحسمه محكّم ثالث؛ حد الاتفاق المقبول: Cohen's κ ≥ 0.8 لأنواع الغرف وIoU ≥ 0.9 للحدود — دونه يُعاد توسيم العينة.
+- **الفصل الصارم:** تدريب/fine-tune 60% · معايرة 20% · **اختبار أعمى 20% في bucket منفصل بصلاحيات CI فقط — لا يراه أي مطور**؛ وأي مخطط استُخدم في prompt engineering يُنقل خارج العمياء فورًا (قاعدة منع التسرب).
+- **التحديث:** +10 مخططات كل ربع من فئات الفشل الأعلى (تغذية راجعة من metrics 4.23). كل المخططات بموافقة كتابية أو مجهولة المصدر تمامًا.
+
+## 4.21 الخصوصية وحماية المخططات
+
+- **Purpose:** مخطط المنزل بيان حساس يكشف تفاصيل سكن العائلة — حمايته شرط ثقة وجودي.
+- **Rules:**
+  1. **نقل:** TLS 1.3 حصرًا. **تخزين:** SSE-KMS + تشفير حقول PII في قاعدة البيانات.
+  2. **وصول:** Presigned URLs ≤ 15 دقيقة؛ عزل S3 ببادئة لكل مشروع + شروط IAM تمنع القراءة العرضية بين المشاريع؛ أي وصول إداري لملفات المستخدمين يُسجَّل في Audit (P14) ويُراجع شهريًا.
+  3. **تدريب:** موافقة opt-in **منفصلة وصريحة** (ليست بندًا داخل الشروط العامة)، قابلة للسحب بأثر فوري على أي استخدام مستقبلي.
+  4. **حذف:** pipeline حذف موثق يشمل: الملف الأصلي + كل artifacts المراحل (`pipeline/*`) + النسخ المؤقتة + الكاش + الفهارس + الإخراج من أي مجموعة تدريب مستقبلية. Soft-delete فوري → hard-delete ≤ 30 يومًا شاملًا انتهاء دورة النسخ الاحتياطي. شهادة حذف عند الطلب.
+- **Failure Cases:** فشل حذف artifact → إنذار فوري + إعادة محاولة + بند في تقرير الامتثال الأسبوعي.
+- **Acceptance Criteria:** اختبار دوري آلي: بعد حذف مشروع اختباري، فحص بالبصمة (hash) عبر كل المخازن يثبت **صفر بقايا** خلال الـ SLA.
+
+## 4.22 الميزانية الزمنية والمالية لكل مرحلة (Cost & Time Budgets)
+
+- **Purpose:** التحكم في COGS التحليل كمقياس هندسي — لا مفاجآت تشغيلية.
+- **الميزانيات (لكل طابق — كلها في `config/cost_budgets.yaml`):**
+
+| المرحلة | زمن P95 | تكلفة مستهدفة | ملاحظات |
+|---------|---------|----------------|----------|
+| Quality Gate | ≤ 5s | 0.005 ريال | CPU خفيف |
+| مسار CAD | ≤ 30s | 0.02 ريال | حتمي |
+| مسار Vector-PDF | ≤ 45s | 0.05 ريال | حتمي |
+| CV (M1..M4) | ≤ 60s | 0.15 ريال | GPU serverless |
+| OCR / Vision-LLM | ≤ 30s | 0.40 ريال | الأغلى — قصاصات لا صورة كاملة |
+| Reconcile + Validate + Confidence | ≤ 10s | 0.01 ريال | حتمي |
+| **الإجمالي/طابق** | **≤ 120s** | **≤ 0.65 ريال هدف / 1.5 ريال سقف** | |
+| Human review (ops داخلي) | — | تُقاس بدقائق المشغّل | هدف < 5 دقائق/حالة موجهة |
+
+- **سقف تكلفة تحليل المشروع الواحد (كل الطوابق + إعادات التشغيل) لكل باقة:** Free ≤ **3 ريال** (طابقان، إعادة واحدة) · Pro ≤ **8 ريال** · Premium ≤ **15 ريال** + أولوية طابور.
+- **Rules:** تجاوز السقف → إيقاف مؤدب + خيار ترقية أو تحويل ops — لا استنزاف صامت. كل الأرقام config لا كود (معيار 1.10-5).
+- **Acceptance Criteria:** لوحة تكلفة لكل مشروع تعمل من اليوم الأول؛ تنبيه آلي عند تجاوز أي مرحلة ميزانيتها 20%.
+
+## 4.23 المراقبة التشغيلية (Mandatory Metrics)
+
+| Metric | الهدف | عتبة الإنذار |
+|--------|-------|---------------|
+| نسبة الرفض في بوابة الجودة | < 15% | > 25% |
+| نسبة التحليل الآلي الكامل (بلا مراجعة بشرية) | ≥ 60% بعد 6 أشهر | < 40% |
+| نسبة التحويل للمراجعة اليدوية | ≤ 35% | > 50% |
+| متوسط عدد التصحيحات لكل مخطط | ≤ 3 | > 5 |
+| أكثر عناصر الاكتشاف فشلًا (Pareto) | تقرير أسبوعي آلي → يغذي Golden Set | — |
+| تكلفة وزمن كل مرحلة (P50/P95) | ضمن ميزانيات 4.22 | تجاوز 20% |
+| نسبة المشاريع المُعاد تشغيلها من checkpoint | تُقاس (مؤشر صحة الأساس) | إعادة كاملة > 10% |
+
+- كل metric له dashboard (Grafana) + مالك محدد؛ مراجعة أسبوعية مثبتة في طقوس الفريق.
+
+## 4.24 التوحيد القياسي للـ Pipeline (State Machine / Sequence / Errors / Recovery)
+
+### State Machine (رسمية — تُنفذ كما هي)
+
+```mermaid
+stateDiagram-v2
+    [*] --> uploaded
+    uploaded --> quality_checked: QG pass
+    uploaded --> rejected: QG fail (ERR-QG-*)
+    quality_checked --> extracted: مسار CAD/PDF/CV
+    extracted --> labeled: OCR/Labels
+    labeled --> reconciled: Reconciler
+    reconciled --> validated: Validation
+    validated --> analysis_passed: Confidence ≥ عتبة
+    validated --> needs_review: Confidence < عتبة
+    needs_review --> reconciled: تصحيحات المستخدم
+    analysis_passed --> [*]
+    rejected --> uploaded: إعادة رفع
+```
+
+### Sequence (الطلب الكامل)
+
+```mermaid
+sequenceDiagram
+    participant U as المستخدم
+    participant API as Core API
+    participant Q as Queue
+    participant W as Workers
+    participant S3 as Storage
+    participant DB as Postgres
+    U->>API: complete upload
+    API->>Q: enqueue quality_gate {fp_id, rev}
+    Q->>W: consume
+    W->>S3: قراءة original / كتابة artifacts
+    W->>DB: تحديث الحالة + checkpoint
+    W->>Q: enqueue المرحلة التالية
+    API-->>U: SSE: تقدم كل مرحلة
+    W->>DB: twin rev N + confidence
+    API-->>U: SSE: analysis_passed | needs_review
+```
+
+### Retry / Timeout Matrix (config: `config/pipeline_retries.yaml`)
+
+| المرحلة | Timeout | Retries | Backoff | عند الاستنفاد |
+|---------|---------|---------|---------|----------------|
+| Quality Gate | 15s | 2 | 5s ثابت | ERR-QG-TIMEOUT → مسار رفض |
+| CAD (sandbox) | 60s | 1 | — | ERR-CAD-002 → تحويل لمسار raster (rasterize) |
+| CV | 120s | 3 | 10/60/300s | DLQ + ops |
+| OCR/VLM | 90s | 3 | 10/60/300s + مزود بديل | DLQ + ops |
+| Reconcile/Validate | 30s | 2 | 10/60s | DLQ + ops (خطأ برمجي محتمل) |
+
+### Error Code Registry (بادئة `ERR-` — كل كود له رسالة عربية وrecovery معلن)
+
+| Code | المعنى | Recoverable | Recovery |
+|------|--------|-------------|----------|
+| ERR-UPL-001/002/003 | صيغة/حجم/ملف خبيث | ❌ | رسالة توجيه للمستخدم |
+| ERR-QG-001/002/003 | دقة منخفضة/ليس مخططًا/انحراف شديد | ❌ | توجيه إعادة تصوير |
+| ERR-CAD-001/002 | فشل تحويل DWG / sandbox timeout | ✅ | fallback إلى مسار raster |
+| ERR-CV-001 | فشل نموذج | ✅ | retry ثم مزود GPU بديل |
+| ERR-OCR-001 | فشل قراءة | ✅ | مزود بديل ثم استمرار بلا أسماء (تُطلب من المستخدم) |
+| ERR-REC-001 | topology غير قابل للبناء | ⚠ | تحويل كامل للمراجعة اليدوية |
+| ERR-CNF-001 | ثقة دون العتبة | ⚠ | مسار needs_review الطبيعي |
+
+**Recovery العام:** استئناف من آخر checkpoint دائمًا (ADR-4.3)؛ فشل نهائي = DLQ + إنذار + رسالة "نراجع مخططك يدويًا" — لا يُترك المستخدم في المجهول أبدًا.
+
 ---
 
-*(الأقسام 5–12 تُكتب تباعًا بعد اعتماد كل قسم)*
+# القسم 5 — المواصفة الهندسية: الاستبيان، الذوق، والقيود (Intake & Style)
+
+> يطبّق معايير 1.10 بالكامل. مخرجات هذا القسم هي **العقد الرسمي** الذي يستلمه مجلس الوكلاء (القسم 6).
+
+## 5.0 القرارات المعمارية (ADRs)
+
+### ADR-5.1 · تمثيل الذوق: StyleVector بأبعاد مسماة متصلة
+- **القرار:** الذوق يُمثَّل بـ **10 أبعاد مسماة** قيمها `[0,1]` (5.5) مع ثقة لكل بُعد — قابل للحساب (مسافات، مزج، فلترة) وقابل للتفسير (P11: "اخترنا هذا القماش لأن ذوقك يميل للخامات الطبيعية 0.8").
+- **البدائل المرفوضة:** enum أنماط فقط (لا يمزج ولا يمثل ذوقًا بين نمطين — وذوق الناس الحقيقي دائمًا بينهما)؛ embedding معتم فقط (غير قابل للتفسير — يكسر P11؛ قد يُضاف *بجانب* الأبعاد لاحقًا للبحث، لا بديلًا عنها).
+
+### ADR-5.2 · مخرجات الاستبيان كيانات مُنمَّطة منفصلة لا blob واحد
+- **القرار:** 8 كيانات معرفة Schema (5.10) تُخزن وتُتحقق مستقلة، ولكل كيان دورة حياة وإصدار.
+- **البدائل المرفوضة:** JSONB واحد حر (لا يُتحقق، يتعفن مع الزمن، ولا يدعم إعادة تشغيل جزئية)؛ محادثة حرة تُفسَّر لاحقًا (غير حتمية — تكسر P9).
+
+### ADR-5.3 · نقل التفضيلات للذاكرة العامة بموافقة صريحة فقط
+- **القرار:** كل ما يُستخلص يبقى **داخل المشروع** افتراضيًا؛ الترقية إلى `UserTasteProfile` تتطلب موافقة صريحة لكل تفضيل (أو دفعة معروضة بوضوح).
+- **البدائل المرفوضة:** التعلم الصامت التلقائي (يكسر الثقة والخصوصية، ويخلط ذوق مشروع استثنائي — مجلس فخم لبيت العائلة — بذوق المستخدم الدائم).
+
+## 5.1 Project Intake (ProjectBrief)
+
+- **Purpose:** التقاط سياق المشروع الذي لا يستطيع التوأم استنتاجه.
+- **Inputs:** التوأم المؤكد (يملأ مسبقًا كل ما يعرفه — P15: لا سؤال عن معلوم)؛ إجابات المستخدم.
+- **Outputs:** `ProjectBrief` مكتمل.
+
+```typescript
+interface ProjectBrief {
+  project_id: string;
+  property_type: "villa"|"apartment"|"duplex"|"floor_in_villa"|"annex"|"traditional_house"|"chalet";
+  tenure: "owned"|"rented";
+  condition: "new_empty"|"existing_occupied";
+  stage: "plan_only"|"structure"|"finishing"|"occupied";   // مخطط | عظم | تشطيب | قائم
+  scope: "full_home"|"selected_rooms";
+  rooms_to_design: string[];               // room_ids من التوأم — تُعرض قائمة، لا يُسأل نصيًا
+  area_m2_confirmed: number;               // من التوأم — للعرض والتأكيد فقط
+  floors_count: number;                    // من التوأم
+  timeline_target: "asap"|"1_3_months"|"3_6_months"|"flexible";
+  created_at: string; version: number;
+}
+```
+
+- **Rules (Rule Engine):** `stage` يقيّد النطاق آليًا: `occupied` → لا أعمال تمديدات افتراضيًا (تُعرض كخيار صريح)؛ `structure` → كامل الكهرباء والتكييف متاح؛ `rented` → تفعيل قيود الإيجار (5.7) تلقائيًا مع سؤال تأكيد واحد.
+- **Failure Cases:** تعارض إدخال المستخدم مع التوأم (يقول 3 غرف نوم والتوأم يظهر 5) → لا قبول صامت: توضيح بصري وسؤال حسم.
+- **Acceptance Criteria:** صفر أسئلة عن حقائق موجودة في التوأم (اختبار آلي)؛ إكمال 5.1 ≤ 45 ثانية.
+
+## 5.2 بيانات الأسرة (HouseholdProfile)
+
+```typescript
+interface HouseholdProfile {
+  occupants_count: number;
+  adults: number; children: { count: number; ages: number[] };
+  elderly: { count: number; mobility_needs: boolean };
+  accessibility_needs: ("wheelchair"|"walker"|"low_vision"|"hearing"|"none")[];
+  pets: { type: "cat"|"dog"|"bird"|"other"; indoor: boolean }[];
+  hospitality: {
+    frequency: "weekly"|"monthly"|"occasions_only";
+    typical_guest_count: "under_5"|"5_15"|"over_15";
+    gender_separated_majlis: boolean;          // يؤثر على تصميم المجالس مباشرة
+  };
+  staff: { live_in_maid: boolean; driver: boolean };  // يُسأل فقط إن وُجدت غرفهم في التوأم
+  version: number;
+}
+```
+
+- **Rules:** كل حقل هنا **يُستخدم فعليًا في قاعدة تصميم واحدة على الأقل** (أطفال → زوايا آمنة/خامات قابلة للتنظيف/ارتفاعات أفياش؛ كبار سن → مقابض، إضاءة ممرات ليلية، لا عتبات؛ حيوانات → أقمشة مقاومة للخدش) — حقل بلا قاعدة مستهلكة يُحذف من الاستبيان.
+- **قاعدة خصوصية (تفصيل P15):** يُمنع جمع أو استنتاج: الديانة/المذهب، الحالة الصحية (خارج احتياجات الوصول المصرّح بها)، الدخل (خارج الميزانية المصرّح بها)، الجنسية/العرق. قائمة المنع في `config/privacy_forbidden_inferences.yaml` وتُفحص مخرجات الوكلاء ضدها.
+- **Acceptance Criteria:** كل سؤال يعرض "لماذا نسأل" بسطر؛ إكمال ≤ 60 ثانية.
+
+## 5.3 الميزانية (BudgetEnvelope)
+
+```typescript
+interface BudgetEnvelope {
+  mode: "total"|"per_room";
+  total_sar: number | null;
+  per_room_sar: { room_id: string; amount: number }[] | null;
+  includes: { furniture: boolean; finishing: boolean; appliances: boolean;
+              lighting_fixtures: boolean; hvac: boolean };   // ما الذي تشمله الميزانية؟
+  contingency_pct: number;                  // افتراضي 10% — يظهر ويُعدَّل
+  no_compromise: { kind: "room"|"category"|"item_type"; ref: string }[];  // لا توفير هنا
+  economy_ok:   { kind: "room"|"category"|"item_type"; ref: string }[];  // بدائل اقتصادية مقبولة
+  currency: "SAR"; version: number;
+}
+```
+
+- **Rules:** فحص معقولية مبكر (Rule Engine): الميزانية ÷ المساحة المشمولة تقارن بنطاقات `market_rates` — خارج النطاق يغذي محرك التناقضات (5.9) **قبل** بدء المجلس، لا بعده؛ `no_compromise ∩ economy_ok = ∅` (تحقق فوري).
+- **Failure Cases:** المستخدم لا يعرف ميزانيته → وضع "اقترحوا لي": يقترح النظام 3 نطاقات من متوسطات السوق لمساحته ويختار.
+- **Acceptance Criteria:** تحذير الميزانية غير الواقعية يظهر خلال ثانية من الإدخال؛ لا يصل مشروع للمجلس بميزانية غير معقولة دون قرار مستخدم موثق.
+
+## 5.4 Style Quiz (بصري — لا يعتمد على أسماء الأنماط)
+
+- **Purpose:** استخراج الذوق الفعلي ممن لا يعرف الفرق بين Japandi وScandinavian.
+- **البنية (3 طبقات):**
+  1. **اختيار سريع اختياري** لنمط مسمى (لمن يعرف ماذا يريد) — يعطي prior لا قرارًا نهائيًا.
+  2. **مقارنات بصرية A/B تكيفية (8–14 سؤالًا):** كل زوج صور مُوسَّم مسبقًا على أبعاد الـ StyleVector (توسيم فريق التصميم + VLM، بمراجعة بشرية)؛ كل إجابة تحدّث التوزيع الاحتمالي للأبعاد المستهدفة (Bayesian update)؛ **يتوقف تكيفيًا** حين يضيق نطاق الثقة لكل بُعد دون `thresholds.style_ci_width` أو عند الحد الأقصى.
+  3. **أسئلة مفاضلة مباشرة (sliders مصورة):** دافئ↔بارد، بسيط↔مزخرف، فاتح↔داكن، خامات طبيعية↔لامعة، أثاث منخفض↔رسمي، إضاءة هادئة↔قوية.
+- **Outputs:** `StyleVector` + ثقة لكل بُعد + سجل الإجابات (للتدقيق وإعادة الحساب عند تحسين الخوارزمية).
+- **Failure Cases:** إجابات متذبذبة (تناقض داخلي عالٍ) → لا تخمين: يُعرض على المستخدم البعدان الأقل حسمًا كسؤال مباشر أخير.
+- **Acceptance Criteria:** Quiz كامل ≤ 90 ثانية (P75)؛ صور الأزواج محايدة (نفس جودة التصوير والغرفة — يختلف النمط فقط) لمنع انحياز الجودة.
+
+## 5.5 StyleVector (العقد الرسمي للذوق)
+
+```typescript
+interface StyleVector {
+  schema_version: "1.0";
+  dims: {
+    modernity: number;             // 0 تراثي ← 1 معاصر
+    ornamentation: number;         // 0 بسيط ← 1 مزخرف
+    warmth: number;                // 0 بارد ← 1 دافئ
+    color_saturation: number;      // 0 محايد ← 1 مشبع
+    material_naturalness: number;  // 0 صناعي/لامع ← 1 طبيعي
+    luxury_level: number;          // 0 عملي ← 1 فاخر
+    minimalism: number;            // 0 غني بالعناصر ← 1 مينيمال
+    formality: number;             // 0 مريح/عائلي ← 1 رسمي
+    contrast: number;              // 0 متجانس ← 1 متباين
+    maintenance_tolerance: number; // 0 يريد صيانة صفرية ← 1 يتقبل عناية عالية
+  };
+  confidence_per_dim: Record<keyof dims, number>;
+  sources: ("named_style"|"quiz_ab"|"quiz_sliders"|"reference_images"|"user_edit")[];
+  room_overrides: { room_id: string; dims: Partial<dims> }[];   // مجلس ≠ غرفة أطفال
+  version: number;
+}
+```
+
+- **جدول الأنماط الثمانية كنقاط مرجعية** (presets معتمدة في `config/style_presets.yaml` — مقتطف):
+
+| النمط | modernity | ornamentation | warmth | luxury | minimalism | formality |
+|-------|-----------|---------------|--------|--------|------------|-----------|
+| Modern | 0.9 | 0.2 | 0.5 | 0.5 | 0.6 | 0.4 |
+| New Classic | 0.5 | 0.7 | 0.6 | 0.8 | 0.2 | 0.8 |
+| Japandi | 0.7 | 0.1 | 0.7 | 0.5 | 0.9 | 0.2 |
+| Industrial | 0.8 | 0.3 | 0.3 | 0.4 | 0.5 | 0.2 |
+
+- **Rules:** كل وكيل تصميمي يستلم الـ StyleVector (مع overrides غرفته) كمدخل إلزامي؛ اختيار نمط مسمى = تحميل الـ preset ثم تعديله بالـ Quiz — **الاسم واجهة، والـ vector هو الحقيقة**.
+
+## 5.6 الصور المرجعية (Reference Images)
+
+- **Purpose:** "أرني ما يعجبك" أدق من أي سؤال.
+- **Pipeline:** رفع ≤ 10 صور → فحص محتوى → استخراج لوحة الألوان (k-means في فضاء Lab) → توسيم VLM (خامات، أشكال أثاث، مزاج إضاءة) → StyleVector ضمني لكل صورة → دمج مرجح في الـ vector العام.
+- **كشف التعارض:** المسافة الزوجية بين vectors الصور > `thresholds.ref_conflict_distance` → تجميع (clustering) وسؤال المستخدم: *"صورك تميل لذوقين مختلفين — أيهما أقرب لك؟ أم نخصص الأول للمجلس والثاني لغرف النوم؟"* — **لا متوسط صامت يفسدهما معًا**.
+- **Failure Cases:** صورة غير داخلية/غير ذات صلة → تستبعد بلطف مع السبب؛ فشل الاستخراج → تُتجاهل الصورة ولا تعطل المسار.
+- **Acceptance Criteria:** معالجة 10 صور ≤ 30 ثانية؛ كل تعارض مكتشف يُحسم بسؤال لا بتخمين (P9).
+
+## 5.7 الممنوعات والقيود (HardConstraints / SoftPreferences / ExistingAssets)
+
+```typescript
+interface HardConstraints {           // فلاتر مطلقة في Rule Engine — لا يتجاوزها وكيل (P12)
+  banned_colors: string[];            // قيم قياسية من نظام ألواننا
+  banned_materials: string[];
+  banned_stores: string[];
+  banned_item_types: string[];
+  allergy_flags: ("dust_fabrics"|"feathers"|"strong_voc_paint"|"other")[];
+  cleaning_requirement: "standard"|"easy_clean_priority";
+  rental_restrictions: { no_drilling: boolean; no_wall_changes: boolean; no_painting: boolean } | null;
+  structural: { wall_demolition_allowed: false };   // ثابت v1 — خارج النطاق دائمًا
+  version: number;
+}
+interface SoftPreferences {           // أوزان في دوال الترشيح — تُفضَّل ولا تُفرض
+  preferred_stores: string[];
+  preferred_colors: string[];
+  preferred_materials: string[];
+  notes_freeform_ar: string | null;   // يُفسَّر ويُحوَّل لقيود مهيكلة بمراجعة المستخدم
+}
+interface ExistingAsset {             // قطع حالية يجب/يفضَّل الاحتفاظ بها
+  id: string; name_ar: string; category: string;
+  dimensions_cm: [number, number, number] | null;   // إن جهلت → تقدير من الصورة + تأكيد
+  photo_key: string | null;
+  keep_level: "must_keep"|"prefer_keep";
+  current_room_id: string | null;
+  condition: "good"|"fair"|"needs_refurb";
+}
+```
+
+- **Rules:** `HardConstraints` تُطبَّق **قبل** الوكلاء (فلترة الكتالوج وفضاء الحلول) وتُفحص **بعدهم** (Validation) — خرقها خطأ نظام لا ملاحظة؛ `must_keep` assets تدخل توزيع الأثاث كعناصر مثبتة الأبعاد ويصمم حولها.
+- **Failure Cases:** قيد يجعل الحل مستحيلًا (كل المتاجر محظورة) → محرك التناقضات لا رسالة خطأ عامة.
+- **Acceptance Criteria:** صفر خروقات HardConstraints في أي مخرج (فحص آلي على كل design version)؛ كل asset بلا أبعاد يُطلب تأكيد تقديرها قبل الاستخدام.
+
+## 5.8 ذاكرة المشروع وملف الذوق (تطبيق P5 + P15 + ADR-5.3)
+
+| البيان | أين يعيش | متى يُرقّى للذاكرة العامة |
+|--------|-----------|----------------------------|
+| كل إجابات الاستبيان والقيود | `ProjectMemory` (المشروع فقط) | لا يُرقّى تلقائيًا أبدًا |
+| أنماط سلوك متكررة (رفض اللون البني 3 مرات، تفضيل متجر) | يُرصد في المشروع | **اقتراح ترقية بموافقة صريحة:** "نحفظ هذا في ذوقك العام؟" |
+| ميزانيات ومقاسات المشروع | المشروع فقط | لا — خاصة بسياقه |
+
+- **Rules:** شاشة S17 تعرض كل بند في `UserTasteProfile` مع **مصدر استنتاجه** وزر حذف فوري الأثر؛ الحذف يمنع إعادة الاستنتاج الصامت لنفس البند (قائمة suppressed)؛ قائمة الاستنتاجات المحظورة (5.2) تسري هنا أيضًا.
+- **Acceptance Criteria:** لا بند يدخل الذاكرة العامة بلا موافقة مسجلة في Audit (P14)؛ اختبار آلي: مشروعان لنفس المستخدم لا يتسرب بينهما تفضيل غير مُرقّى.
+
+## 5.9 محرك التناقضات (Contradiction Engine)
+
+- **Purpose:** التناقض يُدار كحوار محترم، لا يُرفض ولا يُتجاهل.
+- **قواعد الكشف (Rule Engine — `config/contradiction_rules.yaml`):**
+
+| Code | التناقض | مثال |
+|------|----------|------|
+| CNT-01 | ميزانية × (luxury_level × مساحة النطاق) دون الحد الأدنى الممكن من market_rates | فاخر جدًا بميزانية 60k لفيلا 400م² |
+| CNT-02 | صور مرجعية تناقض النمط المختار | اختار Minimal وصوره كلها New Classic |
+| CNT-03 | must_keep assets تنافر ذوقيًا مع الـ StyleVector | كنبة كلاسيكية ثقيلة في توجه Japandi |
+| CNT-04 | مجموع بنود no_compromise وحدها > الميزانية | — |
+| CNT-05 | rental_restrictions × نطاق تشطيب واسع | يريد تغيير أرضيات وهو مستأجر بلا صلاحية |
+
+- **بروتوكول الاستجابة (إلزامي — لا رفض مباشر):** يعرض النظام: (1) **ما يمكن تحقيقه** ضمن قيوده كما هي، (2) **ما يحتاج تنازلًا** — مسمى وبأرقام، (3) **ثلاثة مسارات بديلة** قابلة للنقر (مثال CNT-01: «فخامة انتقائية: مجلس ومدخل فاخران والباقي متوازن ضمن 60k» / «نفس الفخامة بنطاق أضيق: 4 غرف الآن والبقية مرحلة ثانية» / «رفع الميزانية إلى ~110k — هذا أقل مبلغ يحقق طلبك كاملًا»).
+- **Outputs:** القرار يُسجَّل في `ProjectBrief` + Audit؛ ما لم يُحسم → `UnresolvedQuestions` (blocking إن كان يمنع المجلس).
+- **Acceptance Criteria:** 100% من تناقضات CNT-* المكتشفة تُعرض قبل بدء المجلس؛ صفر مشاريع تدخل المجلس بتناقض blocking غير محسوم.
+
+## 5.10 مخرجات القسم (العقد الرسمي لمجلس الوكلاء)
+
+```typescript
+interface IntakeBundle {              // يُسلَّم للقسم 6 كاملًا
+  project_brief: ProjectBrief;
+  household: HouseholdProfile;
+  budget: BudgetEnvelope;
+  style: StyleVector;
+  hard_constraints: HardConstraints;
+  soft_preferences: SoftPreferences;
+  existing_assets: ExistingAsset[];
+  unresolved_questions: UnresolvedQuestion[];
+  bundle_version: number;             // أي تعديل لاحق = نسخة (P7)
+}
+interface UnresolvedQuestion {
+  id: string; question_ar: string;
+  blocking: boolean;                  // blocking يوقف المجلس (P9: لا تخمين)
+  default_if_deferred: string | null; // non-blocking يتقدم بافتراض معلن
+  raised_by: string;                  // rule code أو agent
+  resolution: { answer: string; at: string } | null;
+}
+```
+
+- **Rules:** كل كيان يُتحقق بـ JSON Schema عند الكتابة؛ الحزمة تُجمَّد (snapshot) لحظة إطلاق المجلس — تعديل لاحق ينشئ bundle version جديدة ويحدد الوكلاء المتأثرين (إعادة تشغيل جزئية).
+- **Acceptance Criteria:** لا يبدأ المجلس إلا بحزمة كاملة الصحة schema + صفر blocking questions.
+
+## 5.11 معايير قبول القسم 5 (تجربة + هندسة)
+
+| # | المعيار | العتبة |
+|---|---------|--------|
+| AC5-1 | إكمال الاستبيان الأساسي (5.1+5.2+5.3 + نمط سريع) | ≤ 3 دقائق (P75) |
+| AC5-2 | تخطي/حفظ/استكمال لاحق من نفس النقطة | متاح في كل خطوة |
+| AC5-3 | صفر إعادة سؤال عن معلوم (توأم/ذاكرة/إجابة سابقة) | 100% — اختبار آلي |
+| AC5-4 | كل سؤال غير بديهي يعرض سببه | 100% |
+| AC5-5 | جوال + RTL كامل | 100% |
+| AC5-6 | شاشة ملخص Brief قابلة للمراجعة والتعديل قبل بدء المجلس | إلزامية — وكل تعديل فيها يحدّث الكيان المصدر |
+| AC5-7 | نسبة إكمال الاستبيان ممن بدأوه | ≥ 85% (يُقاس ويُحسَّن) |
+
+---
+
+# ملحق A — Future AI Improvements (موثقة فقط — **لا تُنفذ الآن** بقرار مؤسس)
+
+> الغرض: حفظ الأفكار بمداخلها المعمارية حتى لا تُتخذ اليوم قرارات تسدّ طريقها غدًا. كل بند: ما هو، شرطه المسبق، ونقطة اتصاله بالنظام.
+
+| # | التحسين | الوصف | الشرط المسبق | نقطة الاتصال المعمارية |
+|---|---------|--------|----------------|--------------------------|
+| F1 | توليد فيديو واقعي | جولة سينمائية photorealistic داخل المنزل | نضج نماذج video-gen الموجهة هندسيًا | مشتق جديد من الـ Digital Twin (P8) — لا تغيير في الأساس |
+| F2 | تصميم الحدائق المتقدم | نباتات محلية حسب مناخ المدينة، ري، ظل | قاعدة نباتات خليجية + بيانات مناخ | توسيع Landscape Agent بمصدر بيانات جديد |
+| F3 | اقتراح الطاقة الشمسية | جدوى ألواح على السطح: مساحة، ميل، إنتاج متوقع | مساحة السطح والاتجاه (موجودة في التوأم) + بيانات إشعاع | وكيل جديد يقرأ التوأم — البنية جاهزة |
+| F4 | تحسين استهلاك الكهرباء | محاكاة استهلاك التصميم المقترح واقتراح بدائل موفرة | بيانات استهلاك الأجهزة في الكتالوج | حقل `energy_rating` في Product schema (يُضاف الآن كحقل اختياري فارغ) |
+| F5 | تحليل الإضاءة الطبيعية | محاكاة مسار الشمس حسب `rotation_north_deg` والموقع الجغرافي وتأثيرها على كل غرفة | التوأم يحفظ الاتجاه (4.16 ✓) | Lighting Agent يستهلك sun-path engine حتمي |
+| F6 | تصميم المنازل الذكية | تخطيط KNX/Matter: حساسات، إنارة ذكية، ستائر | كتالوج أجهزة ذكية + قواعد تمديد | يوسّع Electrical Agent — نقاط smart تُحجز في schema الكهرباء من الآن |
+| F7 | تقدير تكلفة الصيانة السنوية | لكل تصميم: كلفة صيانة متوقعة (خامات، أجهزة، حديقة) | بيانات أعمار الخامات ومعدلات الصيانة | حقل `maintenance_profile` في Material schema (اختياري الآن) |
+| F8 | AR بالجوال | وضع القطع المقترحة في الغرفة الفعلية بالكاميرا | تطبيق جوال + نماذج 3D للمنتجات | مشتق من التوأم + كتالوج 3D assets |
+| F9 | توليد مخططات من الوصف | "فيلا 400م² بثلاث غرف نوم ومجلسين" → مخططات مقترحة | نموذج توليدي مقيد بقواعد البناء | يولّد Digital Twin مباشرة — نفس العقد |
+
+**قاعدة الملحق:** أي بند يُرقّى للتنفيذ يدخل الـ PRD كقسم كامل بمعايير 1.10 — لا تنفيذ من الملحق مباشرة.
+
+---
+
+*(الأقسام 6–12 تُكتب تباعًا بعد اعتماد كل قسم)*

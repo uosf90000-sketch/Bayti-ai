@@ -32,6 +32,9 @@
 | ADR-024 | دمج ذري بحارس دلالي: transactional merge على نسخة معزولة + semantic validation قبل التجميد — فشل = rollback كامل | ✅ معتمد | [PRD §6.14 ADR-6.6](02-prd.md) |
 | ADR-025 | قانون تغييرات التوأم: Atomic · Immutable · Traceable · Replayable · Reversible — يسري على كل مسار كتابة بلا استثناء إداري | ✅ معتمد | [PRD §6.15 ADR-6.7](02-prd.md) |
 | ADR-026 | طبقة محاكاة حتمية (2D swept-volumes) كبوابة اعتماد التصميم — أي تعارض يمنع الاعتماد | ✅ معتمد | [PRD §6.17](02-prd.md) |
+| ADR-027 | النسخ الثلاث ملفات معايرة (variants) فوق توأم واحد — لا ثلاث جولات مجلس مستقلة | ✅ معتمد | [PRD §6.20 ADR-6.8](02-prd.md) |
+| ADR-028 | دورة حياة التكلفة الثلاثية Estimate→Quote→Actual مع Price Confidence لكل بند | ✅ معتمد | [PRD §6.21](02-prd.md) |
+| ADR-029 | تطوير الـ Schemas: additive-first + major version بهجرة مُختبرة ونافذة قراءة مزدوجة — المشاريع القديمة تُقرأ بإصداراتها | ✅ معتمد | [PRD §6.27 ADR-6.9](02-prd.md) |
 
 ---
 

@@ -5,7 +5,7 @@
 | **المنتج** | Bayti AI — منصة تحويل مخططات المنازل إلى تصاميم تنفيذية مُسعَّرة |
 | **الإصدار** | v2.0 — يُبنى قسمًا بقسم باعتماد المؤسس |
 | **المالك** | CTO |
-| **الحالة** | 🟡 قيد الكتابة — القسم 6 (الدفعة 3/4) جاهز للمراجعة |
+| **الحالة** | 🟡 قيد الكتابة — القسم 6 (الدفعة 4/4 الأخيرة) جاهز للمراجعة · يليها Architecture Freeze v1.0 |
 | **آخر تحديث** | 2026-07-14 |
 
 ---
@@ -19,7 +19,8 @@
 | 3 | رحلة المستخدم التفصيلية (شاشة بشاشة — UX) | ✅ **معتمد** |
 | 4 | المواصفة الهندسية: رفع المخطط وتحليله وتحويله إلى Digital Twin | ✅ **معتمد (مع إضافات المؤسس 4.16–4.24)** |
 | 5 | المواصفة الهندسية: الاستبيان، الذوق، والقيود (Intake & Style) | ✅ **معتمد** |
-| 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام — 4 دفعات) | 🔍 **1/4 ✅ · 2/4 ✅ · 3/4 جاهزة للمراجعة** |
+| 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام — 4 دفعات) | 🔍 **1/4 ✅ · 2/4 ✅ · 3/4 ✅ · 4/4 جاهزة للمراجعة** |
+| — | **Architecture Freeze v1.0** — مراجعة شاملة 1–6، توحيد مصطلحات، Dependency Map، Traceability Matrix، تجميد القرارات (قرار مؤسس: قبل القسم 7 وقبل أي كود) | ⬜ بعد اعتماد 4/4 |
 | 7 | المتطلبات الوظيفية: التسوق، النسخ الثلاث، والتكلفة | ⬜ |
 | 8 | المتطلبات الوظيفية: المخرجات (صور، فيديو، 3D، PDF) | ⬜ |
 | 9 | المتطلبات الوظيفية: التعديل بالمحادثة | ⬜ |
@@ -2544,6 +2545,257 @@ TwinHealthScore = min(Geometry, Rule_hard_gate) قاطعة أولًا:
 
 > هذا المثال هو **الاختبار المرجعي الحي**: يُبنى كسيناريو آلي كامل في CI (بيانات فيلا اختبارية) — أي تغيير معماري يكسر أي خطوة من العشر يُرفض.
 
+## 6.20 النسخ الثلاث (Design Variants + Budget Allocation Engine)
+
+> النسخ ليست ثلاثة تصاميم عشوائية ولا مجرد ميزانيات — هي **ملفات معايرة (profiles) فوق التوأم نفسه**.
+
+### الثابت والمتغير (قرار مؤسس)
+
+| ثابت عبر النسخ الثلاث (يستحيل اختلافه) | متغير بين النسخ |
+|------------------------------------------|------------------|
+| الهندسة الأساسية والتوزيع، المسافات والخلوصات، كل قواعد السلامة، Hard Constraints، مخرجات المحاكاة | المنتجات، الخامات، التفاصيل الجمالية، مستوى التقنية، عناصر الراحة غير الأساسية |
+
+### DesignVariant (Schema)
+
+```typescript
+interface DesignVariant {
+  variant_id: string;                  // "economy"|"balanced"|"luxury" (+ مخصصة مستقبلًا)
+  schema_version: "1.0";
+  variant_rules: string[];             // rule_ids الحاكمة للنسخة (config)
+  budget_envelope: MoneyRange;         // نطاق النسخة المشتق من ميزانية المستخدم
+  grades: {
+    material_grade:  "economy"|"standard"|"premium";
+    furniture_grade: "economy"|"standard"|"premium";
+    lighting_grade:  "economy"|"standard"|"premium";
+    appliance_grade: "economy"|"standard"|"premium";
+    finish_grade:    "economy"|"standard"|"premium";
+  };
+  expected_lifetime_years: { furniture: number; finishes: number; appliances: number };
+  maintenance_level: "minimal"|"standard"|"attentive";     // يتقاطع مع maintenance_tolerance في StyleVector
+  sustainability_level: "baseline"|"improved"|"high";
+  allocation: RoomAllocation[];        // ناتج محرك التوزيع أدناه
+}
+```
+
+**تعريف الدرجات (`config/variants/grades.yaml`):** لكل grade: نطاق سعري للفئة، حد أدنى ضمان، فئة علامات (tier-1/2/3)، عمر متوقع، مستوى صيانة — **القيمة مقابل السعر معيار التوازن: balanced ليست "منتصف السعر" بل أفضل نقطة عمر×جودة÷سعر.**
+
+### Budget Allocation Engine (محرك توزيع الميزانية)
+
+```
+Inputs: BudgetEnvelope + rooms_in_scope + zones + HouseholdProfile + hospitality + no_compromise/economy_ok
+1) خصم الثوابت: contingency (10%) + بنود السلامة الإلزامية + بنود no_compromise (تُسعَّر أولًا وتُثبَّت)
+2) توزيع الباقي بأوزان الغرف (config/variants/allocation_weights.yaml — قابلة للتعديل):
+   افتراضي فيلا سعودية: مجلس+مقلط 22% · معيشة 16% · مطبخ 18% · نوم رئيسية 12% ·
+   نوم أخرى 4%×غرفة · حمامات 3%×حمام · حديقة/خارجي 8% · ممرات/مداخل 5%
+3) معدِّلات سياقية حتمية: ضيافة أسبوعية → مجلس +20% نسبيًا · أطفال → غرفهم +15% · economy_ok(غرفة) → −25%
+4) فحص أرضيات الحد الأدنى الوظيفي لكل غرفة (لا غرفة تحت حدها) → تعذُّر = تناقض CNT-01 لا توزيع مكسور
+Output: RoomAllocation[] { room_id, amount, floor_amount, rationale_ar } — قابلة للتعديل يدويًا (تدخل P7)
+```
+
+- **ADR-6.8 · النسخ ملفات معايرة فوق توأم واحد:** التوزيع والهندسة يُحسبان مرة واحدة؛ النسخ تعيد فقط اختيار الدرجات/المنتجات عبر نفس الـ pipeline (كاش الـ Orchestrator يجعلها شبه مجانية). **المرفوض:** ثلاث جولات مجلس كاملة (تكلفة ×3 وتباعد هندسي بين النسخ يمنع "خلط المستويات" لكل غرفة الذي وعدنا به).
+
+## 6.21 Cost Engineer — دورة حياة التكلفة الثلاثية
+
+### Estimate → Quote → Actual (قرار مؤسس)
+
+| المرحلة | المصدر | متى | الغرض |
+|---------|--------|-----|-------|
+| **Estimate** | كتالوج حي + market_rates | وقت التصميم | القرار والموازنة |
+| **Quote** | عروض أسعار فعلية (متجر/مقاول) يرفعها المستخدم أو شريك | قبل التنفيذ | تثبيت الالتزام |
+| **Actual** | ما دُفع فعلًا (إيصالات يسجلها المستخدم) | أثناء/بعد التنفيذ | مقارنة الميزانية بالواقع + **تغذية دقة تقديراتنا المستقبلية (أصل بيانات)** |
+
+```typescript
+interface CostLine {
+  line_id: string; schema_version: "1.0";
+  stage: "estimate"|"quote"|"actual";
+  layer: "furniture"|"lighting"|"doors"|"windows"|"flooring"|"paint"|"kitchen"|"bathrooms"
+        |"appliances"|"hvac"|"electrical_accessories"|"installation_allowance"|"delivery"
+        |"vat"|"contingency"|"unavailable_price_allowance";
+  room_id: string | null; item_ref: string | null;
+  currency: "SAR"; quantity: number; unit: string;
+  unit_price: number; subtotal: number; tax: number;
+  delivery: number | null; installation: number | null;
+  uncertainty_range: { low: number; high: number };     // لا دقة وهمية — نطاق دائمًا
+  price_type: "live_catalog"|"market_rate"|"vendor_quote"|"user_receipt";
+  source: string; source_date: string;
+  price_confidence: number;            // أدناه
+  variant_id: string; twin_version_id: string;
+}
+```
+
+- **Price Confidence (لكل بند):** `conf = W_type × decay(age_days)` حيث `W_type`: user_receipt=1.0 · vendor_quote=0.95 · live_catalog=0.9 · market_rate=0.6، والـ decay نصف عمر config (كتالوج 14 يومًا، market_rate 90 يومًا). ثقة الإجمالي = متوسط مرجح بقيمة البنود، **وتُعرض للمستخدم** ("التقدير بثقة 87% ±6%").
+- **Variance:** عند توفر Quote/Actual → تقرير انحراف لكل layer/غرفة (estimate vs actual) — يغذي معايرة market_rates ربع سنويًا.
+- **Acceptance:** لا رقم بلا مصدر وتاريخ ونطاق؛ vat وcontingency وunavailable_allowance بنود صريحة دائمًا لا مدفونة.
+
+## 6.22 Shopping Agent — العقد الكامل (التنفيذ لاحقًا، العقد الآن)
+
+### الضوابط القانونية والأخلاقية (ملزمة — قرار مؤسس)
+
+1. البحث **مرة واحدة لكل مشروع** أو عند طلب تحديث صريح — لا polling خفي باسم المستخدم.
+2. بيانات الكتالوج تُجمع بخط ingestion مستقل **يحترم شروط المتاجر وrobots.txt والسياسات القانونية** — أولوية مطلقة للاتفاقيات وfeeds الرسمية.
+3. **لا تحايل على CAPTCHA أو أنظمة منع** بأي شكل — متجر حاجب = خارج الكتالوج حتى اتفاق رسمي.
+4. التصفح (حيث مسموح) بمعدلات مهذبة كمستخدم عادي — لا حمل عدواني.
+
+### Product Match Score (لا اعتماد على التشابه البصري وحده — قرار مؤسس)
+
+```
+match_score = 0.30×size_fit + 0.20×function_fit + 0.12×material_match + 0.08×color_match
+            + 0.10×price_fit(variant) + 0.10×availability(city) + 0.05×delivery + 0.05×warranty
+(الأوزان config/shopping_scoring.yaml — التشابه البصري يدخل ضمن function/material كمُدخل مساعد لا كمعيار مستقل حاكم)
+حارس قاطع قبل الحساب: size_fit يتحقق هندسيًا (fits + clearances) — فشله = استبعاد، لا score منخفض
+```
+
+### ترتيب المطابقة الإلزامي
+`1. قابلية التركيب والمقاس → 2. Hard Constraints → 3. الوظيفة → 4. التوفر → 5. الميزانية → 6. الأسلوب → 7. التفضيلات Soft`
+
+### قاعدة الصدق (نصية معتمدة)
+> **"أي منتج بلا مقاسات موثوقة المصدر لا يُصنَّف مطابقًا — يُصنَّف «مرشح يحتاج تحقق» ويُعرض بهذه الصفة صراحة."** — تسري أيضًا على أي حقل ناقص يدخل الـ score (يُحسب أسوأ حالة ويُعلَّم).
+
+```typescript
+interface ShoppingCandidate {
+  candidate_id: string; schema_version: "1.0";
+  design_item_id: string; product_id: string;
+  role: "primary"|"cheaper_alt"|"premium_alt"|"needs_verification";  // ⭐ التصنيف الرابع رسمي
+  match_score: number; score_breakdown: Record<string, number>;
+  size_fit: { verified: boolean; source: "official_feed"|"scraped"|"missing" };
+  availability: { in_stock: boolean; city_deliverable: boolean; checked_at: string };
+  price: { amount: number; currency: "SAR"; as_of: string };
+  delivery: { days_estimate: number | null; cost: number | null };
+  warranty_months: number | null;
+  explanation: DecisionExplanation;
+  twin_version_id: string; variant_id: string;
+}
+```
+
+## 6.23 المراجعة البشرية (ثلاثة أنواع + SLA)
+
+| | **Design Review** | **Engineering Review** | **Shopping Review** |
+|---|---|---|---|
+| من يراجع | المستخدم (أو مصممه Pro) | مهندس معتمد (داخلي/شريك) | فريق العمليات |
+| متى تُطلب | نقاط checkpoint المعلنة؛ قرارات جوهرية من ConflictResolver؛ رضا دون عتبة | كل بند `requires_certified_engineer` (أحمال اللوحة، مركزي HVAC، إنشائي مسبح)؛ Rule Health بمنطقة رمادية | عناصر `needs_verification`؛ فئة كتالوج قديمة؛ روابط فاشلة |
+| البيانات المعروضة | TwinDiff بصري + خيارات + أثر كل خيار | الحسابات القابلة لإعادة التشغيل + المدخلات + القاعدة | بيانات المنتج + المصدر + سبب الشك |
+| صلاحية الاعتماد | المستخدم فقط | المهندس (توقيعه مسجل P14) | العمليات، وما يمس المال → تأكيد المستخدم |
+| ماذا يُعاد بعده | مصفوفة الإبطال الانتقائي حسب نطاق القرار | البند + مشتقاته فقط | SHP للعنصر + CST |
+| **SLA** | فوري (تجربة المستخدم) — تذكير بعد 48h | **72h** (شريك) / 24h (داخلي) | **24h** |
+| أثر على الحالة | `awaiting_user` — لا يجمّد باقي المسارات غير المعتمدة عليه | البند `pending_engineering` — المشروع يُنشر مع تعليمه بوضوح | العنصر `pending_verification` — يُنشر كمرشح |
+
+```typescript
+interface HumanReviewRequest {
+  review_id: string; schema_version: "1.0";
+  kind: "design"|"engineering"|"shopping";
+  reason_code: string; payload_refs: string[];
+  approver_role: "user"|"certified_engineer"|"ops";
+  sla_hours: number; requested_at: string;
+  status: "open"|"approved"|"rejected"|"expired_escalated";
+  resolution: { by: string; at: string; decision: object } | null;
+  reruns_on_approval: string[];        // agent scopes من مصفوفة الإبطال
+}
+```
+
+## 6.24 جودة الوكلاء (Agent Scorecard + Quality Trend)
+
+### Scorecard (لكل وكيل، لكل إصدار)
+
+| المقياس | القياس |
+|---------|---------|
+| Validity | نسبة مخرجات schema-valid من أول محاولة |
+| Rule compliance | نسبة proposals العابرة C3 من أول مرة |
+| Executability | نسبة العناصر القابلة للتنفيذ (P1 checks) |
+| Explanation completeness | نسبة القرارات كاملة الطبقات الثلاث (6.5) |
+| Confidence calibration | calibration error على Golden Set الوكيل |
+| User acceptance | نسبة عدم التعديل/الرفض من المستخدمين |
+| Cost / Latency | متوسط لكل تشغيلة (P50/P95) |
+| Rerun rate | إعادات لغير سبب مدخلات |
+| Human override rate | نسبة القرارات التي عدّلها بشر |
+
+### Quality Trend (قرار مؤسس)
+- Snapshot أسبوعي لكل مقياس لكل وكيل → منحنى زمني في لوحة الوكلاء؛ كشف تدهور آلي: EWMA ينحرف > عتبة config لأسبوعين → إنذار "الوكيل يتدهور" + تجميد ترقياته.
+- **بوابة الترقية (نصية معتمدة):** *"لا يُرقّى إصدار وكيل إلى الإنتاج إذا تحسّن جماليًا لكنه تراجع هندسيًا"* — مقارنة إلزامية على Golden Set الوكيل: أي تراجع في Validity/Rule compliance/Executability/Calibration يمنع الترقية مهما تحسن غيرها. الترقية عبر shadow ثم تدريجي (نفس نمط 6.8).
+- الاختبارات العشرة لكل وكيل (unit/scenario/regression/adversarial/hallucination/consistency/cross-agent/cost/latency/golden) تعمل في `ai-evals.yml` — الأحمر يمنع الدمج.
+
+## 6.25 المراقبة التشغيلية للمجلس + Project Timeline
+
+**Metrics إلزامية (لوحة المجلس):** نجاح/فشل كل وكيل · زمنه وتكلفته · نسبة retry · نسبة التعارض ونوعه · **أكثر القواعد خرقًا (Pareto أسبوعي → يغذي تحسين الوكلاء والقواعد)** · نسبة القرارات اليدوية · نسبة المقترحات المرفوضة · نسبة الدمج الناجح من أول مرة · زمن الرحلة الكاملة P50/P95 · تكلفة المشروع الكاملة · نسبة الاستئناف من checkpoint · **drift الثقة** (متوسط confidence عبر الزمن لكل وكيل) · **drift جودة التصميم** (Twin Health المتوسط للمشاريع الجديدة أسبوعيًا).
+
+**Project Timeline (قرار مؤسس):** عرض زمني مشتق حصريًا من مخزن الأحداث (`sequence_number` يضمن الترتيب): كل AgentRun (بدء/انتهاء/حالة) · كل Merge (بنسخته وdiff) · كل Conflict (اكتشاف→حسم) · كل Human Review (طلب→قرار) · كل Rollback — للمستخدم نسخة مبسطة ("صمّم مهندس الإنارة غرفك — 14:32")، وللفريق نسخة كاملة قابلة للنقر حتى مستوى الـ artifacts. **لا مصدر ثانٍ للحقيقة الزمنية.**
+
+## 6.26 أمن المجلس (Security)
+
+**المصادق عليه سابقًا (يُفرض هنا):** أقل بيانات لكل وكيل (Context Contracts) · عزل مشروع/مشروع (مفاتيح وصلاحيات لكل مشروع، اختبار تسرب آلي) · لا PII للنماذج · تشفير كل الـ artifacts · سجل وصول (P14) · **دفاع Prompt Injection:** كل نص مصدره ملفات المستخدم/OCR/أوصاف منتجات = **بيانات غير موثوقة** تُعزل بمحددات صارمة، **ولا تُنفَّذ أي تعليمات واردة داخل مخطط أو صورة أو وصف منتج** · Content sanitization عند الاستقبال · Model output validation (schema + حدود قيم) · Tool allowlists (لا وكيل يملك أدوات خارج manifest) · Rate limits · Budget limits (6.7).
+
+**الإضافتان الجديدتان (قرار مؤسس):**
+| البند | المواصفة |
+|-------|-----------|
+| **Supply Chain Security** | **النماذج:** إصدارات مثبتة (pinned model ids) لا "latest"؛ سجل provenance لكل نموذج/أوزان مستضافة (مصدر + checksum + رخصة)؛ تقييم أمني قبل إدخال أي نموذج جديد (نفس بوابة shadow). **الاعتمادات:** lockfiles ملزمة، فحص ثغرات مستمر (CI)، SBOM لكل إصدار، صور حاويات موقعة ومفحوصة، لا تبعية جديدة بلا مراجعة |
+| **Secrets Rotation** | كل الأسرار في مدير أسرار (لا env في الريبو)؛ دوران آلي كل 90 يومًا (مفاتيح LLM/DB/S3/دفع)؛ دوران فوري عند أي شبهة؛ dual-key أثناء الدوران (صفر انقطاع)؛ فحص CI يمنع دمج أي secret في الكود (secret scanning) |
+
+## 6.27 سجل الكيانات النهائي (Final Schemas + Versioning & Migration)
+
+**القاعدة (قرار مؤسس):** كل schema يحمل `schema_version` إلزاميًا + استراتيجية هجرة موثقة — تطوير المستقبل لا يكسر المشاريع القديمة.
+
+| الكيان | عُرّف في | | الكيان | عُرّف في |
+|--------|-----------|---|--------|-----------|
+| AgentContract/AgentRun | 6.3 | | OrchestrationPlan | 6.7 |
+| AgentProposal | 6.4 | | DAG (manifests) | 6.6 |
+| DecisionExplanation | 6.5 | | MergeTransaction/ChangeSet/TwinDiff | 6.14 |
+| RuleDefinition/RuleEvaluation | 6.8 | | DesignVariant | 6.20 |
+| Conflict/ConflictResolution | 6.13 | | CostLine/CostEstimate | 6.21 |
+| LightingPlan (+7 مكوناتها) | 6.9 | | ShoppingCandidate | 6.22 |
+| ElectricalPlan (RoughIn/Final) | 6.10 | | ProjectHealth/TwinHealth | 6.18 + P13 |
+| KitchenPlan (+Cabinet/Appliance) | 6.11 | | HumanReviewRequest | 6.23 |
+| BathroomPlan (+Zones/Clearances) | 6.12 | | CouncilEvent | 6.6 |
+
+### استراتيجية الهجرة (ADR-6.9)
+1. **Additive-first:** التغيير الافتراضي إضافة حقول اختيارية — لا يكسر شيئًا، لا يرفع الإصدار الرئيسي.
+2. **Breaking change = major version جديد** + سكربت هجرة مُختبر + **نافذة قراءة مزدوجة** (الكود يقرأ الإصدارين حتى اكتمال الترحيل).
+3. **المشاريع القديمة تُقرأ بإصداراتها** (نفس مبدأ rule_pack_versions) — الترحيل الفعلي عند فتح المشروع للتعديل فقط، وبموافقة.
+4. سجل الـ schemas في `packages/design-schema` مع **فحص توافق آلي في CI**: أي تعديل schema يُصنف تلقائيًا (متوافق/كاسر) — الكاسر بلا خطة هجرة يُرفض.
+- **المرفوض:** ترحيل شامل قسري لكل قاعدة البيانات مع كل تغيير (خطِر، يوقف الخدمة، ويكسر قابلية إعادة التشغيل التاريخية Replayable).
+
+## 6.28 معايير قبول القسم 6 + Architecture Review Checklist
+
+### حالات الـ End-to-End الثلاث الإلزامية (تُبنى كسيناريوهات CI حية)
+
+| الحالة | التغطية | الحالة المرجعية |
+|--------|----------|------------------|
+| **E2E-1: شقة صغيرة بميزانية محدودة** | شقة 95م² · 55k ريال · اقتصادي · تناقض CNT-01 يُحسم بمسار "فخامة انتقائية" · مطبخ 6م² (Edge للـ KIT-SIM) | تُبنى بنفس نمط 6.19 |
+| **E2E-2: فيلا عائلية** | ✅ موثقة كاملة في **6.19 (فيلا حي النرجس)** — المرجع الرسمي | 6.19 |
+| **E2E-3: تعديل غرفة بعد اكتمال التصميم** | "اجعل المجلس أفخم" على rev3 → intent → FUR/LT/EF/CST/SHP للمجلس فقط (المصفوفة 6.6) → rev4 · **يُقاس:** لا إعادة لأي وكيل خارج النطاق (اختبار آلي) | تُبنى |
+
+### حالة الفشل الكاملة الإلزامية (F2E-1)
+
+`جولة فيلا 6.19 يُحقن فيها فشل GPU دائم في lighting_task ←` retry ×2 → model fallback → فشل نهائي → **LT يُعلَّم ⚠ والجولة تكمل** (Partial Results) → merge يتوقف عند بوابة "مسار حاجب ناقص" → المستخدم يرى الصحة: "الإنارة التفصيلية قيد المعالجة" → العمليات تعالج → **استئناف من checkpoint LT فقط** → دمج ناجح → **التحقق: صفر فقد بيانات، صفر إعادة تشغيل لوكلاء ناجحين، والـ timeline يعرض القصة كاملة.**
+
+### معايير القبول الاثنا عشر (من قرار المؤسس)
+
+1. كل وكيل له عقد واضح غير متداخل ✓ (6.2 + حدود Scope المحظورة)
+2. كل قاعدة لها مالك ومصدر وتصنيف ✓ (6.8)
+3. الـ DAG بلا دورة غير معالجة ✓ (6.6 + فحص CI)
+4. التعديل الجزئي له Selective Rerun محدد ✓ (مصفوفة 6.6 + E2E-3)
+5. كل Proposal قابل للتفسير والتراجع ✓ (6.4 + 6.5)
+6. لا يمكن تجاوز Hard Rule ✓ (C8/C10 بنيويًا)
+7. كل تعارض له مسار حسم ✓ (6.13)
+8. Merge ذري وقابل للـ rollback ✓ (6.14)
+9. كل نتيجة مرتبطة بإصدار Twin ✓ (6.3/6.4/قانون 6.15)
+10. أمثلة E2E الثلاث ✓ (أعلاه)
+11. حالة فشل كاملة ✓ (F2E-1)
+12. فريق هندسي يبدأ بلا افتراضات غير موثقة → **تُختبر فعليًا في مراجعة الـ Freeze** (مهندس لم يشارك في الكتابة يقرأ ويسجل كل سؤال بلا إجابة)
+
+### Architecture Review Checklist (بوابة اعتماد القسم — قرار مؤسس)
+
+| البند | ما يُفحص | النتيجة المطلوبة |
+|-------|-----------|-------------------|
+| الاتساق | لا تعارض بين 6.x وبين الأقسام 1–5 (مصطلحات، schemas، تدفقات) | تقرير Freeze نظيف |
+| الأداء | ميزانيات 4.14/4.22/6.7 قابلة للتحقيق بالتصميم الحالي (تحليل نظري + مخاطر) | لا مسار حرج بلا ميزانية |
+| الأمان | 6.26 + 4.21 + §9 تغطي نموذج التهديد كاملًا | صفر فجوات معروفة بلا خطة |
+| قابلية التوسع | كل مكوّن أفقي التوسع أو معلن حدوده | موثق لكل مكوّن |
+| قابلية الاختبار | كل قاعدة test_cases، كل pipeline سيناريوهات 6.16، كل حساب replayable | 100% |
+| القابلية للتفسير | P11/6.5 مفروضة بنيويًا في كل مخرج | 100% |
+| قابلية الصيانة | schemas مُصدَّرة بهجرة، rules-as-data، prompts مُصدَّرة، config لا كود | ✓ |
+| تكلفة التشغيل | COGS لكل مرحلة له هدف وسقف ومقياس | ✓ |
+
+> **لا يُعتمد القسم 6 نهائيًا إلا باجتياز القائمة كاملة — وهي بذاتها البند الأول في أجندة Architecture Freeze v1.0.**
+
 ---
 
-*(القسم 6 — الدفعة 4/4 الأخيرة تُستكمل تاليًا: 6.20–6.28، ثم الأقسام 7–12)*
+*(القسم 6 مكتمل الكتابة بدفعاته الأربع — التالي: **Architecture Freeze v1.0** ثم الأقسام 7–12)*

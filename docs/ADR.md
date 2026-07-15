@@ -40,6 +40,10 @@
 | ADR-030 | **Canonical Truth:** كل معلومة لها مصدر حقيقة واحد فقط — DigitalTwin للهندسة، Rule Engine للقواعد، StyleVector للذوق، Budget Allocation Engine للميزانية، Project Timeline للتسلسل الزمني. لا يُسمح بنسختين من الحقيقة أبدًا | ✅ معتمد (قرار مؤسس مباشر) | [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) |
 | ADR-031 | **AI Is Advisory:** الذكاء الاصطناعي يقترح ولا يغيّر بيانات المشروع مباشرة — كل تعديل دائم مهما صغر يمر عبر `Proposal → Rule Engine → Conflict Resolver → Merge Engine → Digital Twin` (يعمّم ADR-018 على كل مسار AI بما فيه المحادثة والتعديلات البسيطة) | ✅ معتمد (قرار مؤسس مباشر) | [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) |
 | ADR-032 | **UI Independence:** واجهة المستخدم ليست مصدر بيانات — Web/iOS/Android/Vision Pro/Desktop كلها قابلة للاستبدال دون أي تغيير في الـ Domain Model؛ كل منطق المجال خلف الـ API | ✅ معتمد (قرار مؤسس مباشر) | [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) |
+| ADR-033 | **Canonical Product Model:** منتج واحد بعروض متعددة (CanonicalProduct + Offers) — لا تكرار المنتج لكل متجر | 🔍 مقترح — بانتظار اعتماد القسم 7 | [PRD §7.0 ADR-7.1](02-prd.md) |
+| ADR-034 | Knowledge Graph كعلاقات مُنمَّطة مفسَّرة فوق PostgreSQL — لا قاعدة graph مخصصة الآن | 🔍 مقترح — بانتظار اعتماد القسم 7 | [PRD §7.0 ADR-7.2](02-prd.md) |
+| ADR-035 | Offline-First Catalog: وقت الطلب لا يلمس أي موقع خارجي أبدًا — الجلب بخط ingestion مستقل قانوني | 🔍 مقترح — بانتظار اعتماد القسم 7 | [PRD §7.0 ADR-7.3](02-prd.md) |
+| ADR-036 | التجارة الوحدوية (مواد البناء m2/liter/lm) مواطن درجة أولى في نموذج المنتج + حاسبات كميات من التوأم | 🔍 مقترح — بانتظار اعتماد القسم 7 | [PRD §7.0 ADR-7.4](02-prd.md) |
 
 ---
 

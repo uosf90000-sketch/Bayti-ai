@@ -5,7 +5,7 @@
 | **المنتج** | Bayti AI — منصة تحويل مخططات المنازل إلى تصاميم تنفيذية مُسعَّرة |
 | **الإصدار** | v2.0 — يُبنى قسمًا بقسم باعتماد المؤسس |
 | **المالك** | CTO |
-| **الحالة** | ✅ الأقسام 1–6 معتمدة · 🔒 **Architecture v1.0 (Frozen)** · التالي: القسم 7 |
+| **الحالة** | 🔒 Architecture v1.0 (Frozen) · القسم 7 (Commerce Platform) جاهز للمراجعة |
 | **آخر تحديث** | 2026-07-14 |
 
 ---
@@ -21,7 +21,7 @@
 | 5 | المواصفة الهندسية: الاستبيان، الذوق، والقيود (Intake & Style) | ✅ **معتمد** |
 | 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام — 4 دفعات) | 🔍 **1/4 ✅ · 2/4 ✅ · 3/4 ✅ · 4/4 جاهزة للمراجعة** |
 | — | **Architecture Freeze v1.0** — [التقرير الكامل](ARCHITECTURE_FREEZE_v1.md) + [الدستور المختصر](PROJECT_CONSTITUTION.md) | ✅ **Approved — Architecture v1.0 (Frozen)** بمصادقة المؤسس 2026-07-15 (الشروط نُفِّذت: F-03/04/05/07 + ADR-030..032) |
-| 7 | المواصفة الهندسية: التسوق، النسخ الثلاث، والتكلفة (تكامل الكتالوج) | ⬜ التالي — فوق أساس مجمد |
+| 7 | **المواصفة الهندسية: Commerce Platform** (قرار مؤسس: منصة تجارة كاملة لا Shopping فقط — كتالوج، Knowledge Graph، مواد بناء، تجار، ذكاء أسعار وتوفر) | 🔍 **جاهز للمراجعة** |
 | 7 | المتطلبات الوظيفية: التسوق، النسخ الثلاث، والتكلفة | ⬜ |
 | 8 | المتطلبات الوظيفية: المخرجات (صور، فيديو، 3D، PDF) | ⬜ |
 | 9 | المتطلبات الوظيفية: التعديل بالمحادثة | ⬜ |
@@ -2811,4 +2811,280 @@ interface HumanReviewRequest {
 
 ---
 
-*(القسم 6 مكتمل الكتابة بدفعاته الأربع — التالي: **Architecture Freeze v1.0** ثم الأقسام 7–12)*
+# القسم 7 — المواصفة الهندسية: Commerce Platform
+
+> **قرار مؤسس موسِّع للنطاق:** لا نبني "محركًا يجلب منتجات" بل **طبقة تجارة كاملة** تدعم السوق السعودي ثم تتوسع عالميًا — وتغطي **رحلة المنزل كاملة: من مواد التشطيب (بلاط، رخام، دهانات، جبس، أبواب، شبابيك، أدوات صحية، تكييف) إلى الأثاث والإنارة** — لا التأثيث فقط.
+> يطبّق معايير 1.10 + سيناريوهات 6.16، ويعمل تحت Architecture v1.0 المجمدة (ينفّذ عقد 6.22 المجمد ولا يعدّله).
+
+## 7.0 القرارات المعمارية (ADRs جديدة — أُضيفت للسجل)
+
+### ADR-7.1 (ADR-033) · Canonical Product Model — منتج واحد، عروض متعددة
+- **القرار:** فصل تام بين **`CanonicalProduct`** (الحقيقة الواحدة عن المنتج: هوية، أبعاد، خامات، معرفة تركيب) و**`Offer`** (عرض متجر: سعر، توفر، رابط، صور) — منتج واحد له عدة متاجر/أسعار/توفرات/صور، **ولا يُكرر المنتج لكل متجر أبدًا**.
+- **البدائل المرفوضة:** صف منتج لكل متجر (تكرار، استحالة مقارنة عابرة للمتاجر، ومعرفة المنتج تتشظى)؛ عروض بلا canonical (لا تتراكم معرفة، وكل متجر جزيرة).
+
+### ADR-7.2 (ADR-034) · Knowledge Graph كعلاقات مُنمَّطة فوق PostgreSQL
+- **القرار:** علاقات المنتجات (بدائل، مكملات، توافق، سلاسل) جداول علاقات مُنمَّطة + embeddings — **لا قاعدة graph مخصصة الآن**.
+- **البدائل المرفوضة:** Neo4j وأشباهها من اليوم الأول (نظام إضافي كامل التشغيل لعمق استعلام لا يتجاوز قفزتين عندنا)؛ علاقات ضمنية بالـ embeddings فقط (غير قابلة للتفسير — تكسر P11).
+
+### ADR-7.3 (ADR-035) · الكتالوج يُبنى دومًا خارج مسار الطلب (Offline-First Catalog)
+- **القرار:** وقت طلب المستخدم **لا يلمس النظام أي موقع خارجي أبدًا** — المطابقة من كتالوجنا حصريًا؛ الجلب بخط ingestion مستقل مجدول. (يرسّخ 6.22 بنيويًا.)
+- **البدائل المرفوضة:** وكلاء تصفح حي وقت الطلب (زمن غير مضبوط، هشاشة قانونية، حمل عدواني على المتاجر، واستحالة ضبط الجودة).
+
+### ADR-7.4 (ADR-036) · التجارة الوحدوية (مواد البناء) مواطن درجة أولى من اليوم الأول
+- **القرار:** نموذج المنتج يدعم أصلًا البيع بالوحدة (`m2`, `lm`, `liter`, `piece`, `roll`, `bag`) مع **حاسبات كميات من التوأم** (مساحة أرضية + هالك، مساحة جدران ÷ تغطية دهان...) — البلاط والرخام والدهانات والجبس مواطنون كاملون في نفس النموذج.
+- **البدائل المرفوضة:** نموذج أثاث-فقط يُرقَّع لاحقًا (الترقيع سيلمس كل schema وmatch engine — إعادة تصميم كاملة لطبقة التجارة، وهو بالضبط ما أراد قرار المؤسس تفاديه).
+
+## 7.1 Catalog Ingestion
+
+- **Purpose:** بناء الكتالوج وتحديثه بشكل قانوني مستدام قابل للتوسع لأي سوق.
+- **Inputs:** مصادر البيانات المصرح بها. **Outputs:** `CanonicalProduct`/`Offer` منشورة بإصدارات.
+
+### Connectors وData Sources (سجل تصريحي `config/commerce/sources/*.yaml`)
+
+```typescript
+interface SourceConnector {
+  source_id: string; merchant_id: string;
+  kind: "official_feed"|"partner_api"|"affiliate_feed"|"compliant_scraper"|"manual_upload";
+  legal_basis: {                       // ⭐ إلزامي — بوابة قانونية قبل التفعيل
+    classification: "written_agreement"|"published_affiliate_program"|"public_data_robots_compliant";
+    reviewed_by: string; reviewed_at: string;   // مراجعة قانونية موثقة بالاسم والتاريخ
+    tos_notes: string;
+  };
+  update_policy: { mode: "incremental"|"full_refresh"; cadence: string;    // cron
+                   price_ttl_hours: number; availability_ttl_hours: number };
+  rate_limits: { rps: number; concurrency: number; backoff: string };      // مهذبة دائمًا
+  enabled: boolean;
+}
+```
+
+**أولوية المصادر الملزمة:** `official_feed / partner_api` ← ثم `affiliate_feed` ← وأخيرًا `compliant_scraper` كجسر مؤقت فقط، بشرط البوابة القانونية. **(الضوابط الكاملة في 7.11 — Legal.)**
+
+### خط المعالجة (State Machine + Recovery وفق 1.10-3)
+
+```
+fetch → parse → normalize → dedupe/canonical-match → enrich → quality-score → publish
+```
+
+| المرحلة | المواصفة | Failure Recovery |
+|---------|-----------|-------------------|
+| fetch | حسب الـ connector؛ كل استجابة تُؤرشف خام (S3) للتدقيق وإعادة التشغيل | retry 3× backoff؛ فشل مستمر → circuit breaker للمصدر + **آخر نسخة سليمة تبقى منشورة** مع تقادم freshness معلن |
+| parse | إلى `RawOffer` موحد | صف فاسد يُعزل (quarantine) ولا يفشل الدفعة |
+| normalize | قواميس مُدارة: وحدات→متري، ألوان→نظامنا اللوني، خامات→enum، فئات المتجر→taxonomy الخاص بنا (`config/commerce/mappings/{source}.yaml`) | قيمة غير قابلة للتطبيع → حقل `unmapped` + طابور مراجعة، لا تخمين |
+| **dedupe / canonical-match** | مفاتيح حجب (brand+model+dims) → تشابه embeddings → عتبات: ≥ عالية دمج آلي، وسطى → **طابور مراجعة بشرية**، دونها منتج canonical جديد | قرار خاطئ قابل للفك (unmerge) — العلاقة offer↔canonical versioned |
+| enrich | توسيم LLM دفعات (نمط، لون فعلي من الصورة، خامة) + embedding نص+صورة | فشل إثراء ≠ حجب النشر — يُنشر بجودة أدنى معلنة |
+| quality-score | حساب `CatalogQuality` (7.5) | — |
+| publish | **نسخ منتج immutable** (`product_rev`) + بث أحداث (7.12) | النشر ذري لكل دفعة مصدر |
+
+- **Incremental updates:** لكل مصدر cursor (آخر تعديل/ETag)؛ الدلتا فقط تمر بالخط؛ full refresh دوري (config) يلتقط الحذوفات الصامتة.
+- **Versioning:** كل تغيير على canonical أو offer = revision جديد بسبب التغيير (price_change/spec_change/merge/unmerge) — قابل للتدقيق والتراجع (اتساقًا مع قانون 6.15 روحًا).
+
+## 7.2 Canonical Product Model (Schemas)
+
+```typescript
+interface CanonicalProduct {
+  canonical_id: string; schema_version: "1.0"; rev: number;
+  taxonomy: { category: string; item_type: string };      // taxonomy موحد يشمل مواد البناء
+  identity: { brand: string | null; model: string | null; gtin: string | null };
+  name_ar: string; name_en: string | null;
+  sold_by: "piece"|"m2"|"lm"|"liter"|"roll"|"bag"|"set";  // ⭐ ADR-036
+  dims_mm: { w: number; h: number; d: number } | null;     // للقطع
+  unit_spec: { coverage_m2_per_unit?: number;              // دهان: تغطية/لتر
+               tile_size_mm?: [number, number];            // بلاط
+               waste_factor_default?: number } | null;     // هالك افتراضي (config قابل للتجاوز)
+  attributes: { materials: string[]; colors: string[]; style_tags: string[];
+                finish?: string; usage_context?: ("wet_area"|"outdoor"|"high_traffic")[] };
+  installation: { required: boolean; kind?: "assembly"|"professional"|"plumbing"|"electrical";
+                  clearances_mm?: object; notes_ar?: string };
+  constraints: string[];                                    // "غير مناسب للمناطق الرطبة"...
+  media: { image_urls: string[]; primary: string };
+  embedding: number[];                                      // نص+صورة موحد
+  quality: CatalogQuality;                                  // 7.5
+}
+
+interface Offer {
+  offer_id: string; canonical_id: string; merchant_id: string; rev: number;
+  external_id: string; url: string;
+  price: { amount: number; currency: "SAR"; includes_vat: boolean; captured_at: string };
+  availability: AvailabilityInfo;                           // 7.8
+  merchant_media: string[];                                 // صور المتجر (قد تختلف عن canonical)
+  delivery: { days_estimate: number | null; cost: number | null; cities: string[] | "nationwide" };
+  warranty_months: number | null;
+  source_id: string; seen_at: string;
+}
+```
+
+## 7.3 Product Knowledge Graph
+
+```typescript
+interface ProductRelation {
+  from_canonical_id: string; to_canonical_id: string;
+  kind: "alternative"           // بديل مباشر (نفس الوظيفة والمقاس التقريبي)
+      | "complement"            // مكمل (طاولة ↔ كراسيها)
+      | "required_accessory"    // لا يعمل بدونه (خلاط ↔ سيفون)
+      | "same_series"           // نفس السلسلة/التشكيلة
+      | "style_match"           // توافق أسلوبي عابر للفئات
+      | "incompatible_with";    // قيد سلبي صريح
+  confidence: number;
+  source: "merchant_data"|"deterministic_rule"|"ml_inferred"|"manual_curation"|"user_behavior";
+  explanation_ar: string;       // P11 — حتى العلاقات مفسَّرة
+}
+```
+- البناء: قواعد حتمية (نفس السلسلة/الأبعاد المتوافقة) + استدلال ML (يُعلَّم مصدره وثقته) + سلوك المستخدمين (استُبدل معًا كثيرًا) + تنسيق يدوي للفئات الحرجة.
+- **قاعدة:** علاقة `ml_inferred` لا تُعرض كحقيقة — تُعرض "قد يناسبك" وتترقى بالتحقق.
+
+## 7.4 الـ Taxonomy الموحد (يشمل مواد البناء — قرار مؤسس)
+
+| مجموعة | فئات (مقتطف) | sold_by الغالب | الحاسبة من التوأم |
+|--------|----------------|-----------------|---------------------|
+| الأثاث | كنب، طاولات، أسرّة، خزائن... | piece | fit + clearances |
+| الإنارة | ثريات، downlights، أباجورات... | piece | LightingPlan counts |
+| **الأرضيات** | بلاط، رخام، باركيه، SPC | **m2** | مساحة الغرفة × (1 + هالك) |
+| **الدهانات** | داخلية، خارجية، إيبوكسي | **liter** | مساحة الجدران الصافية ÷ التغطية × عدد الأوجه |
+| **الجبس** | ألواح، كرانيش، عوازل | m2 / lm | مساحات الأسقف + محيطاتها |
+| الأبواب والشبابيك | داخلية، خارجية، ألمنيوم، خشب | piece | Openings من التوأم (المقاسات جاهزة) |
+| **الأدوات الصحية** | أطقم، خلاطات، مغاسل | piece/set | BathroomPlan |
+| التكييف | سبليت، مخفي، مركزي | piece | HVAC loads (BTU مطابق) |
+| المطبخ | خزائن modules، أسطح، أجهزة | piece/lm/m2 | KitchenPlan + ApplianceContract |
+| الخارجي | مظلات، عشب، أحجار واجهات | m2/piece | LandscapePlan |
+
+> **حاسبات الكميات معادلات مسجلة** (`COM-CALC-*`) في Rule Engine — الكمية في قائمة الشراء قابلة لإعادة الحساب من التوأم دائمًا (P11/C6).
+
+## 7.5 Catalog Quality (لكل منتج — قرار مؤسس)
+
+```typescript
+interface CatalogQuality {
+  completeness: number;   // 0..1 — مرجح بالحقول الحرجة للفئة (الأبعاد أثقل وزنًا للأثاث، التغطية للدهان)
+  confidence: number;     // موثوقية البيانات (مصدرها، تناسقها بين المتاجر)
+  freshness_days: number; // عمر آخر تحقق
+  verification: "unverified"|"auto_verified"|"manually_verified"|"merchant_confirmed";
+}
+```
+- **قواعد الاستخدام:** الـ Match Engine لا يرشّح `primary` إلا فوق عتبات جودة (config)؛ ما دونها → `needs_verification` (القاعدة المجمدة 6.22)؛ لوحات الجودة لكل فئة/متجر (7.13).
+
+## 7.6 Merchant Layer
+
+```typescript
+interface Merchant {
+  merchant_id: string; name_ar: string; name_en: string;
+  country: "SA"; status: "active"|"paused"|"delisted";
+  capabilities: {
+    delivery: { cities: string[] | "nationwide"; days_typical: [number, number]; cost_model: string };
+    installation: { available: boolean; categories: string[]; cost_model: string | null };
+    assembly: boolean;
+    returns: { days: number; conditions_ar: string; restocking_fee_pct: number | null };
+    warranty_default_months: number | null;
+  };
+  integration: { source_ids: string[]; relationship: "agreement"|"affiliate"|"public_data" };
+  reliability: { link_health_30d: number; price_accuracy_30d: number; data_quality_avg: number };
+}
+```
+- قدرات التاجر تدخل الـ Match Score (توصيل لمدينة المستخدم، تركيب متاح للفئات المحتاجة) وتُعرض للمستخدم بشفافية.
+
+## 7.7 Price Intelligence
+
+- **ليس السعر الحالي فقط:** لكل offer تاريخ كامل (`price_history` — موجود من الجيل الأول ويتوسع):
+
+```typescript
+interface PriceIntelligence {
+  offer_id: string;
+  current: { amount: number; captured_at: string };
+  last_change: { at: string; from: number; to: number; pct: number } | null;
+  trend_30d: "rising"|"falling"|"stable";
+  volatility_90d: "low"|"medium"|"high";
+  price_confidence: number;      // نفس معادلة 6.21 (نوع المصدر × تقادم)
+  vs_category_median: number;    // هذا العرض مقابل وسيط فئته (كشف المبالغة)
+}
+```
+- **استخدامات المنتج:** شارة "انخفض السعر منذ تصميمك" · تحذير سعر شاذ عن وسيط الفئة · تغذية Bayti Index المستقبلي (v4) — البنية جاهزة له من الآن.
+
+## 7.8 Availability Intelligence
+
+```typescript
+interface AvailabilityInfo {
+  status: "in_stock"|"out_of_stock"|"special_order"|"discontinued";
+  cities: string[] | "nationwide" | null;   // التوفر بمدينة المستخدم هو المعيار لا التوفر المطلق
+  lead_time_days: number | null;            // للطلب الخاص
+  checked_at: string; confidence: number;
+}
+```
+- **قواعد:** `special_order` يُعرض بمدته صراحة ولا يكون `primary` إلا برضا المستخدم؛ `discontinued` يطلق حدث استبدال تلقائي للمشاريع النشطة التي تعتمده (عبر 7.12).
+
+## 7.9 Match Engine (تنفيذ العقد المجمد 6.22 — لا تعديل عليه)
+
+- **المدخلات:** DesignItem spec (أو كمية مادة من `COM-CALC-*`) + HardConstraints + StyleVector + BudgetEnvelope/variant + مدينة المستخدم.
+- **الترتيب الملزم (من 6.22):** حارس المقاس الهندسي القاطع أولًا (fits + clearances؛ وللمواد: كفاية الكمية/التغطية) → Hard Constraints → الوظيفة → التوفر بالمدينة → الميزانية → الأسلوب (مسافة StyleVector مع style_tags) → التفضيلات.
+- **المخرجات:** `ShoppingCandidate` (schema 6.22 المجمد) بأدواره الأربعة، مع `score_breakdown` كامل وexplanation.
+- **خصوصية المواد:** المطابقة تشمل **usage_context** (بلاط منطقة رطبة يجب `wet_area`) — قيود حتمية من Rule Packs لا تفضيلات.
+
+## 7.10 Recommendation Engine
+
+| نوع التوصية | المصدر | مثال العرض |
+|--------------|--------|-------------|
+| بدائل | relations(alternative) + match re-score | "بديل أوفر بنفس المقاس — توفير 840 ريال" |
+| مكملات | relations(complement/required_accessory) | "هذا الخلاط يحتاج سيفون متوافقًا — أُضيف تلقائيًا؟" |
+| باقات | تنسيق يدوي + same_series | "طقم الحمام كاملًا من نفس التشكيلة −12%" |
+| نفس الأسلوب | style_match + embeddings | "قِطَع تكمل أسلوب مجلسك" |
+- **قواعد:** كل توصية مفسَّرة (P11) ومقيدة بالـ variant الحالي وبالميزانية المتبقية للغرفة؛ `required_accessory` ليست توصية بل **فحص اكتمال** (نقصه يظهر في Health).
+
+## 7.11 Legal & Compliance (قرار مؤسس — صياغة ملزمة)
+
+1. **احترام شروط استخدام المتاجر** بلا استثناء — كل connector له `legal_basis` بمراجعة قانونية موثقة بالاسم والتاريخ **قبل** التفعيل.
+2. **لا تحايل على CAPTCHA أو أنظمة الحماية أو تسجيلات دخول** بأي شكل وتحت أي ذريعة — **ولا توجد ولن توجد في هذه المنصة أي آلية تعتمد على كسر حماية المواقع أو تجاوز سياساتها.**
+3. **احترام robots.txt والقيود القانونية** — `compliant_scraper` يقرأ robots آليًا ويلتزم به حرفيًا، بمعدلات مهذبة (rate limits في الـ config)، ويُعطَّل تلقائيًا عند أي إشارة منع.
+4. **الاستدامة قبل التغطية:** متجر بلا مسار قانوني = خارج الكتالوج حتى اتفاق — نقبل فجوة تغطية ولا نقبل هشاشة قانونية.
+5. مسار **takedown** موثق: أي متجر يطلب إزالة بياناته تُنفَّذ خلال 72 ساعة مع سجل.
+6. الأسعار تُعرض بمصدرها وتاريخها دائمًا؛ لا تعديل على أسعار المتاجر أو تمثيل مضلل لها؛ الإحالات (affiliate) يُفصح عنها للمستخدم.
+7. صور المتاجر تُستخدم في سياق العرض والإحالة وفق شروط كل برنامج — والمراجعة القانونية تشمل حقوق الوسائط.
+
+## 7.12 Event Model
+
+`commerce.product.updated` · `commerce.price.changed` (بفارق ونسبة) · `commerce.availability.changed` · `commerce.offer.link_dead` · `commerce.product.discontinued` · `commerce.source.sync_completed` (بإحصاءات) · `commerce.match.gap_detected` — كلها بنمط `CouncilEvent` نفسه (sequence_number لكل stream — ADR-023). **مستهلك رئيسي:** المشاريع النشطة (تغير سعر/توفر عنصر معتمد → تحديث حالة البند + إشعار مهذب للمستخدم).
+
+## 7.13 Observability (Metrics إلزامية)
+
+تغطية الفئات (منتجات صالحة/فئة/مدينة) · Freshness histogram لكل مصدر · نسبة الروابط الميتة (هدف <2%، إنذار >5%) · دقة الأسعار العيّنية الأسبوعية (فحص يدوي n=100) · نسبة `needs_verification` · معدل نجاح canonical-match الآلي · عمق طابور المراجعة البشرية · زمن ingestion end-to-end لكل مصدر · **match rate لكل فئة** (نسبة عناصر التصميم التي وجدت primary) — الأخير هو مقياس نجاح المنصة كلها (بوابة G4).
+
+## 7.14 Security
+
+عزل خط الـ ingestion (لا وصول لبيانات المستخدمين إطلاقًا — شبكة منفصلة) · أوصاف المنتجات **بيانات غير موثوقة** (تعقيم قبل أي prompt — امتداد 6.26) · حماية SSRF في الـ fetchers (قائمة نطاقات بيضاء لكل connector) · توقيع طلبات الـ Commerce APIs الداخلية · حصص B2B API بمفاتيح ومحاسبة (عند فتحها) · سلامة سلسلة التوريد للقواميس والـ mappings (مراجعة PR إلزامية).
+
+## 7.15 Commerce APIs (العقود الرسمية — refine لوثيقة الجيل الأول)
+
+```
+GET  /api/v1/catalog/search?q=&category=&city=&filters=      بحث هجين (نص+متجه+فلاتر)
+GET  /api/v1/catalog/products/{canonical_id}                 المنتج الموحد + جودته
+GET  /api/v1/catalog/products/{canonical_id}/offers?city=    كل العروض مرتبة
+GET  /api/v1/catalog/products/{canonical_id}/related?kind=   الـ Knowledge Graph
+GET  /api/v1/catalog/products/{canonical_id}/price-history
+POST /api/v1/internal/match                                  (داخلي) Match Engine — عقد 6.22
+GET  /api/v1/projects/{id}/shopping?variant=&room=           كما في الجيل الأول + score_breakdown
+POST /api/v1/projects/{id}/shopping/{candidate_id}/action    accept|choose_alt|remove|request_verification
+WH   commerce.* webhooks                                      (B2B لاحقًا — HMAC، retries)
+```
+- كل الاستجابات تحمل `catalog_rev` وfreshness — العميل يعرف دائمًا عمر ما يراه.
+
+## 7.16 سيناريوهات الاختبار (معيار 6.16)
+
+| Normal | Edge | Failure | Recovery | Regression |
+|--------|------|---------|----------|-------------|
+| مزامنة feed رسمي 50k منتج → نشر ذري وأحداث صحيحة | منتج واحد بـ 5 عروض بأسعار متضاربة وصور مختلفة → canonical واحد وترتيب سليم | مصدر يعيد HTML فارغًا (تغيير بنية الموقع) → quarantine + آخر نسخة سليمة تبقى + إنذار | استئناف المزامنة من cursor بعد إصلاح الـ connector دون فقد أو تكرار | إعادة تشغيل dedupe بنسخة خوارزمية جديدة على أرشيف خام لا تكسر canonical_ids المنشورة |
+| مطابقة كنبة 220سم لمجلس فيلا النرجس | **دهان: غرفة 4×5×3م بفتحاتها → كمية لترات صحيحة بمعادلة COM-CALC** | كل عروض عنصر انتهت (discontinued) → match_gap + بدائل + إشعار مشروع | فك دمج canonical خاطئ (unmerge) دون كسر مشاريع تعتمد عليه | match rate على Golden Set التجاري (عينة عناصر مرجعية) لا ينخفض بين الإصدارات |
+
+## 7.17 Acceptance Criteria (بوابة اعتماد القسم)
+
+| # | المعيار | العتبة |
+|---|---------|--------|
+| AC7-1 | كل connector مفعّل له `legal_basis` بمراجعة موثقة | 100% — فحص CI على الـ config |
+| AC7-2 | صفر تكرار canonical لنفس المنتج الفعلي في العينة المدققة | ≥ 98% دقة dedupe (عينة يدوية شهرية) |
+| AC7-3 | match rate للأثاث والإنارة (primary صالح) | ≥ 80% (بوابة G4) |
+| AC7-4 | مواد البناء: كمية محسوبة قابلة لإعادة الاشتقاق من التوأم | 100% عبر COM-CALC-* |
+| AC7-5 | روابط صالحة عند العرض | ≥ 95% يوميًا، ≥ 98% لحظة النشر |
+| AC7-6 | منتج دون عتبة الجودة لا يظهر primary أبدًا | 100% بنيويًا |
+| AC7-7 | زمن بحث الكتالوج P95 | ≤ 500ms |
+| AC7-8 | حدث تغير سعر/توفر يصل للمشاريع النشطة | ≤ 15 دقيقة من الرصد |
+| AC7-9 | كل توصية ولها explanation وscore_breakdown | 100% |
+| AC7-10 | صفر آليات تتجاوز حماية المواقع في الكود كله | مراجعة أمنية + بند إلزامي في كل PR review للـ connectors |
+
+---
+
+*(القسم 7 جاهز للمراجعة — التالي بعد اعتماده: القسم 8 المخرجات، وفق ترتيب ENGINEERING_BOOTSTRAP)*

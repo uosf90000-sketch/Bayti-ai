@@ -5,7 +5,7 @@
 | **المنتج** | Bayti AI — منصة تحويل مخططات المنازل إلى تصاميم تنفيذية مُسعَّرة |
 | **الإصدار** | v2.0 — يُبنى قسمًا بقسم باعتماد المؤسس |
 | **المالك** | CTO |
-| **الحالة** | 🟡 قيد الكتابة — القسم 6 (الدفعة 2/4) جاهز للمراجعة |
+| **الحالة** | 🟡 قيد الكتابة — القسم 6 (الدفعة 3/4) جاهز للمراجعة |
 | **آخر تحديث** | 2026-07-14 |
 
 ---
@@ -19,7 +19,7 @@
 | 3 | رحلة المستخدم التفصيلية (شاشة بشاشة — UX) | ✅ **معتمد** |
 | 4 | المواصفة الهندسية: رفع المخطط وتحليله وتحويله إلى Digital Twin | ✅ **معتمد (مع إضافات المؤسس 4.16–4.24)** |
 | 5 | المواصفة الهندسية: الاستبيان، الذوق، والقيود (Intake & Style) | ✅ **معتمد** |
-| 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام — 4 دفعات) | 🔍 **1/4 ✅ معتمدة · 2/4 جاهزة للمراجعة** |
+| 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام — 4 دفعات) | 🔍 **1/4 ✅ · 2/4 ✅ · 3/4 جاهزة للمراجعة** |
 | 7 | المتطلبات الوظيفية: التسوق، النسخ الثلاث، والتكلفة | ⬜ |
 | 8 | المتطلبات الوظيفية: المخرجات (صور، فيديو، 3D، PDF) | ⬜ |
 | 9 | المتطلبات الوظيفية: التعديل بالمحادثة | ⬜ |
@@ -1451,8 +1451,8 @@ interface UnresolvedQuestion {
 > **خطة التسليم على دفعات (قرار مؤسس):**
 > **الدفعة 1/4 (هذه):** 6.1 الدستور · 6.2 عقود الوكلاء الأحد عشر · 6.3 AgentContract · 6.4 Proposal Model · 6.5 DecisionExplanation
 > **الدفعة 2/4:** 6.6 DAG والتبعيات · 6.7 Orchestrator · 6.8 محرك القواعد · 6.9 الإنارة · 6.10 الكهرباء
-> **الدفعة 3/4:** 6.11 المطبخ · 6.12 الحمامات · 6.13 ConflictResolver · 6.14 Merge Engine
-> **الدفعة 4/4:** 6.15 النسخ الثلاث · 6.16 Cost Engineer · 6.17 Shopping Agent · 6.18 Human Review · 6.19 الجودة والتقييم · 6.20 المراقبة · 6.21 الأمن · 6.22 الكيانات النهائية · 6.23 معايير القبول + أمثلة E2E
+> **الدفعة 3/4:** 6.11 المطبخ · 6.12 الحمامات · 6.13 ConflictResolver · 6.14 Merge Engine · 6.15 قانون تغييرات التوأم · 6.16 معيار سيناريوهات الاختبار · 6.17 Simulation Layer · 6.18 Twin Health · 6.19 مثال End-to-End
+> **الدفعة 4/4:** 6.20 النسخ الثلاث · 6.21 Cost Engineer · 6.22 Shopping Agent · 6.23 Human Review · 6.24 الجودة والتقييم · 6.25 المراقبة · 6.26 الأمن · 6.27 الكيانات النهائية · 6.28 معايير قبول القسم
 
 ## 6.1 المبادئ الحاكمة للمجلس (Council Constitution — C1…C10)
 
@@ -2248,6 +2248,302 @@ interface SwitchGroup { group_id: string; controls: string[];  // LightingCircui
 - **Failure Cases:** نقطة تكسر SAF-ELE → رفض حتمي لا نقاش؛ served_item حُذف لاحقًا → النقطة تُعلَّم يتيمة وتدخل جولة EF الانتقائية.
 - **Acceptance Criteria:** صفر نقاط بلا غرض/عنصر؛ صفر خروقات SAF-ELE؛ كل مفتاح مرتبط بدائرته وموقعه مبرر؛ فصل rough-in/final نظيف 100% (لا نقطة final في جدار لم يعد موجودًا في rough-in).
 
+## 6.11 مواصفة المطبخ التفصيلية (قابل للتنفيذ لا جميل فقط)
+
+- **Purpose:** مطبخ يُركَّب في الواقع بالملليمتر — كل خزانة وجهاز له أبعاد ومتطلبات تركيب مثبتة قبل اقتراحه.
+- **Inputs:** Twin(المطبخ) + kitchen_requirements السياقية + HouseholdProfile + الميزانية + StyleVector.
+- **Outputs:** `KitchenPlan` (تخطيط modules + أجهزة + أسطح + متطلبات موجهة لـ ELE/LGT/سباكة).
+
+### 1) Cabinet Library (مكتبة الخزائن — بيانات مُدارة `config/kitchen/cabinet_library.yaml`)
+
+```typescript
+interface CabinetModule {
+  module_id: string;                   // "base_drawer_600"
+  kind: "base"|"base_sink"|"base_corner"|"wall"|"wall_corner"|"tall_pantry"|"tall_oven_housing"|"island_unit";
+  width_mm: number;                    // من الزيادات القياسية: 150/300/450/600/900/1200
+  height_mm: number; depth_mm: number;
+  opening_clearance_mm: number;        // العمق المطلوب أمام الوحدة لفتحها كاملة (درج/باب)
+  installation_tolerance_mm: number;   // سماحية التركيب (فراغات التسوية والحشوات)
+  door_swing: "left"|"right"|"lift_up"|"drawers"|"none";
+  internal_use: string[];              // "cutlery"|"pots"|"waste_bins"|"appliance_garage"...
+}
+```
+- **قاعدة KIT-001:** التخطيط يُبنى **حصريًا** من وحدات المكتبة + حشوات (fillers) — لا مقاسات مخترعة؛ مجموع العروض + الحشوات = طول الجدار الفعلي ± tolerance.
+
+### 2) Appliance Catalog Contract (عقد كتالوج الأجهزة)
+
+```typescript
+interface ApplianceContract {
+  appliance_id: string;
+  kind: "refrigerator"|"hob"|"oven"|"microwave"|"hood"|"dishwasher"|"washer"|"dryer"|"freezer";
+  dims_mm: { w: number; h: number; d: number };
+  ventilation: { required: boolean; kind?: "duct"|"recirculation"; min_duct_mm?: number; clearance_top_mm?: number };
+  electrical: { point_kind: string; height_mm: number; dedicated_circuit: boolean };
+  plumbing: { water: boolean; drain: boolean; max_distance_mm?: number };
+  service_clearance_mm: { front: number; sides: number; top: number };
+  door_swing: { kind: "front"|"side_left"|"side_right"|"drawer"|"none"; envelope_polygon_mm: Vec2[] };  // مغلف الفتح الكامل
+}
+```
+- **قاعدة KIT-002 (قرار مؤسس):** **لا يُقترح أي جهاز قبل تثبيت أبعاده ومتطلبات تركيبه** — جهاز بلا `ApplianceContract` كامل لا يدخل أي proposal (يُستخدم "dimension set" قياسي للفئة إلى حين مطابقة Shopping بمنتج له عقد فعلي).
+
+### 3) Workflow Simulation (محاكاة سير العمل — بوابة رفض)
+
+تُنفَّذ عبر طبقة المحاكاة العامة (6.17) بفحوصات مطبخية إلزامية:
+
+| فحص | يرفض التصميم إذا |
+|------|--------------------|
+| KIT-SIM-01 | بابا وحدتين/جهازين يتصادمان (تقاطع envelopes) |
+| KIT-SIM-02 | درج لا يفتح كاملًا (عائق داخل opening_clearance) |
+| KIT-SIM-03 | باب الثلاجة لا يفتح ≥ الزاوية المطلوبة لسحب الأدراج الداخلية (من عقد الجهاز) |
+| KIT-SIM-04 | باب غسالة الصحون المفتوح يسد ممر العمل الوحيد (عرض متبقٍ < حد config) |
+| KIT-SIM-05 | مسار المستخدم (مغسلة↔موقد↔ثلاجة) يقطعه envelope مفتوح دائم |
+
+### 4) مناطق العمل ودعم عدة مستخدمين (لا اعتماد حصريًا على المثلث التقليدي)
+
+- **النموذج المعتمد: Work Zones الخمس** (تخزين مواد، تخزين أدوات، تنظيف، تحضير، طهي) مع **المثلث كفحص توافق إضافي** حيث ينطبق (KIT-010: أضلاعه 1.2–2.7م، مجموعه ≤ 6.5م، لا يقطعه ممر رئيسي).
+- **أوضاع الاستخدام (من HouseholdProfile):**
+
+| الوضع | ممر العمل الأدنى | متطلبات إضافية |
+|-------|-------------------|------------------|
+| مستخدم واحد | 1000مم | — |
+| مستخدمان متزامنان | 1200مم | فصل zone التحضير عن التنظيف بحيث لا يتقاطع مساراهما إجباريًا |
+| عائلة (3+/أطفال) | 1200مم + | موقد خارج الممر العابر؛ منطقة فطور/تقديم منفصلة إن اتسعت المساحة؛ أدراج الأطفال الآمنة بعيدًا عن الموقد (SAF-CHD) |
+
+- **اليد المهيمنة:** إن صرّح المستخدم بها وأثّرت (اتجاه فتح فرن/مجلى زاوية) تُطبَّق KIT-020 (تفضيل adjustable_preference).
+- **Failure Cases:** مطبخ أصغر من الحد الأدنى الوظيفي (config) → تناقض CNT لا تصميم مضغوط رديء؛ جدار خدمات مجهول وstage=قائم → `requires_site_review` لمواقع الماء.
+- **Acceptance Criteria:** 100% وحدات من المكتبة؛ صفر فشل KIT-SIM-*؛ مجموع عروض دقيق؛ كل جهاز بعقد كامل.
+
+## 6.12 مواصفة الحمامات التفصيلية
+
+### نموذج المناطق الثلاثي (قرار مؤسس — يتوافق مع SAF-ELE-001)
+
+| المنطقة | التعريف الهندسي | الكهرباء المسموحة |
+|---------|-------------------|---------------------|
+| **Wet Zone** | داخل الدش/فوق حوض الاستحمام + 0.6م أفقيًا وحتى 2.25م ارتفاعًا | **لا شيء إطلاقًا** (منطقة محظورة) |
+| **Splash Zone** | 0.6م إضافية حول الـ Wet + محيط المغسلة 0.6م | IP44+ فقط، دوائر محمية |
+| **Dry Zone** | الباقي | نقاط عادية بارتفاعات ELE-010 |
+
+- المناطق تُشتق **حتميًا** من مواقع الأطقم وتُخزَّن كمضلعات في الـ Twin — **قاعدة صلبة: أي `ElectricalPoint` داخل منطقة محظورة يُرفض بنيويًا في C3 (SAF-ELE-001) — لا استثناءات ولا override بشري.**
+
+### خلوص العناصر الثلاثي (لكل طقم صحي)
+
+```typescript
+interface FixtureClearance {
+  fixture_id: string;
+  kind: "wc"|"basin"|"shower"|"bathtub"|"bidet";
+  service_clearance_mm:     { front: number; sides: number };   // الاستخدام الطبيعي
+  cleaning_clearance_mm:    { front: number; sides: number };   // الوصول للتنظيف حول العنصر
+  maintenance_clearance_mm: { access_panel: boolean; notes_ar: string };  // وصول السباكة (سيفون/محابس/سخان)
+}
+```
+- **BTH-001:** لا يُقبل وضع عنصر تفشل خلوصاته الثلاثة؛ **BTH-002:** كل محبس/سخان/مضخة له مسار وصول صيانة موثق أو يُعلَّم `requires_site_review`.
+
+### Accessibility Variant (نسخة كبار السن/الوصول — حزمة `accessibility` overlay)
+
+تفعيلها تلقائي من HouseholdProfile، وتستبدل عتبات القواعد لا القواعد نفسها:
+| البند | القياسي | Accessibility |
+|-------|----------|----------------|
+| فتح الباب | للداخل مقبول | **للخارج إلزامي** (ACC-BTH-01: إنقاذ ساقط خلف الباب) |
+| دائرة دوران | — | ≥ 1500مم قطرًا (كرسي متحرك) |
+| الدش | عتبة ≤ 20مم | **بلا عتبة (roll-in)** + مقعد + مقابض |
+| مقابض | — | عند WC والدش بارتفاعات ACC-TBL-01 |
+| المغسلة | خزانة تحتها | فراغ ركبتين + ارتفاع مخفض |
+| الأرضية | مقاومة انزلاق R10 | R11+ (SAF) |
+
+### التصريف (بتصنيف الصدق الثلاثي)
+
+- `drainage_suggestion` لكل حمام: موقع صرف الأرضية، ميول 1–2% نحوه، عتبة دش، مناطق عزل (أرضية كاملة + جدران wet حتى 1.8م) — **كل بند مصنف:** `design_proposal` (قابل للتنفيذ مباشرة في stage=عظم) / `requires_site_review` (قائم — مواقع الصرف الموجودة تحكم) / `not_inferable_from_plan` (يُصرَّح به ولا يُخمَّن).
+- **Failure Cases:** حمام بلا أي منفذ صرف معلوم وstage=قائم → كل خطة الصرف `requires_site_review` + سؤال المستخدم عن الموجود بصورة.
+- **Acceptance Criteria:** صفر نقاط كهرباء في مناطق محظورة (فحص هندسي آلي)؛ 100% أطقم بخلوص ثلاثي ناجح؛ تفعيل Accessibility تلقائي عند وجود احتياج مصرح.
+
+## 6.13 حل التعارضات (ConflictResolver — رسمي)
+
+### Conflict Taxonomy (Schema معتمد)
+
+```typescript
+interface Conflict {
+  conflict_id: string;                 // ULID
+  category: "geometric"|"spatial"|"functional"|"aesthetic"|"financial"|"safety"
+           |"maintenance"|"inter_agent"|"user_request"|"tier_variance";
+  severity: "critical"|"major"|"minor";
+  participants: { proposal_ids: string[]; agent_ids: string[]; entity_ids: string[] };
+  detected_by: "rule_engine"|"simulation"|"merge_precheck"|"agent_self_report"|"semantic_validation";
+  rule_ids: string[];
+  impact: { rooms: string[]; budget_delta: MoneyRange | null; safety_related: boolean; blocks_merge: boolean };
+  proposed_resolution: ConflictResolution | null;
+  human_review_required: boolean;
+  auto_resolvable: boolean;
+  explanation: DecisionExplanation;
+  score: number;                       // أدناه
+  status: "open"|"auto_resolved"|"user_resolved"|"deferred"|"escalated";
+}
+interface ConflictResolution {
+  strategy: "priority_override"|"relocate"|"resize"|"substitute"|"split_decision"|"ask_user";
+  winning_proposal_id: string | null;
+  losing_proposal_ids: string[];       // تتحول superseded مع سبب
+  changes: ChangeSet | null;           // 6.14
+  rationale_ar: string;
+}
+```
+
+### Conflict Score (ترتيب حتمي لطابور الحسم)
+
+```
+score = W_cat × S_sev × (1 + 0.2 × affected_rooms) × (2.0 إذا safety_related) × (1.5 إذا blocks_merge)
+W_cat: safety=10, geometric=8, functional=6, financial=5, maintenance=4, inter_agent=4, aesthetic=2, tier_variance=2, user_request=7, spatial=8
+S_sev: critical=3, major=2, minor=1
+```
+الأوزان في `config/conflict_scoring.yaml` — التعارضات تُحسم بترتيب score تنازليًا (حسم الأخطر أولًا يحل تلقائيًا كثيرًا من الأدنى).
+
+### ترتيب الأولوية الإلزامي عند الحسم (قرار مؤسس — لا يُعدَّل إلا بقراره)
+
+`1. السلامة والقواعد الرسمية → 2. قابلية التنفيذ → 3. Hard Constraints للمستخدم → 4. الوظيفة وسهولة الاستخدام → 5. الميزانية → 6. الصيانة → 7. الجمال → 8. تفضيلات Soft`
+
+### بروتوكول عدم الحسم (إلزامي)
+
+عند تعادل/تعذر الحسم الآلي أو كون القرار جوهريًا (يغير طابع غرفة اجتماعية أو > عتبة مالية config): **لا اختيار صامت** — يُعرض على المستخدم: الخيارات + أثر كل خيار (تكلفة/وظيفة/جمال) + توصية معللة، والقرار يُسجَّل (P14) ويدخل ProjectMemory (P15).
+
+## 6.14 محرك الدمج (Merge Engine)
+
+### خط الدمج (Pipeline الرسمي)
+
+```
+Accepted Proposals (rule_checked)
+ ─► [1] Pre-merge validation      (schema + مراجع كيانات صحيحة + twin_version مطابق)
+ ─► [2] Dependency check          (كل proposal تعتمداته merged/مقبولة)
+ ─► [3] Conflict detection        (زوجي على مجموعة الدمج + ضد التوأم الحالي)
+ ─► [4] Conflict resolution       (6.13 — أو إيقاف للمستخدم)
+ ─► [5] Transactional merge       (الكل أو لا شيء — على نسخة عمل معزولة)
+ ─► [6] Semantic validation ⭐    (أدناه — على التوأم المدموج كاملًا)
+ ─► [7] Freeze immutable version  (twin rev N+1) + TwinDiff + audit event
+ ─► [8] Health recalculation      (6.18) + downstream invalidation (مصفوفة 6.6)
+ فشل أي خطوة 5–6 ─► rollback كامل للـ snapshot + تقرير أسباب — لا دمج جزئي أبدًا
+```
+
+### Semantic Validation (قرار مؤسس — ليست Schema Validation)
+
+> الـ JSON قد يكون صحيحًا 100% والكنبة داخل قوس الباب. الفحص الدلالي يعيد تقييم **التوأم المدموج كاملًا** هندسيًا ووظيفيًا:
+
+| فئة | أمثلة الفحوص |
+|-----|---------------|
+| Geometric invariants | لا تداخل أجسام صلبة؛ كل عنصر داخل غرفته؛ لا عنصر داخل clearance_polygon فتحة |
+| Cross-domain | وحدة إنارة تتقاطع مع دكت HVAC؛ نقطة كهرباء دخلت منطقة رطبة بعد تحريك مغسلة |
+| Referential | كل served_item_id موجود فعلًا؛ لا TaskLightingDependency يتيمة |
+| Completeness | كل غرفة نطاق لها الحد الأدنى (إنارة ambient، نقاط كهرباء دنيا، أرضية) |
+| Accounting | مجموع cost_lines = المجاميع المعروضة بت-بت |
+
+### الكيانات (Schemas)
+
+```typescript
+interface MergeTransaction {
+  merge_id: string; correlation_id: string;
+  base_twin_version: string; result_twin_version: string | null;
+  proposal_ids: string[]; conflicts_resolved: string[];
+  change_set: ChangeSet; diff: TwinDiff;
+  rollback_snapshot_ref: string;       // S3 pointer — يُحتفظ به وفق سياسة الاحتفاظ
+  semantic_report_ref: string;
+  rule_pack_versions: Record<string, string>;
+  status: "committed"|"rolled_back"; committed_at: string | null;
+}
+interface ChangeSet {                  // لكل عملية داخل الدمج
+  ops: { op: "create"|"update"|"replace"|"remove"; entity_type: string;
+         entity_id: string; before: object | null; after: object | null;
+         source_proposal_id: string }[];
+}
+interface TwinDiff {                   // قبل/بعد — للمستخدم وللتدقيق
+  summary_ar: string;                  // "أُضيفت 34 قطعة أثاث و46 نقطة إنارة للمجلس والمعيشة"
+  by_room: { room_id: string; added: number; updated: number; removed: number;
+             cost_delta: MoneyRange }[];
+  visual_diff_ref: string | null;      // طبقة مقارنة قابلة للرسم فوق المخطط
+}
+```
+
+### ADR-6.6 · دمج ذري بحارس دلالي (Transactional Merge + Semantic Gate)
+- **القرار:** الدمج معاملة كاملة على نسخة عمل معزولة، والتجميد **بعد** الفحص الدلالي للتوأم كاملًا — فشل = rollback كامل.
+- **البدائل المرفوضة:** تطبيق المقترحات تدريجيًا على التوأم الحي (يترك التوأم في حالات وسيطة غير متسقة يقرؤها الرندر/الواجهة)؛ الاكتفاء بفحص كل proposal منفردًا (التعارضات الناشئة **بين** المقترحات المقبولة لا تُرى إلا على النتيجة المجمعة).
+
+## 6.15 قانون تغييرات الـ Digital Twin (دستوري — قرار مؤسس)
+
+**كل تغيير في الـ Digital Twin يجب أن يكون:**
+
+| الخاصية | آلية الفرض |
+|----------|-------------|
+| **Atomic** | لا كتابة إلا عبر MergeTransaction (الكل أو لا شيء) |
+| **Immutable** | النسخ مجمدة للأبد — التغيير = نسخة جديدة، لا تعديل بالمكان |
+| **Traceable** | كل تغيير ينسب إلى: proposal → run → agent+versions → مسبب بشري/آلي (سلسلة كاملة في Audit) |
+| **Replayable** | `base_version + ChangeSet = result_version` قابلة لإعادة التنفيذ بت-بت (اختبار CI دائم) |
+| **Reversible** | أي نسخة قابلة للاستعادة عبر نسخة جديدة منها (P7) — لا استثناء |
+
+- **ADR-6.7:** هذا القانون فوق كل مكوّن — أي مسار كتابة مستقبلي (استيراد، ترحيل، إصلاح بيانات) يمر بنفس البوابة. **البديل المرفوض:** مسارات كتابة "إدارية" خاصة تتجاوز الدمج (هي الطريق الكلاسيكي لتوائم فاسدة غير قابلة للتدقيق).
+
+## 6.16 معيار سيناريوهات الاختبار (يضاف إلى معايير 1.10)
+
+**كل قسم هندسي يعرّف خمسة سيناريوهات إلزامية:** `Normal · Edge · Failure · Recovery · Regression`. تطبيقه على أقسام هذه الدفعة:
+
+| القسم | Normal | Edge | Failure | Recovery | Regression |
+|-------|--------|------|---------|----------|-------------|
+| Kitchen | مطبخ 12م² قياسي بجدار خدمات معلوم | مطبخ ضيق 6م² بباب وشباكين | ثلاجة مطلوبة لا تدخل بأي ترتيب | UnresolvedQuestion → المستخدم يقبل موديل أصغر → إعادة KIT فقط | مكتبة خزائن جديدة لا تكسر تصاميم الـ Golden Set |
+| Bathroom | حمام رئيسي 5م² stage=عظم | حمام ضيوف 1.8م² | نقطة كهرباء مقترحة داخل splash بعد تحريك مغسلة | semantic validation يمسكها → إعادة EF للحمام فقط | تحديث حزمة accessibility لا يغيّر الحمامات القياسية |
+| ConflictResolver | تعارض أثاث/ممر يُحسم آليًا بالأولوية | 3 تعارضات متشابكة بنفس الغرفة | تعادل جوهري بمجلس | عرض الخيارات → قرار مستخدم → استئناف الدمج | أوزان score جديدة تجتاز حالات الحسم المؤرشفة |
+| Merge | دمج جولة كاملة 9 وكلاء | دمج تعديل غرفة واحدة أثناء جولة أخرى قائمة (تسلسل بالأحداث) | semantic failure (كنبة في قوس باب) | rollback كامل → تصحيح FUR → دمج ناجح | replay كل MergeTransactions التاريخية يعطي نفس النسخ بت-بت |
+
+## 6.17 طبقة المحاكاة (Simulation Layer — بوابة اعتماد)
+
+- **Purpose:** قبل اعتماد أي تصميم، محاكاة حتمية للاستخدام الفعلي — **أي تعارض يمنع الاعتماد.**
+- **النطاق (v1 — هندسة 2D swept-volumes، ليست فيزياء):**
+
+| فحص | الطريقة |
+|------|----------|
+| فتح الأبواب/الشبابيك | تقاطع أقواس/envelopes مع كل الأجسام |
+| حركة الأشخاص | شبكة ممرات (clearance graph) بعرض أدنى config لكل zone — كل غرفة يجب أن تبقى موصولة |
+| حركة الكراسي | envelope سحب الكرسي خلف الطاولات/المكاتب (عمق config) |
+| فتح الأدراج/الخزائن | opening_clearance من المكتبة |
+| الثلاجة/غسالة الصحون | envelopes عقود الأجهزة (KIT-SIM-03/04) |
+| الوصول للأجهزة والصيانة | مسار من ممر رئيسي إلى كل جهاز/access panel |
+
+- **Outputs:** `SimulationReport { checks[], failures[] → تتحول Conflicts (detected_by: "simulation") }` — يعمل ضمن خطوة 6 من الدمج وعند كل تعديل انتقائي على نطاق التعديل فقط.
+- **حدود مصرح بها:** v1 ثنائية الأبعاد بارتفاعات مقطعية (لا تصادم ثلاثي كامل) — يكفي لكل حالات الفتح والحركة المعرفة؛ الترقية لـ 3D كاملة عند الحاجة (ملحق A).
+
+## 6.18 صحة التوأم (Twin Health Score)
+
+يُحسب **بعد كل Merge** (خطوة 8) حتميًا:
+
+| المكوّن | المعادلة (0–100) |
+|---------|-------------------|
+| Geometry Health | 100 − عقوبات (تداخلات/عناصر يتيمة/كسور topology) — يجب 100 للنشر |
+| Rule Health | `100 × hard_passed/hard_total − 2 × warnings` (بحد أدنى 0) |
+| Conflict Health | `100 − 25×open_critical − 10×open_major − 3×open_minor` |
+| Cost Health | ضمن الميزانية 100؛ فوقها بتدرج (كل +5% تجاوز = −10) |
+| Lighting Health | نسبة الغرف المحققة lux الهدف ±10% |
+| Electrical Health | نسبة النقاط المخدومة الصالحة + صفر خروقات SAF (وإلا 0) |
+| Shopping Health | نسبة العناصر بمطابقة primary صالحة السعر |
+
+```
+TwinHealthScore = min(Geometry, Rule_hard_gate) قاطعة أولًا:
+  إن كان Geometry < 100 أو hard_passed < 100% → Score = "غير قابل للنشر" (بغض النظر عن البقية)
+  وإلا: Score = 0.2×Rule + 0.2×Conflict + 0.15×Cost + 0.15×Lighting + 0.15×Electrical + 0.15×Shopping
+```
+النتيجة تغذي ProjectHealth (P13) وتُعرض للمستخدم بلغة بسيطة (سليم/يحتاج مراجعة: السبب).
+
+## 6.19 مثال End-to-End معتمد (المرجع لكل الأقسام): "فيلا حي النرجس"
+
+**المدخل:** فيلا دورين 380م²، PDF ممسوح (مخطط المطور)، الرياض، ميزانية 280,000 ريال، أسرة: زوجان + 3 أطفال (2–9 سنوات) + جدة (صعوبة حركة)، ضيافة أسبوعية منفصلة، نمط New Classic للمجالس وModern للباقي.
+
+| # | المرحلة | ما يحدث (بأرقام المثال) |
+|---|---------|--------------------------|
+| 1 | الرفع والتحليل (§4) | Quality Gate: pass · مسار Raster · 78s · اكتُشفت 14 غرفة/دور، ثقة إجمالية 0.87، غرفتان ⚠ (غرفة بلا اسم 0.71، باب مفقود 0.58) |
+| 2 | المراجعة (S5) | المستخدم يسمي "مقلط"، يرسم الباب المفقود، يؤكد طول الواجهة 18م → scale=user_confirmed → twin rev2 ثقة 0.96 · تأكيد ارتفاع 3.2م أرضي/3م علوي |
+| 3 | الاستبيان (§5) | Accessibility (جدة) → حزمة ACC تلقائيًا · child-safety تلقائيًا · CNT-01 يُفحص: 280k لنطاق كامل بنمطين = ممكن ضمن "متوازن" ✓ لا تناقض |
+| 4 | المجلس L0–L1 | architect: zones (جناح ضيوف كامل يمين المدخل ✓) · interior/kitchen/bathroom/landscape/hvac بالتوازي — hvac: مجلس 29.8م²×3.2م غرب بزجاج كبير → **HVAC-CALC-01: 24,400 BTU → وحدتا سبليت 12k** (المعادلة في الـ explanation) |
+| 5 | L2 | lighting_architectural (مجلس: LGT-CALC-01: 175lux×29.8÷(0.55×0.8) = 11,858lm → 8 downlights + cove) ‖ furniture (المجلس: كنب 12 مقعدًا بمقاسات المكتبة) |
+| 6 | L3–L4 | ERI (دوائر + مطبخ ثابت + مناطق حمامات) · LT (قراءة بجانب كرسي الجدة) · EF (فيش شحن جانب كل جلسة) |
+| 7 | **تعارضات مكتشفة** | ① **CNF-001 (safety, critical, score 96):** simulation — باب الحمام الرئيسي يصطدم بكرسي الجدة المقترح داخل دائرة الدوران → auto: ACC-BTH-01 يقلب الباب للخارج + يزيح الكرسي (أولوية 1 سلامة) ② **CNF-002 (geometric, major, 62):** وحدة سبليت المجلس فوق موضع اللوحة الجدارية (interior) → auto: أولوية 2 قابلية تنفيذ — تنزاح اللوحة للجدار الشرقي، interior superseded جزئيًا ③ **CNF-003 (financial, major, 58):** cost: مجموع متوازن 293k > 280k → **جوهري: يُعرض على المستخدم 3 مسارات** (خفض مطبخ لفئة أقل −18k / تأجيل الحديقة −22k / رفع الميزانية) → المستخدم: تأجيل الحديقة → landscape proposals تُعلَّم deferred |
+| 8 | الدمج | Pre-merge ✓ → transactional merge (1,247 ops) → **semantic validation ✓** (كل الفحوص) → **twin rev3 مجمدة** + TwinDiff ("أُضيف 214 عنصرًا عبر 13 غرفة") |
+| 9 | التكلفة | CostEstimate: 271,400 ريال (نطاق ±6%) منها منتجات حية 82% وmarket_rates 18% · لكل غرفة وقسم |
+| 10 | الصحة والنشر | Geometry 100 · Rule hard 100% · Conflict 100 (كلها محسومة) · Cost 96 · Lighting 100 · Electrical 100 · Shopping 84 → **TwinHealthScore: 94 — قابل للنشر** · rendering ينطلق من rev3 |
+
+> هذا المثال هو **الاختبار المرجعي الحي**: يُبنى كسيناريو آلي كامل في CI (بيانات فيلا اختبارية) — أي تغيير معماري يكسر أي خطوة من العشر يُرفض.
+
 ---
 
-*(القسم 6 — الدفعتان 3/4 و4/4 تُستكملان تباعًا، ثم الأقسام 7–12)*
+*(القسم 6 — الدفعة 4/4 الأخيرة تُستكمل تاليًا: 6.20–6.28، ثم الأقسام 7–12)*

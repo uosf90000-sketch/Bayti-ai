@@ -23,6 +23,9 @@
 | ADR-015 | نقل التفضيلات للذاكرة العامة بموافقة صريحة فقط (لا تعلم صامت) | ✅ معتمد | [PRD §5.0 ADR-5.3](02-prd.md) |
 | ADR-016 | مجلس وكلاء متخصصين بـ DAG حتمي (لا orchestration بأطر LangChain/CrewAI) | ✅ معتمد | [AI Architecture §1,§6](04-ai-architecture.md)، [Tech Stack](11-tech-stack.md) |
 | ADR-017 | كل Threshold/مهلة/سقف في Configuration مُدار بالإصدارات — ليس في الكود | ✅ معتمد (معيار 1.10-5) | [PRD §1.10](02-prd.md) |
+| ADR-018 | معمارية المقترحات: الوكلاء يقترحون ولا يكتبون — الكتابة حصرية لـ Merge Engine | ✅ معتمد | [PRD §6.1 ADR-6.1](02-prd.md) |
+| ADR-019 | سجل وكلاء تصريحي (Agent Manifests في config) — لا pipeline مكتوب صلبًا | ✅ معتمد | [PRD §6.1 ADR-6.2](02-prd.md) |
+| ADR-020 | حسابات التفسير كمراجع معادلات مسجلة قابلة لإعادة التشغيل — لا نصوص حرة | ✅ معتمد | [PRD §6.5 ADR-6.3](02-prd.md) |
 
 ---
 

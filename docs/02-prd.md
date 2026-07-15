@@ -5,7 +5,7 @@
 | **المنتج** | Bayti AI — منصة تحويل مخططات المنازل إلى تصاميم تنفيذية مُسعَّرة |
 | **الإصدار** | v2.0 — يُبنى قسمًا بقسم باعتماد المؤسس |
 | **المالك** | CTO |
-| **الحالة** | 🟡 قيد الكتابة والمراجعة — القسم 5 جاهز للاعتماد |
+| **الحالة** | 🟡 قيد الكتابة — القسم 6 (الدفعة 1/4) جاهز للمراجعة |
 | **آخر تحديث** | 2026-07-14 |
 
 ---
@@ -18,8 +18,8 @@
 | 2 | السوق والمستخدمون (تحليل السوق، TAM/SAM/SOM، Personas، JTBD، رحلة المستخدم، المنافسون، خطة التوسع) | ✅ **معتمد (بعد تعديلات المؤسس)** |
 | 3 | رحلة المستخدم التفصيلية (شاشة بشاشة — UX) | ✅ **معتمد** |
 | 4 | المواصفة الهندسية: رفع المخطط وتحليله وتحويله إلى Digital Twin | ✅ **معتمد (مع إضافات المؤسس 4.16–4.24)** |
-| 5 | المواصفة الهندسية: الاستبيان، الذوق، والقيود (Intake & Style) | 🔍 **جاهز للمراجعة** |
-| 6 | المتطلبات الوظيفية: مجلس الوكلاء ومواصفات التصميم | ⬜ |
+| 5 | المواصفة الهندسية: الاستبيان، الذوق، والقيود (Intake & Style) | ✅ **معتمد** |
+| 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام — 4 دفعات) | 🔍 **دفعة 1/4 جاهزة للمراجعة** |
 | 7 | المتطلبات الوظيفية: التسوق، النسخ الثلاث، والتكلفة | ⬜ |
 | 8 | المتطلبات الوظيفية: المخرجات (صور، فيديو، 3D، PDF) | ⬜ |
 | 9 | المتطلبات الوظيفية: التعديل بالمحادثة | ⬜ |
@@ -1446,4 +1446,418 @@ interface UnresolvedQuestion {
 
 ---
 
-*(الأقسام 6–12 تُكتب تباعًا بعد اعتماد كل قسم)*
+# القسم 6 — المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام)
+
+> **خطة التسليم على دفعات (قرار مؤسس):**
+> **الدفعة 1/4 (هذه):** 6.1 الدستور · 6.2 عقود الوكلاء الأحد عشر · 6.3 AgentContract · 6.4 Proposal Model · 6.5 DecisionExplanation
+> **الدفعة 2/4:** 6.6 DAG والتبعيات · 6.7 Orchestrator · 6.8 محرك القواعد · 6.9 الإنارة · 6.10 الكهرباء
+> **الدفعة 3/4:** 6.11 المطبخ · 6.12 الحمامات · 6.13 ConflictResolver · 6.14 Merge Engine
+> **الدفعة 4/4:** 6.15 النسخ الثلاث · 6.16 Cost Engineer · 6.17 Shopping Agent · 6.18 Human Review · 6.19 الجودة والتقييم · 6.20 المراقبة · 6.21 الأمن · 6.22 الكيانات النهائية · 6.23 معايير القبول + أمثلة E2E
+
+## 6.1 المبادئ الحاكمة للمجلس (Council Constitution — C1…C10)
+
+| # | المبدأ (معتمد من المؤسس) | آلية الفرض التقنية |
+|---|---------------------------|----------------------|
+| **C1** | لا وكيل يعدّل الـ Digital Twin مباشرة | الوكلاء بلا صلاحية كتابة على التوأم إطلاقًا (فصل IAM) — الكتابة حصرية لـ Merge Engine |
+| **C2** | كل وكيل يُصدر Proposals منظمة فقط | مخرج الوكيل يُرفض آليًا إن لم يطابق `AgentProposal` schema (6.4) |
+| **C3** | Rule Engine يفحص المقترحات قبل قبولها | بوابة `RuleEvaluation` إلزامية لكل proposal قبل دخوله طابور الدمج |
+| **C4** | Validation Engine يفحص النتيجة بعد الدمج | فحص التوأم المدموج كاملًا (اتساق كلي) قبل تجميد النسخة |
+| **C5** | الـ Orchestrator هو الوحيد المسؤول عن: الترتيب، السياق، التبعيات، إعادة المحاولة، حل التعارضات، تجميد النسخة | لا وكيل يستدعي وكيلًا آخر مباشرة — كل التنسيق عبر الـ Orchestrator (6.7) |
+| **C6** | لا يُسمح للـ LLM بإصدار أرقام هندسية من الذاكرة دون قاعدة أو مصدر أو حساب حتمي | كل رقم هندسي في proposal يجب أن يحمل `evidence` (rule_id أو calculation أو مصدر بيانات) — رقم بلا سند = رفض آلي في C3 |
+| **C7** | كل قرار: قابل للتفسير، للتدقيق، للتراجع، ومرتبط بإصدار محدد | `DecisionExplanation` إلزامي (6.5) + `reversible` + `twin_version_id` في كل proposal |
+| **C8** | لا يُعرض للمستخدم تصميم فشل في أي Hard Constraint | بوابة عرض نهائية: `hard_constraint_violations.length === 0` شرط النشر |
+| **C9** | عند غياب معلومة مؤثرة → `UnresolvedQuestion` بدل التخمين | حالة `needs_clarification` في عقد الوكيل (6.3) — مسار رسمي لا استثناء |
+| **C10** | النتائج الاحتمالية لا تتجاوز القواعد الحتمية | ترتيب P12 مفروض بنيويًا: مخرج LLM مهما بلغت ثقته لا يمر إن كسر قاعدة حتمية |
+
+### ADR-6.1 · معمارية المقترحات (Proposal-Based Architecture)
+- **القرار:** الوكلاء **يقترحون ولا يكتبون**. التدفق الوحيد: `Agent → Proposals → Rule Gate → Merge Engine → Twin version جديدة (immutable)`.
+- **لماذا:** يجعل C1–C10 قابلة للفرض تقنيًا لا تنظيميًا؛ كل تغيير traceable لوكيل وقرار وسبب؛ التراجع والمقارنة مجانيان؛ التوازي آمن (لا سباقات كتابة).
+- **البدائل المرفوضة:** كتابة مباشرة بأقفال (سباقات، لا تدقيق، rollback كابوسي)؛ وكيل واحد عملاق يفعل كل شيء (لا تخصص، لا قياس منفصل، prompt غير قابل للصيانة — عكس فلسفة المجلس أصلًا).
+
+### ADR-6.2 · سجل الوكلاء تصريحي (Declarative Agent Registry)
+- **القرار:** كل وكيل مسجل بـ **Manifest** بياني (`config/agents/{agent_id}.yaml`): الإصدار، التبعيات، الميزانيات، العتبات، سياسة النموذج — الـ Orchestrator يقرأ السجل ولا يعرف الوكلاء hardcoded.
+- **لماذا:** إضافة/تعطيل/ترقية وكيل دون لمس كود الـ Orchestrator؛ feature flags لكل وكيل؛ توافق مع معيار 1.10-5 (config لا كود).
+- **البدائل المرفوضة:** pipeline مكتوب صلبًا (كل تعديل نشر كامل، ولا يمكن تفعيل وكيل تجريبيًا لمشاريع محددة).
+
+## 6.2 عقود الوكلاء الأحد عشر
+
+### الافتراضات المشتركة (AgentDefaults — يرثها كل وكيل ما لم يصرّح بخلافها)
+
+| البند | القيمة الافتراضية |
+|-------|---------------------|
+| Retry policy | 2 محاولة إضافية، backoff 30s/120s، على أخطاء عابرة فقط (5xx/timeout/schema-fail-once) |
+| Timeout | 120s لكل استدعاء، 3 استدعاءات كحد أقصى للجولة |
+| Fallback | فشل نهائي → قسم الوكيل يُعلَّم ⚠ في ProjectHealth ويستمر الباقون (لا يفشل المشروع) |
+| Model policy | توجيه بالتعقيد عبر طبقة LLM الموحدة: `simple → small` (Haiku-class)، `standard → mid` (Sonnet-class)، `complex → large` (Opus-class)؛ التصنيف بقواعد حجم المدخل في الـ manifest |
+| Versioning | `agent_version` (semver) + `prompt_version` مثبتة في كل run — أي مخرج قابل النسب لنسخته |
+| Metrics (لكل وكيل إلزاميًا) | نجاح/فشل، زمن P50/P95، تكلفة/تشغيلة، نسبة رفض المقترحات في C3، نسبة needs_clarification، نسبة override بشري |
+| Confidence (الهيكل العام) | `conf = w1·rule_coverage + w2·schema_validity_history + w3·calibrated_model_conf` — الأوزان لكل وكيل في manifest؛ المعايرة على Golden Set الوكيل (6.19) |
+| أمن السياق | يستلم الحد الأدنى فقط (6.21): لا PII، لا بيانات مشاريع أخرى، النصوص المستخرجة من ملفات المستخدم معاملة كبيانات غير موثوقة |
+
+### 6.2.1 · Architect Agent (`agent.architect`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | الإثراء الدلالي للتوأم: فهم المنزل كمساحات معيشة لا مضلعات — تمهيدًا لكل الوكلاء |
+| Scope | تقسيم المناطق (خاص/ضيوف/خدمة)، شبكة الحركة، تحليل الاتجاهات، فرص وتحذيرات تصميمية |
+| خارج الـ Scope (محظور) | **أي تعديل هندسي على الجدران/الفتحات** (التوأم من القسم 4 نهائي هندسيًا في v1)؛ اختيار أثاث أو خامات |
+| Inputs | `DigitalTwin` (مؤكد)، `IntakeBundle` |
+| Required context | rooms + openings + connectivity graph + orientation إن وُجد |
+| Optional context | ملاحظات المستخدم الحرة، صور مرجعية للمخطط الأصلي |
+| Outputs / Proposal types | `zone_assignment` (لكل غرفة: zone + دور وظيفي)، `circulation_path`، `design_opportunity` (مثل: "المجلس قابل للفصل الكامل عن الجناح العائلي")، `design_warning` (مثل: "ممر المطبخ-الغسيل يمر بالمعيشة") |
+| Rules owned | `ARC-*`: تحقق المناطق (ضيوف لا يخترق خاصًا إجباريًا)، حدود عرض الممرات، منطق الوصول |
+| Rules prohibited | قواعد الإنارة/الكهرباء/الأثاث — يقرأ نتائجها لاحقًا فقط عبر الـ Orchestrator |
+| Dependencies | لا شيء (أول وكيل) |
+| Confidence | نسبة الغرف المصنفة zone بقاعدة حتمية (اسم+موقع) مقابل المستنتجة LLM |
+| Blocking conditions | توأم غير مؤكد؛ scale غير مؤكد |
+| Failure modes | تصنيف zone متناقض مع نوع الغرفة المؤكد → رفض C3 وإعادة توجيه |
+| Timeout (override) | 90s |
+| Acceptance criteria | 100% غرف لها zone؛ صفر تعارض مع أنواع الغرف المؤكدة من المستخدم |
+| Model policy (override) | mid دائمًا (مهمة فهم لا توليد) |
+
+### 6.2.2 · Interior Designer Agent (`agent.interior`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | المفهوم التصميمي لكل غرفة: الهوية، اللوحة اللونية، الخامات، التشطيبات |
+| Scope | لكل غرفة في النطاق: concept، palette (ألوان قياسية من نظامنا)، أرضيات (خامة/لون/نمط تركيب)، دهانات/تجليدات لكل جدار، أسقف جبس (مستوياتها)، أنماط الأبواب/الشبابيك (مواصفة لا منتج) |
+| خارج الـ Scope (محظور) | مواقع أثاث بإحداثيات (Furniture)؛ حسابات إنارة (Lighting)؛ **أي مقاس هندسي غير مأخوذ من التوأم** (C6) |
+| Inputs | Twin + IntakeBundle + مخرجات Architect (zones) |
+| Required context | StyleVector (مع room_overrides) + HardConstraints + ExistingAssets |
+| Optional context | صور مرجعية موسومة، ProjectMemory |
+| Outputs / Proposal types | `room_concept`، `finish_spec` (أرضية/جدار/سقف)، `palette_assignment`، `door_window_style` |
+| Rules owned | `INT-*`: توافق الخامات مع الاستخدام (رطوبة/أطفال/حيوانات)، حدود تباين اللوحة، اتساق العائلة اللونية بين الغرف المتصلة بصريًا |
+| Rules prohibited | Lux/BTU/أحمال — أي حساب فيزيائي |
+| Dependencies | Architect |
+| Confidence | مطابقة الـ StyleVector (مسافة المفهوم المولد عن vector المستخدم) + rule_coverage |
+| Blocking conditions | StyleVector بثقة أبعاد حرجة < عتبة manifest؛ غرفة بلا نوع مؤكد |
+| Failure modes | خرق HardConstraint لوني/خامي → C3 يرفض بندًا محددًا ويعيد بتعليمة تصحيح |
+| Acceptance criteria | كل غرفة نطاق لها concept كامل التشطيبات؛ صفر خروقات قيود؛ مسافة style ≤ عتبة |
+| Model policy | complex للغرف الاجتماعية (مجلس/معيشة)، standard للخدمية |
+
+### 6.2.3 · Lighting Engineer Agent (`agent.lighting`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | خطة إنارة محسوبة هندسيًا لكل غرفة — لا سبوتات زينة بلا حساب (تفصيلها الكامل 6.9) |
+| Scope | طبقات ambient/task/accent، حساب lumen المطلوب، عدد الوحدات وتوزيعها بإحداثيات، خصائص كل وحدة (K/CRI/beam/dimming) |
+| خارج الـ Scope (محظور) | الدوائر والمفاتيح (Electrical)؛ اختيار منتجات (Shopping)؛ **أي target lux من الذاكرة — حصريًا من جدول LGT-TBL-01** |
+| Inputs | Twin + room_concepts + **furniture placements النهائية** (task lighting يتبع الأثاث) |
+| Required context | ceiling heights مؤكدة، نوافذ الغرفة (إضاءة طبيعية)، zone الغرفة |
+| Optional context | `rotation_north_deg` (تحليل شمس مستقبلي F5) |
+| Outputs / Proposal types | `lighting_layer` (لكل غرفة×طبقة)، `fixture_placement` (إحداثيات + مواصفة)، `LightingPlan` مجمعة قابلة للرسم فوق التوأم |
+| Rules owned | `LGT-*`: جداول lux المستهدفة، معادلة lumen، spacing/beam، مسافات الجدران، glare control |
+| Rules prohibited | ELE-* (دوائر)، وضع نقاط في مناطق أمان الحمامات (يستشير BTH zones كمدخل) |
+| Dependencies | Interior + Furniture (+Kitchen/Bathroom لغرفهما) |
+| Confidence | نسبة الوحدات الناتجة عن حساب حتمي كامل (المستهدف ≈ 100%) — أي وحدة "تقديرية" تخفضه حادًا |
+| Blocking conditions | ارتفاع سقف غير مؤكد؛ توزيع أثاث غير مجمد للغرفة |
+| Failure modes | إجمالي lumen ينحرف عن المحسوب > 10% → رفض C3 |
+| Acceptance criteria | كل غرفة تحقق lux المستهدف ±10%؛ كل وحدة لها إحداثيات ومواصفة كاملة وسبب |
+| Model policy | standard — الحسابات في Rule Engine، الوكيل يوزع ويصوغ فقط |
+
+### 6.2.4 · Electrical Engineer Agent (`agent.electrical`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | خطة نقاط كهربائية مرتبطة بالاستخدام الفعلي — كل نقطة تخدم شيئًا حقيقيًا (تفصيلها 6.10) |
+| Scope | أفياش/مفاتيح/إنترنت/TV/USB-C/نقاط أجهزة/مرايا/كاميرات/ستائر كهربائية + ربط المفاتيح بدوائر الإنارة + تجميع الدوائر منطقيًا |
+| خارج الـ Scope (محظور) | حساب الأحمال الإنشائي للوحة الرئيسية (يُعلَّم "يحتاج مهندس كهرباء معتمد" — 6.18)؛ تغيير خطة الإنارة |
+| Inputs | Twin + furniture placements + LightingPlan + HVAC unit placements + kitchen/bathroom plans |
+| Required context | مناطق الماء والحرارة (من BTH/KIT)، stage المشروع (عظم = حرية كاملة، قائم = الحد الأدنى) |
+| Outputs / Proposal types | `electrical_point` (كل نقطة: نوع/جدار/ارتفاع/غرض/العنصر المخدوم/دائرة)، `switch_group`، `ElectricalPlan` مجمعة |
+| Rules owned | `ELE-*` + `SAF-ELE-*`: مسافات الأمان عن الماء/الحرارة، ارتفاعات قياسية، حد أدنى للنقاط لكل غرفة/استخدام، كل نقطة لها served_item |
+| Rules prohibited | KIT/BTH التصميمية — يستهلك مخرجاتها |
+| Dependencies | Furniture + Lighting + HVAC + Kitchen + Bathroom |
+| Confidence | نسبة النقاط المسندة لعنصر مخدوم فعلي (target 100%) |
+| Blocking conditions | توزيع أثاث غير مجمد؛ خطة إنارة غير معتمدة من C3 |
+| Failure modes | نقطة داخل safety zone → رفض حتمي؛ نقطة بلا غرض → رفض C6 |
+| Acceptance criteria | صفر نقاط بلا سبب/عنصر مخدوم؛ صفر خروقات SAF-ELE؛ كل مفتاح مرتبط بدائرته |
+| Model policy | standard |
+
+### 6.2.5 · HVAC Engineer Agent (`agent.hvac`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | تبريد مناسب محسوب لكل غرفة — في مناخ سعودي هذا قرار جودة حياة أول |
+| Scope | حمل تبريد لكل غرفة (BTU — بمعادلة حتمية في Rule Engine: مساحة×ارتفاع×اتجاه×زجاج×إشغال×مدينة)، نوع النظام (سبليت/مخفي/مركزي/VRF حسب stage والميزانية)، مواقع الوحدات الداخلية والخارجية بإحداثيات، مسارات دكت مبدئية للمخفي |
+| خارج الـ Scope (محظور) | **BTU من ذاكرة LLM — الحساب حصريًا HVAC-CALC-01**؛ التصميم النهائي للدكت (يُعلَّم "مراجعة مختص" للمركزي) |
+| Inputs | Twin (مساحات/ارتفاعات/نوافذ/اتجاه) + المدينة (بيانات مناخ) + stage + الميزانية |
+| Required context | zones (توجيه الوحدات الخارجية بعيدًا عن الواجهة/الجلسات) |
+| Outputs / Proposal types | `cooling_load` (لكل غرفة + المعادلة بمدخلاتها)، `hvac_unit_placement`، `hvac_system_choice` |
+| Rules owned | `HVAC-*`: معادلة الحمل، حدود مواقع الوحدات (ليس فوق سرير مباشرة، ميل الصرف، مسافة الخارجية عن النوافذ)، ضجيج مسموح لغرف النوم |
+| Rules prohibited | ELE-* (يطلب نقطة تغذية كمتطلب، لا يضعها) |
+| Dependencies | Architect (+Interior للتنسيق الجمالي لمواقع الوحدات) |
+| Confidence | 100% حسابي بطبيعته — الثقة تعكس جودة مدخلات التوأم (نوافذ/ارتفاعات) |
+| Blocking conditions | ارتفاعات غير مؤكدة؛ مدينة غير محددة |
+| Failure modes | حمل محسوب خارج نطاق معقولية (Sanity: 400–1400 BTU/م² سعوديًا) → مراجعة |
+| Acceptance criteria | كل غرفة نطاق لها حمل محسوب بمعادلة ظاهرة قابلة لإعادة التشغيل + وحدة مسندة |
+| Model policy | small — الذكاء في المعادلات لا النموذج |
+
+### 6.2.6 · Kitchen Designer Agent (`agent.kitchen`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | مطبخ قابل للتنفيذ بالملليمتر (تفصيله الكامل 6.11) |
+| Scope | تخطيط الخزائن بوحدات قياسية (modules)، مثلث/مناطق العمل، الأجهزة بأبعاد تركيبها، الأسطح والـ backsplash، مغسلة/موقد/فرن/ثلاجة/غسالة صحون، تهوية، مخازن نفايات |
+| خارج الـ Scope (محظور) | اقتراح جهاز دون أبعاد تركيب مثبتة؛ نقاط كهربائية نهائية (يصدر متطلبات لـ ELE)؛ إنارة نهائية (متطلبات لـ LGT) |
+| Inputs | Twin (غرفة المطبخ: هندسة+فتحات) + HouseholdProfile (عدد مستخدمين متزامنين، أطفال، يمين/يسار إن أثّر) + الميزانية + StyleVector |
+| Required context | مواقع تمديدات موجودة إن عُرفت (stage=قائم)، `kitchen_dirty` إن وُجد بالتوأم |
+| Outputs / Proposal types | `cabinet_layout` (modules بمقاسات)، `appliance_placement` (بأبعاد + متطلبات: ماء/صرف/كهرباء/تهوية)، `worktop_spec`، `kitchen_requirements` (موجهة لـ ELE/LGT/BTH-plumbing) |
+| Rules owned | `KIT-*`: مثلث العمل وبدائله، clearances (ممرات، فتح أدراج/أفران متقابلة)، ارتفاعات العمل، سلامة الأطفال (موقد بعيد عن الممر) |
+| Rules prohibited | ELE-*/LGT-* النهائية |
+| Dependencies | Architect + Interior (لغة المطبخ الجمالية) |
+| Confidence | نسبة الـ modules المطابقة للمقاسات القياسية والمساحة المتاحة حتميًا |
+| Blocking conditions | أبعاد المطبخ أو ارتفاعه غير مؤكدة؛ مواقع الصرف مجهولة وstage=قائم → UnresolvedQuestion |
+| Failure modes | جهاز بلا أبعاد تركيب → يُستبعد ويُطلب بديل (لا تخمين) |
+| Acceptance criteria | envelope فتح كل باب/درج خالٍ من التعارض 100%؛ مثلث العمل ضمن حدود KIT |
+| Model policy | complex — أعقد غرفة تصميميًا |
+
+### 6.2.7 · Bathroom Designer Agent (`agent.bathroom`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | حمامات آمنة قابلة للتنفيذ، بوعي صريح بحدود ما يُستنتج من مخطط معماري (تفصيله 6.12) |
+| Scope | الأطقم الصحية بمواقعها، wet/dry zones، ميول ونقاط صرف (اقتراحية)، عتبة الدش، مناطق العزل، تهوية، إنارة مرايا (متطلب لـ LGT)، سلامة كهربائية (zones لـ ELE) |
+| خارج الـ Scope (محظور) | اعتماد مواقع صرف نهائية دون معرفة الموجود — **كل ما يحتاج سباكة تنفيذية يُعلَّم `requires_site_review`** |
+| Inputs | Twin (الحمامات) + HouseholdProfile (كبار سن/أطفال/إعاقة) + الميزانية + StyleVector |
+| Required context | stage (عظم = حرية مواقع، قائم = التقيد بالموجود)، مواقع الصرف إن عُرفت |
+| Outputs / Proposal types | `sanitary_placement`، `wet_zone_definition`، `drainage_suggestion` (مع تصنيف: تصميمي/يحتاج مراجعة موقع/غير قابل للاستنتاج)، `waterproofing_zone`، `bathroom_requirements` |
+| Rules owned | `BTH-*` + `ACC-BTH-*`: clearances الأطقم، عتبات، مقابض لكبار السن، فتح الباب للخارج في حمامات كبار السن |
+| Rules prohibited | ELE-* النهائية (يصدر safety zones فقط) |
+| Dependencies | Architect + Interior |
+| Confidence | يعكس نسبة القرارات المعتمدة على معلومات مؤكدة مقابل `requires_site_review` |
+| Blocking conditions | حمام بلا أبعاد مؤكدة |
+| Failure modes | تعارض طقم مع فتح الباب → رفض حتمي BTH-C |
+| Acceptance criteria | كل عنصر مصنف بوضوح (تصميمي/مراجعة موقع/غير مستنتج)؛ صفر تعارضات clearance |
+| Model policy | standard |
+
+### 6.2.8 · Landscape Designer Agent (`agent.landscape`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | الهوية الخارجية: حديقة، واجهة، سور، ممرات، جلسات، مسبح (محيطه)، جراج |
+| Scope | تقسيم المساحات الخارجية، hardscape/softscape، نباتات مناسبة لمناخ المدينة (من قاعدة نباتات مُدارة كبيانات)، إنارة خارجية (متطلبات لـ LGT)، ري أساسي |
+| خارج الـ Scope (محظور) | إنشائيات المسبح نفسه (`requires_site_review` دائمًا)؛ أي تعديل على مبنى |
+| Inputs | Twin (المساحات الخارجية + اتجاه) + Intake (أطفال→أمان المسبح، حيوانات) + الميزانية + StyleVector |
+| Conditional activation | **يعمل فقط إن وُجدت مساحة خارجية في التوأم** (manifest: `activation_condition`) |
+| Outputs / Proposal types | `outdoor_zone`، `hardscape_spec`، `planting_plan`، `facade_concept`، `fence_spec`، `outdoor_requirements` |
+| Rules owned | `LND-*`: أمان مسبح مع أطفال (سياج/بوابة)، مسافات النباتات عن الأساسات، نسب تغطية خضراء مستدامة مائيًا |
+| Dependencies | Architect |
+| Confidence | نسبة النباتات المطابقة لمناخ المدينة من القاعدة (target 100%) |
+| Blocking conditions | مساحة خارجية بلا أبعاد |
+| Acceptance criteria | كل نبتة من قاعدة النباتات المعتمدة للمنطقة المناخية؛ أمان الأطفال مفروض إن وُجدوا |
+| Model policy | standard |
+
+### 6.2.9 · Furniture Agent (`agent.furniture`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | تحويل مفاهيم Interior إلى قطع محددة المواصفات **موضوعة بإحداثيات مثبتة هندسيًا** |
+| Scope | لكل غرفة: قائمة القطع (نوع/أبعاد/لون/خامة/كمية) + placement (x,y,rotation) + دمج ExistingAssets الملزمة |
+| خارج الـ Scope (محظور) | **اختراع أبعاد** — الأبعاد من مكتبة أبعاد قياسية للفئات (`furniture_dimension_sets.yaml`) تتقاطع لاحقًا مع منتجات حقيقية؛ الأسعار (Cost)؛ المنتجات (Shopping) |
+| Inputs | Twin + room_concepts + HouseholdProfile + ExistingAssets + zones |
+| Required context | clearance_polygons لكل الفتحات (من التوأم)، ممرات الحركة (من Architect) |
+| Outputs / Proposal types | `furniture_item` (spec + placement + غرض استخدامي)، `layout_variant` (حتى 2 بديل توزيع للغرف الرئيسية) |
+| Rules owned | `FUR-*` + `ACC-*`: مسافات الحركة، خلوص الفتحات، مسافات الجلوس/المشاهدة/الطاولات، ارتفاعات متوافقة مع كبار السن، ثبات القطع مع الأطفال |
+| Rules prohibited | تعديل تشطيبات Interior |
+| Dependencies | Interior (+ Kitchen/Bathroom لا يضع فيهما إلا القطع الحرة) |
+| Confidence | نسبة القطع العابرة لفحص الملاءمة الهندسية من أول توليد (تقيس جودة الوكيل ذاته) |
+| Blocking conditions | غرفة بلا concept معتمد |
+| Failure modes | قطعة تكسر FUR-C → جولة تصحيح ذاتية واحدة ثم تصعيد للـ Orchestrator |
+| Acceptance criteria | 100% قطع تجتاز الفحص الهندسي (P3)؛ كل must_keep asset مدمج أو مصعَّد بسؤال |
+| Model policy | complex للتوزيع، small لتوليد البدائل |
+
+### 6.2.10 · Cost Engineer Agent (`agent.cost`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | الحقيقة المالية للمشروع — تجميع حتمي، وLLM للصياغة فقط (تفصيله 6.16) |
+| Scope | BoQ كامل بطبقات التكلفة، تكلفة/غرفة و/قسم/نسخة، مطابقة الميزانية، توصيات الموازنة، نطاقات عدم اليقين |
+| خارج الـ Scope (محظور) | **أي سعر من ذاكرة LLM** — الأسعار حصريًا من الكتالوج أو market_rates؛ تغيير قرارات تصميمية (يوصي فقط) |
+| Inputs | كل الـ proposals المقبولة + market_rates + الكتالوج (أسعار فئات) + BudgetEnvelope |
+| Outputs / Proposal types | `cost_line` (بكل حقول 6.16)، `budget_recommendation`، `CostEstimate` مجمع |
+| Rules owned | `CST-*`: اكتمال التغطية (كل عنصر مسعّر أو معلَّم)، حساب VAT، contingency، unavailable_price_allowance |
+| Dependencies | جميع وكلاء التصميم (يعمل بعد استقرارهم) |
+| Confidence | مرجح بمصادر الأسعار: كتالوج حي > market_rate حديث > تقدير معلَّم بنطاق |
+| Blocking conditions | proposals غير مستقرة (جولة تصحيح جارية) |
+| Failure modes | مجموع لا يطابق البنود → خطأ نظام (حتمي — لا يحدث إلا bug) → فشل صريح لا إخفاء |
+| Acceptance criteria | 100% عناصر مغطاة؛ المجاميع تطابق البنود حسابيًا؛ كل رقم بمصدر وتاريخ |
+| Model policy | small (صياغة التوصيات فقط) |
+
+### 6.2.11 · Shopping Agent (`agent.shopping`)
+
+| البند | المواصفة |
+|-------|-----------|
+| Purpose | مطابقة كل عنصر بمنتجات سعودية حقيقية قابلة للشراء (عقده الكامل 6.17) |
+| Scope | primary + cheaper_alt + premium_alt لكل عنصر قابل للشراء، من **الكتالوج الداخلي فقط** |
+| خارج الـ Scope (محظور) | **تصفح الويب الحي وقت الطلب** (الكتالوج يُبنى بخط ingestion مستقل يحترم شروط المتاجر — 6.17)؛ تغيير مواصفات التصميم ليطابق منتجًا (يقترح `spec_adjustment` proposal يمر بالمسار الكامل) |
+| Inputs | furniture/finish/fixture specs + الكتالوج + مدينة المستخدم + tier + HardConstraints (متاجر محظورة) |
+| Outputs / Proposal types | `product_match` (بترتيب مطابقة 6.17)، `match_gap` (عنصر بلا مطابق → يسعَّر market_rate ويُعلَّم) |
+| Rules owned | `SHP-*`: ترتيب المطابقة (مقاس قبل شكل)، عتبة موثوقية المقاسات، التوفر بالمدينة |
+| Dependencies | Furniture + Cost |
+| Confidence | لكل match: مرجح بدقة أبعاد المنتج المصدرية — **منتج بلا مقاسات موثوقة = "مرشح يحتاج تحقق" وليس مطابقًا أبدًا** |
+| Blocking conditions | كتالوج الفئة أقدم من عتبة العمر (config) |
+| Failure modes | فئة بلا أي مطابق → match_gap صريح (لا حشو بمنتج خاطئ) |
+| Acceptance criteria | ≥ 80% عناصر لها primary (بوابة G4)؛ 100% روابط صالحة عند النشر |
+| Model policy | small + embeddings (المطابقة أساسًا vector search حتمي) |
+
+## 6.3 العقد الموحد (AgentContract / AgentRun)
+
+```typescript
+interface AgentRun {                    // سجل تشغيلة واحدة لوكيل — immutable بعد الاكتمال
+  // الهوية والنسب
+  run_id: string;                       // ULID
+  correlation_id: string;               // يربط كل تشغيلات جولة المجلس الواحدة
+  agent_id: string;                     // "agent.lighting"
+  agent_version: string;                // semver من الـ manifest
+  model_id: string;                     // المستخدم فعليًا (بعد التوجيه/الfallback)
+  prompt_version: string;
+  // السياق
+  project_id: string;
+  project_version_id: string;           // نسخة الـ IntakeBundle
+  twin_version_id: string;              // C7: كل نتيجة مرتبطة بإصدار توأم محدد
+  input_artifact_ids: string[];         // كل مدخل مسمى — قابلية إعادة تشغيل كاملة
+  dependency_results: { agent_id: string; run_id: string }[];
+  // المخرجات
+  proposals: AgentProposal[];           // 6.4
+  rejected_options: { summary_ar: string; reason: string }[];  // ما فكر فيه ورفضه — ذهب للتفسير
+  assumptions: { id: string; text_ar: string; risk: "low"|"medium"|"high" }[];
+  unresolved_questions: UnresolvedQuestion[];   // C9
+  warnings: { code: string; text_ar: string }[];
+  hard_constraint_violations: RuleViolationRef[];  // يجب أن تكون فارغة للنشر (C8)
+  soft_constraint_tradeoffs: { constraint: string; tradeoff_ar: string }[];
+  estimated_cost_impact: MoneyRange | null;
+  estimated_usage_impact: string | null;
+  confidence: number;                   // معاير — حسب معادلة manifest الوكيل
+  explanation: DecisionExplanation;     // 6.5 — على مستوى التشغيلة
+  // القياس
+  token_usage: { input: number; output: number; cost_usd: number };
+  latency_ms: number;
+  status: AgentRunStatus;
+  created_at: string;
+}
+
+type AgentRunStatus =
+  | "pending"              // في الخطة، لم يبدأ
+  | "running"
+  | "completed"            // مخرجات صالحة schema وجاهزة لبوابة C3
+  | "needs_clarification"  // C9: أصدر UnresolvedQuestion حاجبة
+  | "blocked"              // تبعية فشلت أو شرط blocking قائم
+  | "failed"               // بعد استنفاد retries
+  | "superseded"           // حلت محله تشغيلة أحدث (تعديل جزئي)
+  | "cancelled";           // ألغاه Orchestrator (مستخدم غادر/ميزانية)
+```
+
+```mermaid
+stateDiagram-v2
+    [*] --> pending
+    pending --> running: dependencies met + inputs valid
+    pending --> blocked: dependency failed / blocking condition
+    running --> completed: valid output
+    running --> needs_clarification: blocking UnresolvedQuestion
+    running --> failed: retries exhausted
+    needs_clarification --> pending: سؤال حُسم
+    blocked --> pending: الشرط زال
+    completed --> superseded: تشغيلة أحدث لنفس النطاق
+    pending --> cancelled
+    running --> cancelled
+```
+
+## 6.4 نموذج المقترح (AgentProposal)
+
+```typescript
+interface AgentProposal {
+  proposal_id: string;                  // ULID
+  agent_id: string;
+  run_id: string;
+  target_entity_id: string;             // room_id / wall_id / item_id / "project"
+  proposal_type: string;                // من قائمة أنواع الوكيل (6.2)
+  operation: "create"|"update"|"replace"|"remove";
+  before_state: object | null;         // null لـ create — وإلا لقطة الكيان الحالي
+  proposed_state: object;               // يطابق schema كيان الهدف
+  // الآثار (تقييم ذاتي يتحقق منه C3)
+  geometric_effect: { changed: boolean; summary?: string; affected_entities?: string[] };
+  budget_effect: MoneyRange | null;
+  usability_effect: string | null;
+  maintenance_effect: string | null;
+  safety_effect: string | null;
+  sustainability_effect: string | null;
+  // السند (C6)
+  required_rules: string[];             // القواعد التي يجب أن يجتازها
+  evidence: EvidenceRef[];              // rule_id | calculation | catalog_ref | twin_ref — رقم بلا سند يُرفض
+  alternatives: { summary_ar: string; why_not_chosen_ar: string }[];
+  confidence: number;
+  explanation: DecisionExplanation;     // 6.5 — على مستوى القرار
+  reversible: boolean;                  // C7 — v1: يجب true لكل شيء
+  dependencies: string[];               // proposal_ids يعتمد عليها
+  conflicts: string[];                  // proposal_ids يتعارض معها (تصريح ذاتي + كشف ConflictResolver)
+  status: "proposed"|"rule_checked"|"accepted"|"rejected"|"merged"|"superseded";
+}
+
+type EvidenceRef =
+  | { kind: "rule";        rule_id: string }
+  | { kind: "calculation"; calc_id: string; formula_ref: string; inputs: Record<string, number>; result: number; unit: string }
+  | { kind: "catalog";     ref: string }        // dimension set / market rate / product
+  | { kind: "twin";        entity_id: string; field: string };  // "من التوأم نفسه"
+```
+
+### أنواع الـ Proposals لكل وكيل (السجل الرسمي)
+
+| الوكيل | proposal_types |
+|--------|----------------|
+| architect | `zone_assignment` · `circulation_path` · `design_opportunity` · `design_warning` |
+| interior | `room_concept` · `finish_spec` · `palette_assignment` · `door_window_style` |
+| lighting | `lighting_layer` · `fixture_placement` |
+| electrical | `electrical_point` · `switch_group` |
+| hvac | `cooling_load` · `hvac_unit_placement` · `hvac_system_choice` |
+| kitchen | `cabinet_layout` · `appliance_placement` · `worktop_spec` · `kitchen_requirements` |
+| bathroom | `sanitary_placement` · `wet_zone_definition` · `drainage_suggestion` · `waterproofing_zone` · `bathroom_requirements` |
+| landscape | `outdoor_zone` · `hardscape_spec` · `planting_plan` · `facade_concept` · `fence_spec` · `outdoor_requirements` |
+| furniture | `furniture_item` · `layout_variant` |
+| cost | `cost_line` · `budget_recommendation` |
+| shopping | `product_match` · `match_gap` · `spec_adjustment` |
+
+## 6.5 مواصفة التفسير الكاملة (DecisionExplanation)
+
+> توسيع البنية الرباعية (P11) إلى مواصفة نهائية. **القاعدة الحاكمة: أي قرار لا يمكن إعادة حسابه أو تفسيره يُرفض في بوابة C3.**
+
+```typescript
+interface DecisionExplanation {
+  // 1) طبقة المستخدم (تُعرض في الواجهة — عربية بسيطة)
+  decision_summary_ar: string;          // "3 نقاط إضاءة سقفية للمجلس"
+  reason_ar: string;                    // "لأن مساحة 24م² بسقف 3م تحتاج ~7200 lumen للإضاءة العامة"
+  budget_impact:  { text_ar: string; amount: MoneyRange | null };
+  usability_impact: string;             // الأثر على الاستخدام اليومي
+  maintenance_impact: string | null;
+  safety_impact: string | null;
+  user_visible: boolean;                // قرارات تقنية داخلية قد لا تُعرض — لكنها تُدقَّق دائمًا
+
+  // 2) طبقة التدقيق (فنية — للفريق والمراجعين)
+  rule_ids: string[];                   // القواعد المستندة (6.8)
+  evidence_sources: EvidenceRef[];
+  assumptions: string[];
+  alternatives_considered: { option_ar: string; score?: number }[];
+  rejected_alternatives: { option_ar: string; rejection_reason_ar: string }[];
+  technical_details: string | null;
+
+  // 3) الطبقة الحسابية (قابلة لإعادة التشغيل آليًا)
+  calculations: {
+    calc_id: string;
+    formula_ref: string;                // مرجع معادلة مسماة في Rule Engine — ليست نصًا حرًا
+    inputs: Record<string, number|string>;
+    result: number; unit: string;
+  }[];
+
+  confidence: number;
+  uncertainty: { level: "low"|"medium"|"high"; reason_ar: string } | null;
+}
+```
+
+- **Rules:** الطبقات الثلاث مفصولة بالبنية لا بالاجتهاد — الواجهة تقرأ (1) فقط، التدقيق يقرأ (1+2)، والـ CI يعيد تشغيل (3) آليًا: **إعادة تنفيذ كل `calculations` بمدخلاتها يجب أن تعطي نفس النتائج بت-بت** (اختبار انحدار دائم).
+- **Failure Cases:** قرار بأرقام في (1) لا تظهر في (3) → رفض C6؛ `formula_ref` غير موجود في سجل المعادلات → رفض.
+- **Acceptance Criteria:** 100% قرارات معروضة لها الطبقات الثلاث؛ 100% من `calculations` قابلة لإعادة التشغيل في CI.
+- **ADR-6.3 · الحسابات كمراجع معادلات لا نصوص:** `formula_ref` يشير لمعادلة مسجلة في Rule Engine بإصدار — **مرفوض:** معادلات حرة نصية داخل الـ explanation (غير قابلة لإعادة التشغيل ولا للتدقيق، وتفتح باب C6 من النافذة).
+
+---
+
+*(القسم 6 — الدفعات 2/4 و3/4 و4/4 تُستكمل تباعًا، ثم الأقسام 7–12)*

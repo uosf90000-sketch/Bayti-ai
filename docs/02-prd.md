@@ -5,7 +5,7 @@
 | **المنتج** | Bayti AI — منصة تحويل مخططات المنازل إلى تصاميم تنفيذية مُسعَّرة |
 | **الإصدار** | v2.0 — يُبنى قسمًا بقسم باعتماد المؤسس |
 | **المالك** | CTO |
-| **الحالة** | 🔒 Architecture v1.0 (Frozen) · القسم 7 (Commerce Platform) جاهز للمراجعة |
+| **الحالة** | 🔒 Frozen · الأقسام 1–8 معتمدة · القسم 9 جاهز للمراجعة |
 | **آخر تحديث** | 2026-07-14 |
 
 ---
@@ -22,8 +22,8 @@
 | 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام) | ✅ **معتمد بدفعاته الأربع** |
 | — | **Architecture Freeze v1.0** — [التقرير الكامل](ARCHITECTURE_FREEZE_v1.md) + [الدستور المختصر](PROJECT_CONSTITUTION.md) | ✅ **Approved — Architecture v1.0 (Frozen)** بمصادقة المؤسس 2026-07-15 |
 | 7 | **Commerce Platform** (منصة تجارة كاملة تشمل مواد البناء) | ✅ **معتمد — ADR-033…036 مفعّلة** |
-| 8 | **Digital Twin Outputs & Rendering** (نطاق مؤسس محدد — 15 بندًا) | 🔍 **جاهز للمراجعة** |
-| 9 | AI Conversation & Design Editing | ⬜ |
+| 8 | **Digital Twin Outputs & Rendering** | ✅ **معتمد** |
+| 9 | AI Conversation & Design Editing (نطاق مؤسس — 14 بندًا) | 🔍 **جاهز للمراجعة** |
 | 10 | Costing, Plans & Payments | ⬜ |
 | 11 | Security, Infrastructure & Deployment | ⬜ |
 | 12 | UI/UX System & Final Acceptance | ⬜ |
@@ -3251,4 +3251,146 @@ Marketplace لأصول 3D · Metaverse/جولات تشاركية · AR متقد�
 
 ---
 
-*(القسم 8 جاهز للمراجعة السريعة — التالي فور إغلاقه: القسم 9 AI Conversation & Design Editing)*
+# القسم 9 — AI Conversation & Design Editing
+
+> نطاق مؤسس محدد — 14 بندًا. لا Voice، لا Avatar، لا وكيل عام جديد، لا Agent Marketplace، لا أدوات خارجية (كلها Future Scope). المحادثة **عميل للآلة المجمدة** — لا مسار كتابة جديدًا: كل تعديل عبر ADR-031 مهما صغر.
+
+## 9.1 Conversation Architecture
+
+```
+رسالة المستخدم ─► Intent Parser (LLM مقيد schema) ─► Edit Router (حتمي)
+   ─► AgentRuns بنطاق الحد الأدنى (مصفوفة الإبطال 6.6) ─► Proposals ─► Rule Gate
+   ─► ConflictResolver ─► Merge Engine ─► Twin rev جديد (P7) ─► SSE: النتيجة + فرق التكلفة
+```
+- خدمة المحادثة **لا تملك أدوات ولا صلاحيات كتابة** — مخرجها الوحيد `ParsedIntent` يُسلَّم للـ Orchestrator. (تطبيق مباشر لـ C5 + ADR-031 — لا قرارات معمارية جديدة.)
+- الاستعلامات (غير التعديلية) تُجاب قراءةً من التوأم/التكلفة/التفسيرات — **الإجابة من `DecisionExplanation` المخزنة لا من ذاكرة النموذج** (سؤال "ليش اخترتوا هذي الكنبة؟" يجيب عنه حقل P11 الموجود أصلًا).
+
+## 9.2 Intent Detection
+
+```typescript
+interface ParsedIntent {
+  schema_version: "1.0";
+  kind: "edit"|"query"|"navigation"|"out_of_scope";
+  edits: EditCommand[];                 // أوامر مركبة تُفكَّك (قد تتعدد)
+  query: { topic: "why"|"cost"|"status"|"compare"|"what_if"; refs: string[] } | null;
+  scope_resolution: { room_ids: string[]; item_ids: string[];
+                      resolved_by: "explicit"|"context"|"needs_clarification" };
+  confidence: number;                   // معاير — دون العتبة (config) → توضيح لا تخمين (C9)
+  raw_text_ar: string;
+}
+interface EditCommand {
+  action: "replace_item"|"change_spec"|"add_item"|"remove_item"
+        | "upgrade_room"|"downgrade_room"|"change_room_style"
+        | "adjust_budget"|"change_flooring"|"adjust_lighting"|"swap_variant_room";
+  target: { room_id?: string; item_id?: string; category?: string };
+  params: object;                       // spec_patch / pct / style ...
+}
+```
+- **تغطية إلزامية (من MVP المجمد):** غيّر الكنبة · أضف مكتبة · اجعل المجلس أفخم · قلّل الميزانية 15% · استبدل الأرضية برخام · زد الإنارة — + الأوامر المركبة.
+- `adjust_budget` يمر حصريًا عبر Cost Engineer (تخفيضات موزونة لا خفض أعمى — كما في المجمد).
+
+## 9.3 Context Management
+
+- سياق كل دورة يُبنى حتميًا (لا تراكم عشوائي): ملخص التوأم **لنطاق الحديث فقط** + الـ variant الحالي + آخر N أدوار (config) + ProjectMemory + ProjectHealth المختصر.
+- ميزانية tokens لكل دورة (config) — تجاوزها → تقليم بالأولوية (النطاق المستهدف أولًا) وتسجيل.
+- نفس قواعد Context Contracts: **لا PII في السياق أبدًا**، ونصوص أسماء المنتجات/العناصر داخل السياق تُعامل كبيانات (9.12).
+
+## 9.4 Project Memory (تطبيق P15 على المحادثة)
+
+- كل قرار محادثة (اختيار من توضيح، رفض اقتراح، تفضيل مصرح) يُسجَّل في `ProjectMemory` — **ولا يُسأل المستخدم عن الشيء نفسه مرتين** (فحص "أُجيب سابقًا؟" قبل أي توضيح).
+- الترقية للذاكرة العامة تبقى بموافقة صريحة فقط (ADR-015/5.8) — المحادثة قد **تقترح** الترقية ("ألاحظ أنك تفضل الرمادي — أحفظه لذوقك العام؟") ولا تنفذها صامتة.
+
+## 9.5 Design Editing (ربط بالآلة المجمدة)
+
+| الأمر | نطاق إعادة التشغيل (من مصفوفة 6.6 — لا اجتهاد) |
+|-------|--------------------------------------------------|
+| استبدال قطعة | FUR(غرفة)→LT→EF(نقاط العنصر)→CST→SHP→V/M→R(غرفة) |
+| أفخم/أرخص لغرفة | variant rules للغرفة→SHP→CST→R |
+| تغيير أرضية/خامة | INT(بند)→CST→SHP→R — مع فحص usage_context (بلاط رطب) |
+| زد الإنارة | LT(غرفة) (وLA فقط إن مسّ الطبقة العامة — يقرره zone-diff) |
+| قلّل الميزانية X% | CST يقترح حزمة تخفيضات موزونة → **معاينة ثم تأكيد** → تطبيق |
+| أضف/احذف قطعة | FUR(غرفة) بفحوص P3 كاملة → التسلسل المعتاد |
+- **كل تعديل = إصدار جديد (P7) + فرق تكلفة يُعرض مع النتيجة دائمًا** — لا تعديل بلا أثر مالي ظاهر.
+- **قرارات جوهرية** (أثر مالي > عتبة config أو تغيير طابع غرفة اجتماعية) → معاينة قبل/بعد + تأكيد صريح قبل الدمج.
+
+## 9.6 Proposal Generation
+
+- التعديلات تولّد `AgentProposal` عبر **الوكلاء المختصين حصريًا** — المحادثة لا تولّد proposals بنفسها؛ حتى تبديل لون (micro-edit) يمر المسار الكامل (ADR-031 نصًا: "حتى لو كان الاقتراح بسيطًا").
+- خيارات التوضيح المعروضة تُبنى من بدائل حقيقية (كتالوج/قواعد) لا من خيال النموذج — كل خيار قابل للتنفيذ فعلًا (P1).
+
+## 9.7 Clarification Questions (بنية لا نص حر)
+
+```typescript
+interface ClarificationRequest {
+  clarification_id: string; message_id: string;
+  question_ar: string;                  // "أي كنبة تقصد؟"
+  options: { id: string; label_ar: string; effect_ar: string;   // أثر كل خيار
+             cost_delta: MoneyRange | null }[];                  // ≤ 4 خيارات
+  allow_free_text: boolean;
+  blocking: boolean;                    // يوقف التعديل حتى الجواب
+}
+```
+- تُطلق عند: غموض النطاق، ثقة intent دون العتبة، تعارض مع قيد، أو قرار جوهري — **التخمين محظور (C9)**.
+
+## 9.8 Multi-turn Conversations
+
+- **حل الإشارات:** "لا، الأغمق" / "نفس اللي في المعيشة" تُحل من سياق آخر الأدوار والاقتراحات المعروضة — وفشل الحل = توضيح.
+- **آلة حالة المحادثة:** `idle → parsing → clarifying → executing → presenting` — رسالة جديدة أثناء `executing`: تُصفّ إن كانت مستقلة النطاق، أو تسأل "أوقف التعديل الجاري وأنفّذ الجديد؟" إن تعارضت (لا supersede صامت).
+- **التراجع:** "ارجع للنسخة السابقة" = عملية versions المجمدة (P7/S15) عبر المحادثة — نسخة جديدة من القديمة، لا محو.
+
+## 9.9 Conversation APIs
+
+```
+POST /api/v1/projects/{id}/chat                    {message} → 202 {message_id, parsed_intent}
+GET  /api/v1/projects/{id}/chat?cursor=            السجل مع نتائج كل رسالة
+POST /api/v1/projects/{id}/chat/{msg_id}/clarify   {option_id | free_text}
+SSE  /api/v1/projects/{id}/events                  intent_parsed · clarification_needed ·
+                                                   edit_preview · edit_applied {new_version, cost_delta} · edit_failed
+```
+
+## 9.10 Conversation Schemas
+
+`ChatMessage` (role, content_ar, parsed_intent, resulting_version, clarifications[]) · `ParsedIntent`/`EditCommand` (9.2) · `ClarificationRequest` (9.7) · `ConversationState` (state, pending_edits[], last_refs[]) — كلها بـ `schema_version` (ADR-029)، والرسائل immutable في السجل (P14).
+
+## 9.11 Failure Handling
+
+| الفشل | السلوك |
+|-------|--------|
+| فشل Intent Parser (LLM) | retry + مزود بديل → وإلا: "لم أفهم — جرّب صياغة أخرى" مع أزرار الأوامر الشائعة (لا انهيار صامت) |
+| ثقة intent منخفضة | توضيح — **ليس فشلًا بل المسار الصحيح** |
+| فشل وكيل أثناء التنفيذ | نمط المجلس المجمد (partial results): يُبلَّغ المستخدم بصدق "تعذّر تعديل الإنارة — البقية طُبّقت" + Health |
+| أمر مركب نجح جزئيًا | تقرير لكل أمر فرعي على حدة (نجح/توضيح/فشل) — لا "تم" مضللة |
+| تعديل يكسر قاعدة صلبة | رفض مُعلَّل ببديل (النمط المجمد من S14) |
+| انقطاع أثناء التنفيذ | استئناف من checkpoints — المحادثة تعرض الحالة الحقيقية عند العودة |
+
+## 9.12 Security & Prompt Injection Protection
+
+- **نص المستخدم غير موثوق بنيويًا:** يُغلَّف كبيانات بمحددات صارمة في prompt الـ Parser؛ **مخرج الـ Parser الوحيد schema مقيد** — لا نص حر يمر للأمام، وأي محاولة حقن تنتهي عمليًا عند حدود الـ schema.
+- **لا تصعيد أدوات:** خدمة المحادثة بلا أدوات (9.1) — حتى لو "أقنع" أحدٌ النموذج، لا يوجد ما يستدعيه.
+- أسماء العناصر/المنتجات داخل السياق (قد تحوي حقنًا من وصف متجر) تُعقَّم وتُعامل كبيانات (امتداد 6.26/7.14).
+- طلبات خارج المجال (كود، محتوى عام، أسئلة عن النظام الداخلي) → رد مهذب بحدود المنتج — **لا تسريب system prompt أو أسماء نماذج أو بنية داخلية.**
+- Rate limits بالباقة (حصص التعديلات المجمدة في §6 API القديمة تُحدَّث في القسم 10) + ميزانية tokens للمحادثة ضمن RunBudget.
+- اختبارات adversarial/injection ضمن evals الإلزامية (6.24) — حزمة هجمات معيارية تعمل في CI.
+
+## 9.13 Observability
+
+دقة الـ intent (عينة موسومة أسبوعيًا) · نسبة التوضيحات (صحية 10–25%: أقل = تخمين محتمل، أكثر = parser ضعيف) · نسبة نجاح التعديلات end-to-end · **P95 نص→تطبيق ≤ 15 ث (SLO المجمد)** · تكلفة الدورة · نسبة المحادثات المهجورة بعد فشل · معدل التعديلات/مشروع (KPI الانخراط 3–15 من §1).
+
+## 9.14 Acceptance Criteria
+
+| # | المعيار | العتبة |
+|---|---------|--------|
+| AC9-1 | أوامر MVP الستة + المركبة تعمل end-to-end | 100% على حزمة اختبار معيارية |
+| AC9-2 | P95 للتعديل النصي (بلا رندر) | ≤ 15 ث |
+| AC9-3 | كل تعديل ينشئ إصدارًا ويعرض فرق التكلفة | 100% — بنيويًا |
+| AC9-4 | صفر تخمين صامت (كل غموض → توضيح مسجل) | تدقيق عيّني أسبوعي |
+| AC9-5 | صفر إعادة سؤال عن مُجاب (P15) | اختبار آلي |
+| AC9-6 | حزمة هجمات الحقن المعيارية | صفر اختراق (schema-bound + لا أدوات) |
+| AC9-7 | أسئلة "لماذا؟" تُجاب من DecisionExplanation المخزنة | 100% (لا توليد ارتجالي) |
+| AC9-8 | نجاح جزئي يُبلَّغ بندًا بندًا | 100% |
+
+**Future Scope (توثيق فقط):** Voice · Avatar · وكيل عام · Agent Marketplace · أدوات خارجية · محادثة استباقية (النظام يبادر).
+
+---
+
+*(القسم 9 جاهز للمراجعة السريعة — التالي فور إغلاقه: القسم 10 Costing, Plans & Payments)*

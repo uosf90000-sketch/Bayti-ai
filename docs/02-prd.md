@@ -19,19 +19,19 @@
 | 3 | رحلة المستخدم التفصيلية (شاشة بشاشة — UX) | ✅ **معتمد** |
 | 4 | المواصفة الهندسية: رفع المخطط وتحليله وتحويله إلى Digital Twin | ✅ **معتمد (مع إضافات المؤسس 4.16–4.24)** |
 | 5 | المواصفة الهندسية: الاستبيان، الذوق، والقيود (Intake & Style) | ✅ **معتمد** |
-| 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام — 4 دفعات) | 🔍 **1/4 ✅ · 2/4 ✅ · 3/4 ✅ · 4/4 جاهزة للمراجعة** |
-| — | **Architecture Freeze v1.0** — [التقرير الكامل](ARCHITECTURE_FREEZE_v1.md) + [الدستور المختصر](PROJECT_CONSTITUTION.md) | ✅ **Approved — Architecture v1.0 (Frozen)** بمصادقة المؤسس 2026-07-15 (الشروط نُفِّذت: F-03/04/05/07 + ADR-030..032) |
-| 7 | **المواصفة الهندسية: Commerce Platform** (قرار مؤسس: منصة تجارة كاملة لا Shopping فقط — كتالوج، Knowledge Graph، مواد بناء، تجار، ذكاء أسعار وتوفر) | 🔍 **جاهز للمراجعة** |
-| 7 | المتطلبات الوظيفية: التسوق، النسخ الثلاث، والتكلفة | ⬜ |
-| 8 | المتطلبات الوظيفية: المخرجات (صور، فيديو، 3D، PDF) | ⬜ |
-| 9 | المتطلبات الوظيفية: التعديل بالمحادثة | ⬜ |
-| 10 | الحسابات، الباقات، والتسعير | ⬜ |
-| 11 | المتطلبات غير الوظيفية (أداء، أمان، لغة، امتثال) | ⬜ |
-| 12 | خارج النطاق، معايير القبول، وبوابات الإطلاق | ⬜ |
-| ملحق A | Future AI Improvements — موثقة ولا تُنفذ الآن (قرار مؤسس) | 📘 حي |
+| 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام) | ✅ **معتمد بدفعاته الأربع** |
+| — | **Architecture Freeze v1.0** — [التقرير الكامل](ARCHITECTURE_FREEZE_v1.md) + [الدستور المختصر](PROJECT_CONSTITUTION.md) | ✅ **Approved — Architecture v1.0 (Frozen)** بمصادقة المؤسس 2026-07-15 |
+| 7 | **Commerce Platform** (منصة تجارة كاملة تشمل مواد البناء) | ✅ **معتمد — ADR-033…036 مفعّلة** |
+| 8 | **Digital Twin Outputs & Rendering** (نطاق مؤسس محدد — 15 بندًا) | 🔍 **جاهز للمراجعة** |
+| 9 | AI Conversation & Design Editing | ⬜ |
+| 10 | Costing, Plans & Payments | ⬜ |
+| 11 | Security, Infrastructure & Deployment | ⬜ |
+| 12 | UI/UX System & Final Acceptance | ⬜ |
+| ملحق A | Future AI Improvements + Future Scope — موثقة ولا تُنفذ الآن (قرار مؤسس) | 📘 حي |
 
-> **منهجية العمل:** لا يُكتب قسم قبل اعتماد الذي يسبقه. كل اعتماد يُسجَّل في جدول الحالة أعلاه. لا برمجة قبل اعتماد الوثائق كاملة.
-> **سجل القرارات:** كل قرار معماري يصعب عكسه يُسجَّل هنا وفي السجل الرسمي المجمع [`docs/ADR.md`](ADR.md).
+> **منهجية العمل:** لا يُكتب قسم قبل اعتماد الذي يسبقه. لا برمجة قبل اعتماد الوثائق كاملة.
+> ⚡ **قاعدة الانضباط بالنطاق (قرار مؤسس — سارية من القسم 8):** أي فكرة جديدة غير ضرورية للتنفيذ الأول: تُوثَّق في Future Scope فقط · لا ADR جديد لها · لا توسّع القسم الحالي · لا تؤخر الكود. لا مراجعات معمارية بعد كل قسم — مراجعة سريعة، إغلاق، انتقال. **الهدف: إنهاء 8–12 ثم Sprint 0.**
+> **سجل القرارات:** [`docs/ADR.md`](ADR.md) — 36 قرارًا مفعّلًا.
 
 ---
 
@@ -3087,4 +3087,168 @@ WH   commerce.* webhooks                                      (B2B لاحقًا 
 
 ---
 
-*(القسم 7 جاهز للمراجعة — التالي بعد اعتماده: القسم 8 المخرجات، وفق ترتيب ENGINEERING_BOOTSTRAP)*
+# القسم 8 — Digital Twin Outputs & Rendering
+
+> نطاق مؤسس محدد بـ 15 بندًا — لا توسع خارجه. كل شيء هنا **مشتق من التوأم** (P8/ADR-008): لا قرارات معمارية جديدة، تنفيذ فوق المجمد. Marketplace/Metaverse/AR المتقدم: **Future Scope فقط** (آخر القسم).
+
+## 8.1 توليد المشهد (3D Scene Generation)
+
+**مُصرِّف حتمي `TwinToScene`** يحول التوأم إلى مشهد glTF 2.0:
+
+| عنصر التوأم | التمثيل في المشهد |
+|--------------|---------------------|
+| الجدران | Extrusion من centerline بسماكتها وارتفاعها الفعليين |
+| الأبواب/الشبابيك | فتحات حقيقية في الجدران + موديل من مكتبة الأصول حسب النوع، بمقاس الفتحة |
+| الأرضيات/الأسقف | أسطح بمساحات الغرف الفعلية + MaterialDefinition من finish_spec |
+| الأثاث | موديل من مكتبة الأصول حسب `item_type` بمقاسات العنصر (قواعد التحجيم في 8.8) — في موضعه/دورانه من placement |
+| الإنارة | مصادر ضوء حقيقية من FixturePlacement (موضع، lumen، CCT) — **الليل يُضاء بخطة الإنارة المصممة فعلًا** |
+| الخامات | mapping من نظام خاماتنا إلى PBR materials (مكتبة 8.8) |
+
+- **قاعدة:** المشهد **مشتق قابل لإعادة التوليد** — يُبنى من `twin_version_id` محدد ويحمله؛ لا يُحرَّر يدويًا أبدًا.
+
+## 8.2 Rendering Pipeline
+
+| المسار | التقنية | الزمن المستهدف (P95) |
+|--------|----------|------------------------|
+| **Preview فوري** | العارض التفاعلي نفسه (8.3) — real-time | ≤ 5 ث من فتح الشاشة |
+| **صور فوتوريالية نهائية** | GPU server: توليد موجه بهندسة المشهد (depth/segmentation guides من الـ Scene — النهج المجمد من الجيل الأول) | ≤ 60 ث/صورة، ≤ 120 ث/غرفة (زاويتان) |
+| **نهاري/ليلي** | Presets إضاءة: نهاري (شمس + DaylightAssumption) / ليلي (LightingPlan حصريًا) — نفس الكاميرا | ضمن ميزانية الصورة |
+| **قبل/بعد** | نفس `CameraPath/camera params` عبر إصدارين → زوج متطابق الإطار | صورة إضافية واحدة فقط (الأصل مؤرشف) |
+| **النسخ الثلاث** | نفس المشهد الهندسي، تبديل materials/assets حسب variant — لا إعادة بناء | كاش المشهد يجعلها رخيصة |
+
+## 8.3 Interactive 3D (العارض)
+
+- **القدرات:** دوران/تكبير (orbit) + تجول (walk بارتفاع عين 1.6م، تصادم بالجدران) + اختيار عنصر → بطاقته (الاسم، المقاس، **المبرر P2**، المنتج والسعر) + إظهار/إخفاء طبقات (أثاث/إنارة/كهرباء).
+- **الجوال:** لمس كامل (قرص/سحب)، واجهة عناصر مبسطة، وfallback تلقائي للأجهزة الضعيفة (8.8).
+- **المصدر:** نفس الـ Scene — لا نسخة ثانية (ADR-030).
+
+## 8.4 Video Generation (منضبط — لا توليد فيديو متقدم في v1)
+
+- جولة آلية: `CameraPath` يُولَّد حتميًا من circulation graph (المدخل → الغرف بأولوية اجتماعية ثم خاصة) — قابل للتعديل الخفيف (ترتيب الغرف).
+- المدة: 60–90 ث (config حسب الباقة)؛ الجودة: 720p (أساسية) / 1080p (Pro) / 4K (Premium).
+- التنفيذ: تصيير مسار الكاميرا من الـ Scene + انتقالات + موسيقى مرخصة من مكتبة — **بلا نماذج توليد فيديو** (Future Scope).
+
+## 8.5 PDF Report
+
+المحتوى بالترتيب: غلاف باسم العائلة والمشروع → ملخص المشروع والتصميم (ملاحظات كبير المصممين) → المخططات (لكل طابق: مخطط ملون + توزيع الأثاث) → صور الغرف (نهاري/ليلي للرئيسية) → خطة الإنارة (مبسطة فوق المخطط) → جداول الأثاث والعناصر بالمواصفات والمبررات → الميزانية (لكل غرفة/قسم/إجمالي + النسخ الثلاث) → المنتجات وروابط الشراء (QR لكل غرفة يفتح قائمتها الحية) → **الملاحظات والتحذيرات** (كل `requires_site_review` وneeds_verification — الصدق في التقرير أيضًا) → QR المشروع التفاعلي.
+- RTL سليم 100%، بهوية [WOW_MOMENTS](WOW_MOMENTS.md) (إخراج مجلة معمارية)، يحمل `twin_version_id` وتاريخ أسعاره على كل صفحة تسعير.
+
+## 8.6 لحظات WOW في هذا القسم (من الوثيقة المرجعية — هذه فقط)
+
+| اللحظة | التنفيذ هنا |
+|--------|--------------|
+| W2 ميلاد المنزل 2D→3D | انتقال كاميرا سينمائي من المخطط المسطح إلى الـ Scene (نفس الإحداثيات — استمرارية مكانية) |
+| W7 الليل والنهار | مفتاح presets 8.2 في العارض — تبديل ≤ 1 ث (إضاءتان محسوبتان مسبقًا) |
+| W4 تبديل النسخ | تبديل material/asset sets على نفس المشهد ≤ 1 ث (محملة مسبقًا) |
+| W8 قبل/بعد | slider بزوج الإطار المتطابق (8.2) |
+| W10 الجولة | فيديو 8.4 + مشهد ختامي |
+- **قيد حاكم:** أي لحظة تكسر ميزانيات 8.9 تُبسَّط — الأداء قبل الإبهار (قاعدة WOW_MOMENTS نفسها).
+
+## 8.7 Render Truthfulness (قواعد ملزمة)
+
+1. كل صورة/فيديو/مشهد/PDF يحمل `twin_version_id` الذي اشتُق منه — **بلا استثناء**.
+2. **لا عنصر بصري غير موجود في التوأم** — لا "staging" تجميلي بقطع غير مصممة؛ ما يظهر يمكن شراؤه.
+3. التحسين البصري (إضاءة جمالية، عمق ميدان) **لا يغيّر المقاسات أو الهندسة** — هندسة الـ guides مقفولة، وتدقيق عيّني أسبوعي يقارن segmentation الناتج بالمشهد (انحراف > tolerance = فشل جودة).
+4. **الرندر ليس مصدر حقيقة** — لا يُستخرج منه أي بيانات ولا يُغذّى عائدًا إلى التوأم أبدًا.
+
+## 8.8 Asset Pipeline
+
+- **مكتبتان مُدارتان (curated — لا رفع أصول من المستخدم في v1):** `MaterialDefinition` (PBR لكل خامة/تشطيب في نظامنا) + مكتبة موديلات أثاث بحسب `item_type`.
+- **التحجيم:** الموديل يُحجَّم لمقاسات العنصر ضمن ±10% كحد أقصى (config) — أبعد من ذلك يُستخدم أقرب موديل مقاسًا مع علم `asset_approximation` (يظهر في الجودة، لا يُخفى).
+- **LOD:** LOD0 خفيف (preview/جوال) · LOD1 (تفاعلي) · LOD2 (رندر نهائي) — توليد آلي عند إدخال الأصل.
+- **ضغط:** Draco للهندسة + KTX2/Basis للخامات؛ **Caching** بمفتاح hash الأصل + CDN؛ **Fallback للأجهزة الضعيفة:** كشف قدرة الجهاز → LOD0 بخامات مبسطة، وأدنى من ذلك → صور ثابتة 360° بدل 3D حي (التجربة لا تنكسر أبدًا).
+
+## 8.9 Performance Budgets (config — قابلة للمعايرة لا للتجاهل)
+
+| البند | الميزانية |
+|-------|-----------|
+| أول Preview تفاعلي | ≤ 5 ث (P95) على جوال متوسط/4G |
+| تفاعل العارض | 60fps أساسية؛ ≥ 30fps حد أدنى مطلق على الجوال المتوسط |
+| Progressive loading | الغرفة المفتوحة أولًا ثم الجيران — التجول لا ينتظر المنزل كاملًا |
+| reduced-motion | احترام كامل (بديل انتقالات فورية) |
+| الجودة المتدرجة | مصفوفة جهاز × باقة (config): دقة الخامات، LOD، عدد مصادر الضوء الحية |
+| حجم التحميل الأولي | ≤ 8MB للمعاينة الأولى (بعد الضغط) |
+
+## 8.10 Schemas (كلها بـ `schema_version` وفق ADR-029)
+
+```typescript
+interface RenderJob { job_id: string; project_id: string; twin_version_id: string;
+  variant_id: string; kind: "scene"|"still"|"video"|"pdf"|"before_after";
+  scope: { room_ids: string[] | "all" }; preset_id: string;
+  status: "queued"|"running"|"partial"|"completed"|"failed"|"cancelled";
+  checkpoints: { room_id: string; state: string }[];    // استئناف لكل غرفة
+  cost_estimate_sar: number; created_at: string; }
+interface RenderPreset { preset_id: string; kind: string;
+  lighting_mode: "day"|"night"; quality_tier: "preview"|"standard"|"final_720|1080|4k";
+  camera_defaults: object; }                             // presets في config
+interface SceneAsset { asset_id: string; item_type: string; source: "curated_library";
+  lods: { level: 0|1|2; uri: string; size_kb: number }[];
+  scale_limits_pct: number; hash: string; }
+interface MaterialDefinition { material_id: string; maps_to: string;  // خامة نظامنا
+  pbr: { base_color: string; roughness: number; metallic: number; texture_uris: object }; }
+interface CameraPath { path_id: string; twin_version_id: string;
+  waypoints: { pos: Vec3; look_at: Vec3; dwell_s: number; room_id: string }[];
+  generated_from: "circulation_graph"; user_edits: object[] | null; }
+interface RenderArtifact { artifact_id: string; job_id: string; twin_version_id: string;  // 8.7-1
+  room_id: string | null; kind: "image"|"scene_gltf"; preset_id: string;
+  uri: string; size_kb: number; checksum: string; created_at: string; }
+interface VideoArtifact extends RenderArtifact { kind_v: "video"; duration_s: number;
+  resolution: string; camera_path_id: string; }
+interface PDFArtifact extends RenderArtifact { kind_p: "pdf"; pages: number;
+  price_as_of: string; includes_warnings: boolean; }
+interface BeforeAfterComparison { comparison_id: string;
+  before: { twin_version_id: string; artifact_id: string };
+  after:  { twin_version_id: string; artifact_id: string };
+  camera_locked: true; cost_delta: MoneyRange; }
+```
+
+## 8.11 APIs
+
+```
+POST   /api/v1/projects/{id}/renders                 إنشاء مهمة {kind, scope, preset, variant}
+GET    /api/v1/projects/{id}/renders/{job_id}        الحالة + checkpoints + تقدم لكل غرفة
+GET    /api/v1/projects/{id}/renders/{job_id}/artifacts
+POST   /api/v1/projects/{id}/renders/room/{room_id}  إعادة رندر غرفة محددة فقط (الإبطال الانتقائي)
+DELETE /api/v1/projects/{id}/renders/{job_id}        إلغاء (يحفظ المكتمل)
+GET    /api/v1/artifacts/{artifact_id}/download      presigned URL مؤقت
+```
+- الأحداث عبر SSE الموحد: `render.room_ready` (تدفقي — W-موجه)، `render.job_completed|partial|failed`.
+
+## 8.12 Failure Handling
+
+| الفشل | السلوك |
+|-------|--------|
+| GPU provider down | failover للمزود الثاني (طبقة inference الموحدة) — retry ×2 قبله |
+| Asset مفقود/تالف | fallback: موديل بديل أقرب → وإلا صندوق بارامتري بمقاسات العنصر + علم `asset_missing` (لا يفشل الرندر) |
+| Timeout غرفة | إعادة بجودة أدنى درجة واحدة (quality fallback ladder) قبل إعلان فشل الغرفة |
+| **Render جزئي** | الغرف الناجحة **تُنشر فورًا** (`partial`) — الفاشلة تُعاد وحدها؛ **الفشل لا يفقد أي نتيجة ناجحة أبدًا** |
+| انقطاع منتصف المهمة | استئناف من checkpoint الغرفة (بنية RenderJob.checkpoints) |
+| فشل PDF (خط/صورة) | توليد بدون العنصر المتعذر + علم — لا حجب التقرير كاملًا |
+
+## 8.13 Security
+
+روابط تنزيل presigned ≤ 15 دقيقة · عزل artifacts ببادئة المشروع + IAM (نمط 4.21) · لا أصول من المستخدم في v1 (المكتبة curated — يغلق ثغرة الأصول الخبيثة بنيويًا؛ فتحها مستقبلًا = مراجعة أمنية وADR) · تحقق checksums للأصول عند التحميل · حدود أحجام لكل artifact (config) · **حذف المشروع = حذف كل مخرجات الرندر ضمن pipeline الحذف المدقق بالبصمة (4.21)**.
+
+## 8.14 Observability
+
+زمن كل مرحلة (scene/still/video/pdf) P50/P95 · **تكلفة الرندر لكل مشروع/غرفة** (ضمن COGS — سقفه من 4.22/6.7) · نسبة الفشل ونوعه · **fallback rate** (أصول ناقصة، جودة مخفضة، أجهزة ضعيفة) · أحجام الملفات · أداء الجوال الفعلي (fps telemetry عيّني بموافقة) · **نسبة إكمال الجولات** (KPI من WOW_MOMENTS: ≥70%).
+
+## 8.15 Acceptance Criteria
+
+| # | المعيار | العتبة |
+|---|---------|--------|
+| AC8-1 | كل artifact يحمل `twin_version_id` | 100% — بنيويًا في الـ schema |
+| AC8-2 | لا اختلاف هندسي بين التوأم والرندر | تدقيق segmentation عيّني أسبوعي ضمن tolerance + صفر عناصر غير موجودة في التوأم |
+| AC8-3 | إعادة رندر غرفة دون إعادة المشروع | endpoint مخصص + اختبار آلي (لا jobs زائدة) |
+| AC8-4 | المعاينة تعمل على الجوال | ≤ 5 ث أولى، ≥ 30fps على جهاز متوسط مرجعي (يُختبر على أجهزة حقيقية) |
+| AC8-5 | الفشل لا يفقد نتيجة ناجحة | اختبار حقن فشل (نمط F2E-1) على مهمة متعددة الغرف |
+| AC8-6 | لحظات WOW لا تضر الأداء أو الوصولية | كل لحظة ضمن ميزانيات 8.9 + reduced-motion بديل كامل |
+| AC8-7 | PDF عربي RTL سليم بكل أقسامه العشرة شاملًا التحذيرات | 100% على عينة قرّاء PDF شائعة |
+
+## Future Scope (توثيق فقط — لا تنفيذ، لا ADRs، وفق قاعدة الانضباط)
+
+Marketplace لأصول 3D · Metaverse/جولات تشاركية · AR متقدم · توليد فيديو بنماذج generative · رفع أصول من المستخدم · exports لمحركات خارجية (Unreal/Blender) — تُقيَّم بعد الإطلاق فقط.
+
+---
+
+*(القسم 8 جاهز للمراجعة السريعة — التالي فور إغلاقه: القسم 9 AI Conversation & Design Editing)*

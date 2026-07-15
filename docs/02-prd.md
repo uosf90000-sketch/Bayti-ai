@@ -5,7 +5,7 @@
 | **المنتج** | Bayti AI — منصة تحويل مخططات المنازل إلى تصاميم تنفيذية مُسعَّرة |
 | **الإصدار** | v2.0 — يُبنى قسمًا بقسم باعتماد المؤسس |
 | **المالك** | CTO |
-| **الحالة** | 🟡 قيد الكتابة — القسم 6 (الدفعة 1/4) جاهز للمراجعة |
+| **الحالة** | 🟡 قيد الكتابة — القسم 6 (الدفعة 2/4) جاهز للمراجعة |
 | **آخر تحديث** | 2026-07-14 |
 
 ---
@@ -19,7 +19,7 @@
 | 3 | رحلة المستخدم التفصيلية (شاشة بشاشة — UX) | ✅ **معتمد** |
 | 4 | المواصفة الهندسية: رفع المخطط وتحليله وتحويله إلى Digital Twin | ✅ **معتمد (مع إضافات المؤسس 4.16–4.24)** |
 | 5 | المواصفة الهندسية: الاستبيان، الذوق، والقيود (Intake & Style) | ✅ **معتمد** |
-| 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام — 4 دفعات) | 🔍 **دفعة 1/4 جاهزة للمراجعة** |
+| 6 | المواصفة الهندسية: مجلس الوكلاء ومواصفات التصميم (قلب النظام — 4 دفعات) | 🔍 **1/4 ✅ معتمدة · 2/4 جاهزة للمراجعة** |
 | 7 | المتطلبات الوظيفية: التسوق، النسخ الثلاث، والتكلفة | ⬜ |
 | 8 | المتطلبات الوظيفية: المخرجات (صور، فيديو، 3D، PDF) | ⬜ |
 | 9 | المتطلبات الوظيفية: التعديل بالمحادثة | ⬜ |
@@ -1858,6 +1858,396 @@ interface DecisionExplanation {
 - **Acceptance Criteria:** 100% قرارات معروضة لها الطبقات الثلاث؛ 100% من `calculations` قابلة لإعادة التشغيل في CI.
 - **ADR-6.3 · الحسابات كمراجع معادلات لا نصوص:** `formula_ref` يشير لمعادلة مسجلة في Rule Engine بإصدار — **مرفوض:** معادلات حرة نصية داخل الـ explanation (غير قابلة لإعادة التشغيل ولا للتدقيق، وتفتح باب C6 من النافذة).
 
+## 6.6 الـ DAG والتبعيات (رسمي)
+
+> **قرار مؤسس مثبّت:** الإنارة مرحلتان (Architectural / Task & Accent) والكهرباء مرحلتان (Rough-in / Final) — هذا ما يكسر الدورة `Lighting ↔ Furniture ↔ Electrical` نهائيًا: مراحل صريحة ونسخ وسيطة مجمدة، لا تكرار تفاوضي بين وكلاء.
+
+### الـ DAG المعتمد v1
+
+```mermaid
+flowchart TD
+    A[architect] --> I[interior]
+    A --> K[kitchen]
+    A --> B[bathroom]
+    A --> LS[landscape*]
+    A --> H[hvac]
+    I --> LA[lighting_architectural]
+    K --> LA
+    B --> LA
+    LS --> LA
+    I --> F[furniture]
+    LA --> ERI[electrical_roughin]
+    K --> ERI
+    B --> ERI
+    H --> ERI
+    F --> LT[lighting_task_accent]
+    LA --> LT
+    F --> EF[electrical_final]
+    LT --> EF
+    K --> EF
+    I & K & B & LS & H & F & LA & LT & ERI & EF --> C[cost]
+    F --> S[shopping]
+    C --> S
+    C & S --> V[Validation Engine]
+    V --> M[Merge Engine]
+    M --> TW[(Twin version N+1)]
+    TW --> R[Rendering]
+```
+`landscape*` مشروط بوجود مساحة خارجية (manifest activation).
+
+### مستويات التوازي
+
+| المستوى | يعمل بالتوازي | ينتظر |
+|---------|----------------|--------|
+| L0 | architect | التوأم المؤكد + IntakeBundle مجمدة |
+| L1 | interior · kitchen · bathroom · landscape · hvac | L0 |
+| L2 | lighting_architectural **·** furniture | L1 (كلاهما — مستقلان عن بعضهما) |
+| L3 | electrical_roughin **·** lighting_task_accent | roughin: يحتاج LA+K+B+H · task: يحتاج F+LA |
+| L4 | electrical_final | F + LT + K (الأجهزة) |
+| L5 | cost | كل التصميم |
+| L6 | shopping | F + C |
+| L7 | validation → merge → twin freeze → rendering | تسلسلي |
+
+### مصفوفة التبعيات (Dependency Matrix — ✔ = يعتمد على)
+
+| ↓ يعتمد على → | ARC | INT | KIT | BTH | LND | HVAC | LA | FUR | LT | ERI | EF | CST | SHP |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| interior | ✔ | | | | | | | | | | | | |
+| kitchen | ✔ | | | | | | | | | | | | |
+| bathroom | ✔ | | | | | | | | | | | | |
+| landscape | ✔ | | | | | | | | | | | | |
+| hvac | ✔ | | | | | | | | | | | | |
+| **lighting_arch (LA)** | ✔ | ✔ | ✔ | ✔ | ✔ | | | **✘ لا يعتمد على الأثاث** | | | | | |
+| furniture (FUR) | ✔ | ✔ | | | | | | | | | | | |
+| **lighting_task (LT)** | | | | | | | ✔ | **✔** | | | | | |
+| electrical_roughin (ERI) | ✔ | | ✔ | ✔ | | ✔ | ✔ | | | | | | |
+| **electrical_final (EF)** | | | ✔ | | | | | **✔** | **✔** | ✔ | | | |
+| cost (CST) | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | | |
+| shopping (SHP) | | | | | | | | ✔ | | | | ✔ | |
+
+**فحص الدورات:** المصفوفة مثلثية (topological order موجود) — فحص آلي في CI على manifests السجل: **أي PR يضيف تبعية تخلق دورة يُرفض قبل الدمج**.
+
+### نموذج الأحداث (Event Model + Ordering — قرار مؤسس)
+
+```typescript
+interface CouncilEvent {
+  event_id: string;                 // ULID
+  correlation_id: string;           // جولة المجلس
+  project_id: string;
+  sequence_number: number;          // ⭐ متزايد ذريًا لكل project (Postgres sequence)
+  event_version: "1.0";             // إصدار الـ schema
+  type: "run_started"|"run_completed"|"run_failed"|"run_superseded"
+       |"proposal_rule_checked"|"conflict_detected"|"merge_committed"
+       |"twin_version_frozen"|"clarification_needed"|"budget_exceeded";
+  payload: object;
+  emitted_at: string;
+}
+```
+- **قاعدة الترتيب:** كل مستهلك (واجهة، health، مراقبة) يخزّن آخر `sequence_number` عالجه **ويرفض أي حدث أقدم** (لا يطبّقه — يسجله فقط) — يستحيل أن يخرّب حدث متأخر حالة أحدث.
+- الأحداث immutable وتغذي: SSE للواجهة، ProjectHealth، الـ Audit (P14).
+
+### دلالات النتائج الجزئية (Partial Results — قرار مؤسس)
+
+1. نجاح وكيل = **artifact غير مدموج** (proposals بحالة `rule_checked`) محفوظ بمفتاح `{correlation_id}:{agent_id}:{inputs_hash}`.
+2. فشل وكيل آخر **لا يمس** النتائج الناجحة — لا يُعاد تشغيل ناجح بلا سبب (السبب الوحيد: تغيّر مدخلاته → يظهر في `inputs_hash`).
+3. الفاشل يستأنف من checkpoint مرحلته، لا من الصفر.
+4. **لا يصدر Final Twin (merge) حتى تكتمل جميع المسارات الحاجبة** — المسارات غير الحاجبة (landscape لغياب حديقة، shopping المؤجل) تُعلَّم skipped صراحة.
+
+### مصفوفة إعادة التشغيل الانتقائية (Selective Rerun Matrix — معتمدة)
+
+| التغيير | يعيد | **لا** يعيد |
+|---------|-------|--------------|
+| استبدال قطعة أثاث (نفس الفئة والموضع التقريبي) | FUR(الغرفة) → LT(الغرفة) → EF(نقاط العنصر) → CST → SHP(العنصر) → V/M → R(الغرفة) | ARC، تحليل المخطط، INT، KIT، BTH، **LA**، ERI |
+| تغيير توزيع أثاث غرفة | FUR(الغرفة) → LT → EF → CST → SHP → V/M → R | LA **إلا إذا** غيّر التوزيع مناطق الاستخدام الأساسية (يقرره فحص zone-diff حتمي) |
+| تغيير تقسيم مناطق غرفة (دمج جلستين، نقل ركن طعام) | INT(الغرفة) → **LA(الغرفة)** → FUR → LT → ERI(الغرفة) → EF → CST → SHP → V/M → R | باقي الغرف |
+| تغيير ارتفاع سقف / سقف جبس جديد | **LA + LT + ERI + EF (للغرفة) + HVAC(الغرفة)** → CST → V/M → R | FUR (إلا تعارض ارتفاعي مكتشف) |
+| تغيير تشطيب (لون جدار/أرضية) | INT(البند) → CST → SHP(البند) → R(الغرفة) | كل الهندسة والإنارة والكهرباء |
+| تغيير نمط غرفة كاملة | INT → LA(إن تغيّرت الأجواء الضوئية المطلوبة) → FUR → LT → EF → CST → SHP → V/M → R | ARC، غرف أخرى |
+| خفض/رفع ميزانية | CST → توصيات → SHP (نفس التصميم، منتجات أخرى) | كل التصميم الهندسي |
+| تعديل جدار/فتحة في المخطط | **عودة للقسم 4** (twin جديد) → إبطال انتقائي بالغرف المتأثرة فقط عبر geometry-diff | الغرف غير المتأثرة هندسيًا |
+
+- **حدود الإبطال:** يقررها **diff حتمي** (geometry-diff / zone-diff / spec-diff) لا اجتهاد LLM — الـ Orchestrator يحسب مجموعة الإبطال الدنيا من مصفوفة التبعيات + نطاق التغيير.
+
+### ADR-6.4 · مراحل مجمدة بدل حلقات تفاوض (Two-Phase Lighting & Electrical)
+- **القرار:** كسر دورة `Lighting ↔ Furniture ↔ Electrical` بمرحلتين لكل من الإنارة والكهرباء مع **نسخ وسيطة مجمدة** بينهما — LA يُجمَّد قبل FUR، وERI يُجمَّد قبل EF.
+- **البدائل المرفوضة:** حلقة تفاوض تكرارية بين الوكلاء حتى "يتفقوا" (غير حتمية، لا ضمان تقارب، غير قابلة للتدقيق)؛ إنارة واحدة بعد الأثاث بالكامل (تجعل الإنارة المعمارية — الأغلى تنفيذًا في السقف — رهينة كل تعديل كنبة: إعادة حساب مكلفة وخاطئة مفهوميًا لأن rough-in ينفَّذ في الموقع قبل دخول الأثاث أصلًا — **الـ DAG يطابق تسلسل البناء الواقعي**).
+
+## 6.7 الـ Orchestrator (مكوّن مستقل)
+
+- **Purpose:** المنفذ الوحيد لدستور C5 — كل تنسيق المجلس يمر به، ولا شيء غيره يملك صورة الجولة الكاملة.
+- **Inputs:** IntakeBundle مجمدة + Twin مؤكد + Agent Manifests + Rule Pack versions. **Outputs:** `OrchestrationPlan` ثم تنفيذها حتى `twin_version_frozen` أو توقف آمن.
+
+### القدرات (كلها إلزامية v1)
+
+| القدرة | المواصفة |
+|--------|-----------|
+| بناء خطة التنفيذ | من السجل التصريحي + الـ DAG: يحسب topological order والتوازي المتاح لكل مشروع (غرف النطاق فقط) |
+| الجدولة والـ concurrency | حد تواز لكل جولة (config: `council.max_parallel_agents: 5`) + أولوية طابور بالباقة |
+| توزيع السياق الأدنى | **Context Contracts** (أدناه) — لا وكيل يستلم أكثر من عقده |
+| منع تضخم السياق | ميزانية tokens لسياق كل وكيل في الـ manifest؛ التجاوز → تقليم بالأولوية (النطاق المستهدف أولًا) + تسجيل تحذير |
+| Retries | سياسة الوكيل من manifest؛ الفشل schema مرة واحدة → إعادة مع رسالة الخطأ؛ مرتان → فشل |
+| Circuit breakers | فشل متتالٍ لوكيل عبر N مشاريع (config) → فتح الدائرة: تعليم أقسامه ⚠ آليًا + إنذار فريق، بدل إغراق المزود |
+| Idempotency | مفتاح `{correlation_id}:{agent_id}:{inputs_hash}` — إعادة التسليم لا تكرر التنفيذ |
+| Deduplication | نفس المفتاح قيد التنفيذ → انتظار النتيجة لا تشغيل موازٍ |
+| Caching | نتيجة بنفس `inputs_hash` + نفس `agent_version+prompt_version+rule_packs` → تُستخدم من الكاش (أساس كفاءة النسخ الثلاث والتعديلات) |
+| Cancellation | إلغاء جولة → إيقاف الـ pending، إكمال الـ running الرخيص، حفظ كل شيء كـ artifacts |
+| Human checkpoints | نقاط توقف معلنة في الخطة (مثل: مراجعة المستخدم بعد LA للنطاق الواسع) — قابلة للتفعيل بالباقة/الحجم |
+| Budgets ⭐ | أدناه |
+| Model fallback | عبر طبقة LLM الموحدة؛ **عدد الـ fallbacks محسوب ضمن ميزانية الجولة** |
+| Audit trail | كل قرار جدولة/تخطي/إلغاء حدث مسجل (P14) |
+| **Fail-fast gate** | **لا يشغّل وكيلًا مكلفًا إن كانت مدخلاته ناقصة أو كان Hard Constraint معروف سيُفشل المشروع لاحقًا** — فحص مسبق حتمي قبل كل L-level (مثال: الميزانية أقل من حد أدنى محسوب → يتوقف قبل حرق تكلفة المجلس ويعيد المستخدم لمحرك التناقضات 5.9) |
+
+### Context Contracts (قرار مؤسس — الحد الأدنى لكل وكيل)
+
+```typescript
+interface ContextContract {           // جزء من Agent Manifest
+  agent_id: string;
+  allowed_inputs: ArtifactType[];     // قائمة بيضاء — ما ليس فيها لا يصل للوكيل
+  scope_filter: "rooms_in_scope"|"target_room_only"|"outdoor_only"|"project_wide";
+  pii_allowed: false;                 // ثابت — لا وكيل يستلم PII
+  max_context_tokens: number;
+  redactions: string[];               // حقول تُحذف دائمًا (أسماء، هاتف، عنوان دقيق...)
+}
+```
+
+| الوكيل | يستلم فقط |
+|--------|------------|
+| architect | Twin كامل + Intake بلا PII |
+| interior | Twin(غرف النطاق) + zones + StyleVector + قيود + أصول قائمة |
+| kitchen / bathroom | Twin(غرفته فقط) + Household(الحقول المؤثرة) + ميزانية قسمه + Style |
+| landscape | Twin(الخارجي فقط) + مناخ المدينة + قيود |
+| hvac | هندسة الغرف + نوافذ + اتجاه + مدينة — **بلا أي تفاصيل أسلوبية** |
+| lighting (LA/LT) | هندسة الغرف + concepts (+furniture للـ LT فقط) |
+| electrical (ERI/EF) | LA/LT + متطلبات KIT/BTH/HVAC (+furniture للـ EF فقط) |
+| furniture | Twin(غرف النطاق) + concepts + Household + أصول + clearances |
+| cost | كل الـ proposals المقبولة + market_rates + الميزانية — **بلا صور مرجعية/ذوق** |
+| shopping | specs المجمدة + كتالوج مرشّح + مدينة + متاجر محظورة |
+
+### ميزانيات الجولة (Orchestrator Budgets — قرار مؤسس)
+
+```typescript
+interface RunBudget {                  // لكل جولة مجلس — من config حسب الباقة
+  max_wall_time_s: number;             // Free: 420 · Pro: 600 · Premium: 900
+  max_cost_sar: number;                // Free: 6 · Pro: 15 · Premium: 30
+  max_tokens_total: number;
+  max_retries_total: number;           // عبر كل الوكلاء
+  max_model_fallbacks: number;
+  max_external_calls: number;          // كتالوج/تخزين — حماية من الحلقات
+}
+```
+- **عند تجاوز أي حد: توقف آمن** — حفظ كل الـ artifacts، تجميد الجولة بحالة `budget_exceeded`، وعرض قرار على المستخدم/العمليات (أكمل بترقية / أكمل نطاقًا أضيق / راجع) — **لا استمرار مفتوح أبدًا**.
+
+## 6.8 محرك القواعد الهندسية (Rule Engine)
+
+### نظام الترقيم الرسمي
+
+`ARC-` معماري · `INT-` داخلي · `LGT-` إنارة · `ELE-` كهرباء · `HVAC-` تكييف · `KIT-` مطبخ · `BTH-` حمامات · `FUR-` أثاث · `LND-` خارجي · `ACC-` وصول · `SAF-` سلامة · `CST-` ميزانية · `SHP-` مطابقة — الرقم `XXX-NNN` ثابت مدى الحياة (لا يُعاد استخدام رقم محذوف).
+
+### RuleDefinition (Schema كامل)
+
+```typescript
+interface RuleDefinition {
+  rule_id: string;                     // "FUR-001"
+  title_ar: string;
+  description: string;
+  jurisdiction: "SA"|"GCC"|"global";
+  room_types: RoomType[] | "all";
+  inputs: string[];                    // الحقول المطلوبة من التوأم/الproposal
+  predicate: string;                   // تعبير حتمي مسمى (CEL-like) أو formula_ref
+  threshold: number | null;            // القيمة من configuration_key — ليست هنا
+  unit: string | null;
+  severity: "error"|"warning"|"info";
+  hard_or_soft: "hard"|"soft";
+  remediation_ar: string;              // ماذا يفعل الوكيل/المستخدم لإصلاحها
+  source: RuleSource;                  // ⭐ التصنيف الخماسي أدناه
+  source_version: string | null;
+  effective_date: string;
+  configuration_key: string;           // "rules.fur.min_walkway_m" — القيمة في config (1.10-5)
+  test_cases: { given: object; expect: "pass"|"fail" }[];   // إلزامية — قاعدة بلا اختبارات لا تُفعَّل
+  exceptions: { condition: string; reason_ar: string }[];
+  confidence_requirement: number;      // أدنى ثقة مدخلات لتقييم موثوق — دونها = "غير قابلة للتقييم" وليس "ناجحة"
+}
+
+type RuleSource =
+  | { kind: "official_code";        ref: string; version: string; verified_by: string; verified_at: string }
+  | { kind: "industry_standard";    ref: string }        // IES, EN 12464, NKBA...
+  | { kind: "recommended_practice"; ref: string | null }
+  | { kind: "adjustable_preference" }                     // قابل للتعديل من المستخدم
+  | { kind: "internal_product_rule" };
+```
+
+> ⚠ **قاعدة إلزامية (قرار مؤسس):** لا توصف أي قاعدة بأنها "مطابقة لكود البناء السعودي" إلا بـ `kind=official_code` مع مرجع محدد وإصدار **وتحقق موثق باسم مهندس/مستشار قانوني وتاريخ** (`verified_by/verified_at`). حتى إتمام التحقق، تُصنف القواعد المستلهمة منه `industry_standard` أو `internal_product_rule` — **الصدق في مصدر القاعدة جزء من الصدق الهندسي.**
+
+### التقييم الحتمي (Deterministic Evaluation — قرار مؤسس)
+
+- **الضمان:** `evaluate(inputs, rule_pack_versions) → نفس النتيجة دائمًا، بت-بت.` لا وصول شبكة، لا عشوائية، لا ساعة نظام داخل predicates (الزمن يُمرر كمدخل إن لزم).
+- يُثبت باختبار CI: كل rule pack يقيَّم على مدخلات الـ Golden Set مرتين بترتيبين مختلفين — نتائج متطابقة.
+
+```typescript
+interface RuleEvaluation {
+  evaluation_id: string;
+  rule_id: string; rule_pack_version: string;
+  target: { proposal_id?: string; entity_id?: string };
+  inputs_snapshot: object;             // ما قُيّم عليه فعلًا — قابلية إعادة تشغيل
+  result: "pass"|"fail"|"not_applicable"|"not_evaluable";  // الأخيرة عند نقص ثقة المدخلات
+  measured_value: number | null; threshold_used: number | null;
+  evaluated_at: string;
+}
+```
+
+### Rule Packs (قرار مؤسس)
+
+| Pack | المحتوى | ملاحظة |
+|------|----------|--------|
+| `saudi-baseline` | قواعد السياق السعودي العامة (مجالس، خصوصية، مناخ) | internal + recommended |
+| `accessibility` | ACC-* (كبار سن، كراسي متحركة) | يُفعَّل تلقائيًا حسب HouseholdProfile |
+| `child-safety` | SAF-CHD-* | يُفعَّل بوجود أطفال |
+| `kitchen` / `bathroom` / `lighting` / `electrical` | KIT-* / BTH-* / LGT-* / ELE-* | دائمًا |
+| `internal-product` | قواعد جودة منتجنا (اتساق، اكتمال) | دائمًا |
+
+- كل مشروع يسجل **`rule_pack_versions` المستخدمة في كل جولة** (في AgentRun وMergeTransaction) — إعادة فتح مشروع قديم تقيّم بنُسخه هو ما لم يطلب المستخدم الترقية.
+
+### Shadow Evaluation (قرار مؤسس — بوابة إطلاق نسخ القواعد)
+
+```
+نسخة pack جديدة ──► تعمل shadow بالتوازي على حركة الإنتاج الحقيقية (تقيّم ولا تؤثر)
+   ──► مقارنة آلية: فروق pass/fail لكل قاعدة مقابل النسخة الحالية
+   ──► تقرير: قواعد زادت رفضًا؟ عينات الفروق تُراجع بشريًا
+   ──► بوابة الترقية: 100% test_cases خضراء + لا زيادة رفض كاذب (عتبة config) + اعتماد مالك القواعد
+   ──► تفعيل تدريجي (10% → 100%) مع مراقبة
+```
+
+### ADR-6.5 · القواعد بيانات تصريحية في حزم مُصدَّرة (Rules-as-Data)
+- **القرار:** كل قاعدة `RuleDefinition` بياني في rule packs مُدارة بالإصدارات، يقيّمها محرك حتمي واحد.
+- **البدائل المرفوضة:** قواعد مكتوبة كودًا داخل كل وكيل (لا تُختبر مركزيًا، لا تُصدَّر لكل مشروع، تتكرر وتتناقض)؛ قواعد داخل prompts (تكسر P12 وC10 — غير حتمية أصلًا).
+
+## 6.9 مواصفة الإنارة التفصيلية
+
+### المرحلتان (قرار مؤسس معتمد)
+
+| | **Architectural Lighting (LA)** | **Task & Accent Lighting (LT)** |
+|---|---|---|
+| يعتمد على | هندسة الغرفة، الارتفاعات، الإضاءة الطبيعية، الاستخدام العام للغرفة | توزيع الأثاث النهائي، مناطق القراءة/العمل، اللوحات والعناصر الجمالية |
+| ينتج | الطبقة العامة (ambient): downlights/أغطية مخفية/شرائط سقف | task (قراءة/عمل/مرايا) + accent (لوحات/تجاويف/نباتات) |
+| متى يُعاد | تغيّر الهندسة/السقف/تقسيم مناطق الاستخدام **فقط** | أي تغيير أثاث في الغرفة (انتقائيًا) |
+
+### المدخلات الإلزامية لكل غرفة
+`room_type · area_m2 · ceiling(height, kind) · usage (من zones) · windows[] (مساحة/اتجاه) · rotation_north_deg?` — غياب أي إلزامي = blocking (C9).
+
+### جدول الأهداف LGT-TBL-01 (مقتطف — كامل الجدول في `config/rule-packs/lighting/targets.yaml`، المصدر: industry_standard مستأنس بـ EN 12464/IES + تكييف داخلي للسياق السعودي)
+
+| الغرفة | Ambient lux | Task lux | CCT (K) | CRI أدنى |
+|--------|-------------|----------|---------|-----------|
+| مجلس | 150–200 | 300 (زوايا القراءة) | 2700–3000 | 90 |
+| معيشة | 100–150 | 300 | 2700–3000 | 80 |
+| مطبخ | 300 | 500 (سطح العمل) | 4000 | 90 |
+| غرفة نوم | 100–150 | 300 (قراءة) | 2700 | 80 |
+| حمام | 200 | 500 (المرآة، عمودي) | 3000–4000 | 90 |
+| ممر/درج | 100 | — | 3000 | 80 |
+
+### الحسابات (معادلات مسجلة — لا سبوتات زينة بلا حساب)
+
+- **LGT-CALC-01 (lumen):** `required_lm = target_lux × area_m2 ÷ (UF × MF)` حيث UF (معامل الاستفادة) من جدول بحسب انعكاسية التشطيبات (من INT) وهندسة الغرفة، وMF (معامل الصيانة) = 0.8 افتراضًا (config).
+- **LGT-CALC-02 (عدد الوحدات):** `count = ceil(required_lm ÷ fixture_lm)` مع فحص توزيع.
+- **LGT-CALC-03 (التباعد):** `spacing ≤ SHR × mounting_height`؛ المسافة من الجدار = `spacing ÷ 2`؛ SHR من نوع الوحدة (config).
+- **LGT-CALC-04 (خصم الإضاءة النهارية):** خصم مشروط على الطبقة العامة نهارًا حسب مساحة الزجاج واتجاهه — **يُسجَّل كـ `DaylightAssumption` قابلة للمراجعة، ولا يخفض الطبقة الليلية أبدًا**.
+
+### قواعد LGT-* (مقتطفات مؤسسة — كلٌّ بمصدرها وconfig key)
+
+| Rule | القاعدة | Source |
+|------|---------|--------|
+| LGT-001 | تحقيق lux الهدف ±10% لكل غرفة/طبقة | industry_standard |
+| LGT-010 | beam angle حسب الارتفاع: ≤2.8م → 60°، 2.8–3.5م → 36–40°، >3.5م → 24° | recommended_practice |
+| LGT-020 | Glare: لا downlight عارٍ فوق خط نظر الجلوس مباشرة؛ UGR مبسط للمجالس | industry_standard |
+| LGT-021 | Shadow control بالمطبخ: مصدر task أمام مستوى العمل لا خلف الواقف | recommended_practice |
+| LGT-030 | Fixture clearance: pendant فوق طاولة 75–90سم من السطح؛ مسار مشي خالٍ حتى 2.1م | recommended_practice |
+| LGT-031 | Maintenance access: لا وحدة تتطلب فك تركيبات للوصول إليها | internal_product_rule |
+| LGT-040 | Dimming إلزامي: مجلس/معيشة/نوم (طبقة ambient) | internal_product_rule |
+| LGT-050 | Energy: كثافة القدرة ≤ حد W/م² لكل نوع غرفة (config) + تقدير استهلاك بالخطة | internal_product_rule |
+
+### مخرجات الإنارة (قرار مؤسس — Schemas)
+
+```typescript
+interface LightingPlan {              // قابلة للرسم فوق الـ Digital Twin مباشرة
+  room_id: string; phase: "architectural"|"task_accent";
+  zones: LightingZone[]; fixtures: FixturePlacement[];
+  circuit_intents: LightingCircuitIntent[];
+  calculations: LuxCalculation[];
+  daylight_assumptions: DaylightAssumption[];
+  task_dependencies: TaskLightingDependency[];
+  render_hints: RenderHints;
+  twin_version_id: string; version: number;
+}
+interface LightingZone { zone_id: string; layer: "ambient"|"task"|"accent";
+  polygon_m: Vec2[]; target_lux: number; achieved_lux: number; }
+interface FixturePlacement { fixture_id: string; zone_id: string;
+  kind: "downlight"|"pendant"|"chandelier"|"cove_strip"|"wall_washer"|"track_spot"|"mirror_light"|"floor_uplight";
+  position: { x: number; y: number; mount_height_m: number };
+  spec: { lumen: number; cct_k: number; cri_min: number; beam_deg: number; dimmable: boolean; ip_rating?: string };
+  serves: string | null;              // item_id للأثاث المخدوم (task/accent)
+  explanation: DecisionExplanation; }
+interface LightingCircuitIntent {     // نية دوائر — الكهرباء تحولها لدوائر فعلية
+  intent_id: string; fixture_ids: string[];
+  switching: "single"|"two_way"|"dimmer"|"scene"; suggested_switch_location: string; }
+interface LuxCalculation { calc_ref: "LGT-CALC-01"|"LGT-CALC-02"|"LGT-CALC-03"|"LGT-CALC-04";
+  inputs: Record<string, number>; result: number; unit: string; }
+interface DaylightAssumption { window_id: string; orientation: string;
+  assumed_contribution_lux: number; applies_to: "day_ambient_only"; user_reviewable: true; }
+interface TaskLightingDependency { fixture_id: string; depends_on_item_id: string;
+  rerun_trigger: "item_moved"|"item_removed"|"item_replaced"; }   // مفتاح الإبطال الانتقائي
+interface RenderHints { mood: "warm_evening"|"bright_day"|"dramatic";
+  key_light_zones: string[]; }        // موجهات للرندر — مشتقة لا مصدر (P8)
+```
+
+## 6.10 مواصفة الكهرباء التفصيلية
+
+### المرحلتان (قرار مؤسس معتمد)
+
+| | **RoughInElectricalPlan (ERI)** | **FinalElectricalPlan (EF)** |
+|---|---|---|
+| طبيعته | ما يُنفَّذ في الجدران/الأسقف مبكرًا — قبل الأثاث | ما يعتمد على المواضع النهائية للأثاث والأجهزة |
+| يشمل | أفياش عامة بقاعدة توزيع المحيط، تغذية مكيفات/سخانات، نقاط المطبخ الثابتة (بمتطلبات KIT)، مناطق أمان الحمامات، مواسير TV/data، دوائر الإنارة من LightingCircuitIntent | فيش جانبي السرير حسب موضعه، مكتب + USB-C عند المكتب الفعلي، نقاط شحن عند الجلسات، إنارة المرايا، ستائر كهربائية، كاميرات، dock مكنسة روبوت |
+| يعتمد على | LA + متطلبات KIT/BTH/HVAC + zones | Furniture + LT + مواضع الأجهزة النهائية |
+| متى يُعاد | تغيّر الهندسة/السقف/الأنظمة الثابتة | أي تغيير أثاث/أجهزة يمس نقاطه (انتقائيًا عبر served_item) |
+
+### ElectricalPoint (Schema — قرار مؤسس: لا نقطة بلا سبب)
+
+```typescript
+interface ElectricalPoint {
+  point_id: string; phase: "rough_in"|"final";
+  kind: "socket"|"switch"|"data"|"tv"|"usb_c"|"appliance_feed"|"mirror_light_feed"
+       |"camera"|"motorized_curtain"|"smart_hub"|"ev_charger_provision";
+  wall_id: string | null;             // أو surface: "floor"|"ceiling"|"island"
+  position_on_wall_m: number;         // من بداية الجدار
+  height_m: number;                   // من ارتفاعات قياسية بقاعدة ELE-010
+  circuit_group: string;              // منطقي v1 (التنفيذي يعتمده مهندس موقع)
+  purpose_ar: string;                 // "شاحن جانب السرير الأيمن"
+  served_item_id: string | null;      // العنصر المخدوم — إلزامي لنقاط final
+  source_requirement: string | null;  // kitchen_requirements/bathroom_requirements ref
+  explanation: DecisionExplanation;
+}
+interface SwitchGroup { group_id: string; controls: string[];  // LightingCircuitIntent ids
+  location: { wall_id: string; height_m: number; by_door_id: string | null };
+  logic: "entry"|"two_way_bed"|"scene_panel"; }
+```
+
+### قواعد ELE-* وSAF-ELE-* (مقتطفات مؤسسة)
+
+| Rule | القاعدة | Source |
+|------|---------|--------|
+| ELE-001 | كل نقطة `final` لها `served_item_id` + سبب — لا نقاط زينة | internal_product_rule |
+| ELE-010 | ارتفاعات قياسية: أفياش عامة 30سم؛ مفاتيح 110–120سم؛ فوق أسطح المطبخ 110سم؛ AC حسب الوحدة | recommended_practice |
+| ELE-011 | توزيع المحيط: لا نقطة على جدار معيشة تبعد > مسافة config عن أقرب فيش | recommended_practice |
+| SAF-ELE-001 | مناطق أمان الحمام: لا نقاط within المنطقة 0/1؛ IP44+ في 2 (تعريف المناطق بحزمة bathroom) | industry_standard (IEC-inspired — pending official_code verification) |
+| SAF-ELE-002 | مسافة آمنة عن مصادر الماء/الحرارة بالمطبخ (config لكل نوع) | industry_standard |
+| SAF-ELE-003 | لا نقطة خلف قوس فتح باب (تقاطع مع clearance_polygon) | internal_product_rule |
+| ELE-020 | كل LightingCircuitIntent مُلبّى بمفتاح موقعه منطقي (عند المدخل، two-way لغرف النوم من السرير) | recommended_practice |
+| ELE-030 | نقاط smart home تُحجز provision في rough-in إن اختار المستخدم الخيار (F6) | internal_product_rule |
+| ELE-090 | حساب الأحمال النهائي للوحة التوزيع = **`requires_certified_engineer` دائمًا** — يُصدر تقدير استرشادي معلَّم فقط | internal_product_rule |
+
+- **Failure Cases:** نقطة تكسر SAF-ELE → رفض حتمي لا نقاش؛ served_item حُذف لاحقًا → النقطة تُعلَّم يتيمة وتدخل جولة EF الانتقائية.
+- **Acceptance Criteria:** صفر نقاط بلا غرض/عنصر؛ صفر خروقات SAF-ELE؛ كل مفتاح مرتبط بدائرته وموقعه مبرر؛ فصل rough-in/final نظيف 100% (لا نقطة final في جدار لم يعد موجودًا في rough-in).
+
 ---
 
-*(القسم 6 — الدفعات 2/4 و3/4 و4/4 تُستكمل تباعًا، ثم الأقسام 7–12)*
+*(القسم 6 — الدفعتان 3/4 و4/4 تُستكملان تباعًا، ثم الأقسام 7–12)*

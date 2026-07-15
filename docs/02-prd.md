@@ -5,7 +5,7 @@
 | **المنتج** | Bayti AI — منصة تحويل مخططات المنازل إلى تصاميم تنفيذية مُسعَّرة |
 | **الإصدار** | v2.0 — يُبنى قسمًا بقسم باعتماد المؤسس |
 | **المالك** | CTO |
-| **الحالة** | 🔒 Frozen · الأقسام 1–10 معتمدة · 11+12 جاهزان للمراجعة الأخيرة — بعدها: الكود |
+| **الحالة** | ✅ **الأقسام 1–12 معتمدة كاملة — Documentation Complete: Go to Build (2026-07-15)** · Sprint 0 جارٍ |
 | **آخر تحديث** | 2026-07-14 |
 
 ---
@@ -25,8 +25,8 @@
 | 8 | **Digital Twin Outputs & Rendering** | ✅ **معتمد** |
 | 9 | AI Conversation & Design Editing | ✅ **معتمد** |
 | 10 | Costing, Plans & Payments (أقفل F-11) | ✅ **معتمد** |
-| 11 | Security, Infrastructure & Deployment | 🔍 **جاهز للمراجعة** |
-| 12 | UI/UX System & Final Acceptance | 🔍 **جاهز للمراجعة** |
+| 11 | Security, Infrastructure & Deployment | ✅ **معتمد** |
+| 12 | UI/UX System & Final Acceptance | ✅ **معتمد** |
 | ملحق A | Future AI Improvements + Future Scope — موثقة ولا تُنفذ الآن (قرار مؤسس) | 📘 حي |
 
 > **منهجية العمل:** لا يُكتب قسم قبل اعتماد الذي يسبقه. لا برمجة قبل اعتماد الوثائق كاملة.

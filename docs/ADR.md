@@ -1,6 +1,6 @@
 # Architecture Decision Records — Bayti AI
 
-> 🔒 **Architecture Freeze v1.0 (2026-07-15):** القرارات ADR-001 → ADR-029 كلها بحالة **Active** — روجعت في [مرحلة ADR Freeze](ARCHITECTURE_FREEZE_v1.md) (صفر تعارضات، 29/29 ببدائل مرفوضة موثقة). بعد مصادقة المؤسس على الـ Freeze: **أي تغيير معماري يتطلب ADR جديدًا معتمدًا من المؤسس قبل التنفيذ.**
+> 🔒 **Architecture v1.0 (Frozen) — صادق المؤسس على Architecture Freeze v1.0 بتاريخ 2026-07-15** (مصادقة مشروطة نُفِّذت شروطها: تطبيق F-03/F-04/F-05/F-07 + إضافة ADR-030..032). القرارات ADR-001 → ADR-032 كلها بحالة **Active** — صفر تعارضات، وكلها ببدائل مرفوضة موثقة. **أي تغيير معماري من الآن يتطلب ADR جديدًا معتمدًا من المؤسس قبل التنفيذ — لا استثناءات.**
 
 > **السجل الرسمي المجمع لكل القرارات المعمارية التي يصعب عكسها.**
 > كل قرار: السياق، القرار، البدائل المرفوضة (مع سبب الرفض)، والعواقب.
@@ -37,6 +37,9 @@
 | ADR-027 | النسخ الثلاث ملفات معايرة (variants) فوق توأم واحد — لا ثلاث جولات مجلس مستقلة | ✅ معتمد | [PRD §6.20 ADR-6.8](02-prd.md) |
 | ADR-028 | دورة حياة التكلفة الثلاثية Estimate→Quote→Actual مع Price Confidence لكل بند | ✅ معتمد | [PRD §6.21](02-prd.md) |
 | ADR-029 | تطوير الـ Schemas: additive-first + major version بهجرة مُختبرة ونافذة قراءة مزدوجة — المشاريع القديمة تُقرأ بإصداراتها | ✅ معتمد | [PRD §6.27 ADR-6.9](02-prd.md) |
+| ADR-030 | **Canonical Truth:** كل معلومة لها مصدر حقيقة واحد فقط — DigitalTwin للهندسة، Rule Engine للقواعد، StyleVector للذوق، Budget Allocation Engine للميزانية، Project Timeline للتسلسل الزمني. لا يُسمح بنسختين من الحقيقة أبدًا | ✅ معتمد (قرار مؤسس مباشر) | [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) |
+| ADR-031 | **AI Is Advisory:** الذكاء الاصطناعي يقترح ولا يغيّر بيانات المشروع مباشرة — كل تعديل دائم مهما صغر يمر عبر `Proposal → Rule Engine → Conflict Resolver → Merge Engine → Digital Twin` (يعمّم ADR-018 على كل مسار AI بما فيه المحادثة والتعديلات البسيطة) | ✅ معتمد (قرار مؤسس مباشر) | [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) |
+| ADR-032 | **UI Independence:** واجهة المستخدم ليست مصدر بيانات — Web/iOS/Android/Vision Pro/Desktop كلها قابلة للاستبدال دون أي تغيير في الـ Domain Model؛ كل منطق المجال خلف الـ API | ✅ معتمد (قرار مؤسس مباشر) | [PROJECT_CONSTITUTION.md](PROJECT_CONSTITUTION.md) |
 
 ---
 

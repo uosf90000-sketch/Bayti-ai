@@ -10,8 +10,13 @@ Bayti AI هي منصة ذكاء اصطناعي تحوّل أي مخطط منزل
 
 ## 📚 الوثائق التأسيسية
 
+> 🔒 **Architecture v1.0 (Frozen)** — ابدأ القراءة من [**دستور المشروع**](docs/PROJECT_CONSTITUTION.md)، ثم [الـ PRD الرسمي](docs/02-prd.md) (المرجع عند أي تعارض)، و[سجل القرارات ADR](docs/ADR.md) و[تقرير الـ Freeze](docs/ARCHITECTURE_FREEZE_v1.md).
+
 | # | الوثيقة | الوصف |
 |---|---------|-------|
+| ⭐ | [PROJECT_CONSTITUTION](docs/PROJECT_CONSTITUTION.md) | الدستور المختصر — يُقرأ أولًا |
+| ⭐ | [ADR](docs/ADR.md) | سجل القرارات المعمارية (32 قرارًا — Frozen) |
+| ⭐ | [ARCHITECTURE_FREEZE_v1](docs/ARCHITECTURE_FREEZE_v1.md) | تقرير التجميد: قاموس، مخاطر، ديون، جاهزية 89/100 |
 | 1 | [Product Vision](docs/01-product-vision.md) | الرؤية، الرسالة، ولماذا سنفوز |
 | 2 | [PRD](docs/02-prd.md) | متطلبات المنتج التفصيلية ورحلة المستخدم |
 | 3 | [Software Architecture](docs/03-software-architecture.md) | المعمارية البرمجية للنظام |

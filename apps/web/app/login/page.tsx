@@ -2,7 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Brand } from "@/components/ui";
-import { store } from "@/lib/mock";
+import { auth } from "@/lib/services";
+import { TEST_OTP_ALLOWED } from "@/lib/flags";
 
 export default function Login() {
   const router = useRouter();
@@ -16,19 +17,18 @@ export default function Login() {
 
   const requestOtp = async () => {
     setBusy(true); setError("");
-    await new Promise((r) => setTimeout(r, 700)); // mock — عقد OtpRequest
+    await auth.requestOtp(phone);
     setBusy(false); setStep("otp");
   };
 
   const verify = async () => {
     setBusy(true); setError("");
-    await new Promise((r) => setTimeout(r, 600));
-    if (code === "1234") {
-      store.login(phone);
+    const res = await auth.verifyOtp(phone, code);
+    if (res.ok) {
       router.replace("/projects");
     } else {
       setBusy(false);
-      setError("الرمز غير صحيح — في النسخة التجريبية استخدم 1234");
+      setError(res.error ?? "تعذّر الدخول");
     }
   };
 
@@ -72,7 +72,9 @@ export default function Login() {
             <button className="btn btn-ghost btn-block" onClick={() => { setStep("phone"); setCode(""); setError(""); }}>
               تغيير الرقم
             </button>
-            <p className="dim" style={{ textAlign: "center", fontSize: 13 }}>نسخة تجريبية — الرمز: 1234</p>
+            {TEST_OTP_ALLOWED && (
+              <p className="dim" style={{ textAlign: "center", fontSize: 13 }}>نسخة تجريبية — الرمز: 1234</p>
+            )}
           </div>
         )}
       </div>

@@ -140,14 +140,22 @@ export default function Shopping({ params }: { params: Promise<{ id: string }> }
             </Link>
           </div>
 
-          {/* الكتالوج الحقيقي (Bayti Catalog Builder) — منتجات حقيقية اجتازت حد الجودة فقط، منفصلة عن إجمالي المشروع أعلاه */}
+          {/*
+            الكتالوج الحقيقي (Bayti Catalog Builder) — Catalog Beta Scope (راجع docs/CATALOG_INTEGRATION.md):
+            يعرض فقط منتجات اجتازت حد الجودة (60+) من CatalogRepository — لا يُحتسب ضمن إجمالي المشروع
+            أو أي توصية أعلاه، ولن يُحتسب حتى قرار منتج منفصل يوسّع نطاق ذلك عمدًا. منتجات Review Queue
+            (327 منتجًا لم تجتز الحد بعد) غير مجلوبة هنا إطلاقًا — لا في العرض ولا في أي حساب.
+          */}
           <div style={{ marginTop: 28 }}>
             <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 6 }}>
               <h2 className="h-lg">الكتالوج الحقيقي</h2>
               <span className="chip chip-success">منتجات حقيقية بروابط شراء رسمية</span>
             </div>
-            <p className="muted t-sm" style={{ marginBottom: 14 }}>
-              من متاجر سعودية حقيقية — تُعرض فقط المنتجات التي اجتازت حد الجودة (سعر وحالة توفر موثّقان). لا تُحتسب هذه القائمة ضمن إجمالي المشروع أعلاه بعد.
+            <p className="muted t-sm" style={{ marginBottom: 6 }}>
+              من متاجر سعودية حقيقية — تُعرض فقط المنتجات التي اجتازت حد الجودة (سعر وحالة توفر موثّقان). لا تُحتسب هذه القائمة ضمن إجمالي المشروع أعلاه أو أي توصية بعد.
+            </p>
+            <p className="dim t-sm" style={{ marginBottom: 14 }}>
+              ⚠ الأسعار وحالة التوفر تتغير لدى المتاجر — تاريخ "آخر تحقق" موضّح لكل منتج، وقد يختلف السعر الفعلي وقت الشراء.
             </p>
             {catalogProducts === null ? (
               <div className="grid-cards">
@@ -180,6 +188,9 @@ export default function Shopping({ params }: { params: Promise<{ id: string }> }
                           </a>
                         )}
                       </div>
+                      <p className="dim t-sm" style={{ marginTop: 8 }}>
+                        {offer.sourceCheckedAt ? `آخر تحقق: ${offer.sourceCheckedAt}` : "تاريخ التحقق غير مؤكد"}
+                      </p>
                     </div>
                   );
                 })}

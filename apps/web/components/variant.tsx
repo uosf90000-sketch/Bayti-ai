@@ -7,7 +7,7 @@ export function VariantSwitcher({ value, onChange }: { value: VariantId; onChang
   return (
     <div
       role="tablist" aria-label="نسخة التصميم"
-      className="glass" style={{ display: "flex", padding: 6, gap: 6, borderRadius: 16 }}
+      className="card" style={{ display: "flex", padding: 6, gap: 6, borderRadius: "var(--r-control)" }}
     >
       {VARIANTS.map((v) => {
         const active = v.id === value;
@@ -16,14 +16,14 @@ export function VariantSwitcher({ value, onChange }: { value: VariantId; onChang
             key={v.id} role="tab" aria-selected={active}
             onClick={() => onChange(v.id)}
             className="btn" style={{
-              flex: 1, minHeight: 46, padding: "0 10px", fontSize: 14.5, flexDirection: "column", gap: 0,
-              background: active ? "linear-gradient(135deg, var(--gold-300), var(--gold-500))" : "transparent",
-              color: active ? "var(--night-950)" : "var(--sand-300)",
-              boxShadow: active ? "0 6px 20px rgba(194,164,94,0.35)" : "none",
+              flex: 1, minHeight: 54, padding: "0 8px", fontSize: 14.5, flexDirection: "column", gap: 2,
+              background: active ? "linear-gradient(135deg, var(--accent), var(--accent-strong))" : "transparent",
+              color: active ? "var(--on-accent)" : "var(--text-2)",
+              boxShadow: active ? "var(--shadow-soft)" : "none",
             }}
           >
-            <span style={{ fontWeight: 800 }}>{v.icon} {v.label}</span>
-            <span style={{ fontSize: 11, fontWeight: 500, opacity: 0.8 }}>{v.desc}</span>
+            <span style={{ fontWeight: 800, fontSize: 14.5 }}>{v.icon} {v.label}</span>
+            <span style={{ fontSize: 14, fontWeight: 500, opacity: 0.8 }}>{v.desc}</span>
           </button>
         );
       })}

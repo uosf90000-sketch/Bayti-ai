@@ -10,6 +10,8 @@ export const flags = {
   USE_MOCK_ANALYSIS: on(process.env.NEXT_PUBLIC_USE_MOCK_ANALYSIS),
   USE_MOCK_COUNCIL: on(process.env.NEXT_PUBLIC_USE_MOCK_COUNCIL),
   USE_MOCK_RESULTS: on(process.env.NEXT_PUBLIC_USE_MOCK_RESULTS),
+  /** VS-4: سجل المشاريع + Storage المخططات + checkpoints التحليل (Supabase). يتطلب أيضًا مصادقة حقيقية — راجع supabase/README.md */
+  USE_MOCK_PROJECTS: on(process.env.NEXT_PUBLIC_USE_MOCK_PROJECTS),
 } as const;
 
 /**

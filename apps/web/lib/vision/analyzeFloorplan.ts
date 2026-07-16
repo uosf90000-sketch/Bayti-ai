@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { RoomType } from "@bayti/design-schema";
+import { getAnthropicClient, classifyAnthropicError, logAiCall } from "../ai/client";
 
 /**
  * تحليل مخطط حقيقي عبر رؤية Claude — لا بيانات ثابتة، لا Demo (توجيه المؤسس).
@@ -43,6 +44,8 @@ const SYSTEM_PROMPT = `أنت مهندس معماري تحلّل مخططات م
 - الأبعاد (dimensions_m): فقط إن كانت أرقام العرض/الطول/الارتفاع مكتوبة صراحة على المخطط أو قابلة للقياس بثقة من مقياس مرسوم — وإلا اجعل dimensions_m كاملة null. لا تخمّن أبعادًا من شكل الغرفة فقط.
 - confidence لكل غرفة: رقم بين 0 و1 يعكس ثقتك الحقيقية في نوع الغرفة، لا رقمًا ثابتًا.
 - overall_confidence: ثقتك الإجمالية في قراءة المخطط ككل (جودة الصورة، وضوح الخطوط، اكتمال المخطط).
+- إن كان الملف PDF متعدد الصفحات: ركّز فقط على الصفحة/الصفحات التي تُظهر فعليًا مخطط الغرف (تجاهل أغلفة، جداول بيانات، مخططات موقع عامة لا تُظهر تقسيم غرف). إن وُجد أكثر من طابق في صفحات منفصلة، اجمع غرف كل الطوابق الظاهرة فعليًا كغرف مستقلة — لا تُكرر نفس الغرفة لكل صفحة.
+- إن كانت الصورة غير واضحة لدرجة يتعذّر معها تمييز الغرف بثقة معقولة: أعد أفضل قراءة ممكنة مع confidence منخفض صريح (أقل من 0.4) بدل رفض الاستجابة — overall_confidence المنخفض هو الإشارة الصادقة، لا رفض التحليل.
 - استخدم أداة report_rooms فقط — لا نص حر خارجها.`;
 
 function assertSupported(mediaType: string): "image" | "document" {
@@ -54,78 +57,81 @@ function assertSupported(mediaType: string): "image" | "document" {
 }
 
 export async function analyzeFloorplan(base64Data: string, mediaType: string): Promise<AnalysisResult> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("analyzeFloorplan: ANTHROPIC_API_KEY غير مضبوط — لا يمكن تشغيل تحليل حقيقي بدونه.");
-  }
   const kind = assertSupported(mediaType);
-  const { default: Anthropic } = await import("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey });
+  const started = Date.now();
+  try {
+    const client = await getAnthropicClient();
 
-  const content: Array<Record<string, unknown>> =
-    kind === "image"
-      ? [{ type: "image", source: { type: "base64", media_type: mediaType, data: base64Data } }]
-      : [{ type: "document", source: { type: "base64", media_type: mediaType, data: base64Data } }];
+    const content: Array<Record<string, unknown>> =
+      kind === "image"
+        ? [{ type: "image", source: { type: "base64", media_type: mediaType, data: base64Data } }]
+        : [{ type: "document", source: { type: "base64", media_type: mediaType, data: base64Data } }];
 
-  const response = await client.messages.create({
-    model: "claude-sonnet-5",
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,
-    tools: [
-      {
-        name: "report_rooms",
-        description: "الإبلاغ عن الغرف المكتشفة في المخطط مع نوع كل غرفة ومساحتها وثقة الاكتشاف",
-        input_schema: {
-          type: "object",
-          properties: {
-            rooms: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  type: { type: "string", enum: RoomType.options },
-                  name_ar: { type: "string" },
-                  area_m2: { type: ["number", "null"] },
-                  dimensions_m: {
-                    type: ["object", "null"],
-                    properties: {
-                      width: { type: ["number", "null"] },
-                      length: { type: ["number", "null"] },
-                      height: { type: ["number", "null"] },
+    const response = await client.messages.create({
+      model: "claude-sonnet-5",
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      tools: [
+        {
+          name: "report_rooms",
+          description: "الإبلاغ عن الغرف المكتشفة في المخطط مع نوع كل غرفة ومساحتها وثقة الاكتشاف",
+          input_schema: {
+            type: "object",
+            properties: {
+              rooms: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    type: { type: "string", enum: RoomType.options },
+                    name_ar: { type: "string" },
+                    area_m2: { type: ["number", "null"] },
+                    dimensions_m: {
+                      type: ["object", "null"],
+                      properties: {
+                        width: { type: ["number", "null"] },
+                        length: { type: ["number", "null"] },
+                        height: { type: ["number", "null"] },
+                      },
+                      required: ["width", "length", "height"],
                     },
-                    required: ["width", "length", "height"],
+                    confidence: { type: "number", minimum: 0, maximum: 1 },
                   },
-                  confidence: { type: "number", minimum: 0, maximum: 1 },
+                  required: ["type", "name_ar", "area_m2", "dimensions_m", "confidence"],
                 },
-                required: ["type", "name_ar", "area_m2", "dimensions_m", "confidence"],
               },
+              overall_confidence: { type: "number", minimum: 0, maximum: 1 },
             },
-            overall_confidence: { type: "number", minimum: 0, maximum: 1 },
+            required: ["rooms", "overall_confidence"],
           },
-          required: ["rooms", "overall_confidence"],
         },
-      },
-    ],
-    tool_choice: { type: "tool", name: "report_rooms" },
-    messages: [
-      {
-        role: "user",
-        content: [
-          ...content,
-          { type: "text", text: "حلّل هذا المخطط باستخدام أداة report_rooms فقط، وفق القواعد المذكورة في تعليمات النظام." },
-        ] as never,
-      },
-    ],
-  });
+      ],
+      tool_choice: { type: "tool", name: "report_rooms" },
+      messages: [
+        {
+          role: "user",
+          content: [
+            ...content,
+            { type: "text", text: "حلّل هذا المخطط باستخدام أداة report_rooms فقط، وفق القواعد المذكورة في تعليمات النظام." },
+          ] as never,
+        },
+      ],
+    });
 
-  const toolUse = response.content.find((b) => b.type === "tool_use");
-  if (!toolUse || toolUse.type !== "tool_use") {
-    throw new Error("analyzeFloorplan: لم يُرجع النموذج نتيجة أداة صالحة — فشل التحليل، لا نتيجة بديلة.");
-  }
+    const toolUse = response.content.find((b) => b.type === "tool_use");
+    if (!toolUse || toolUse.type !== "tool_use") {
+      throw new Error("analyzeFloorplan: لم يُرجع النموذج نتيجة أداة صالحة — فشل التحليل، لا نتيجة بديلة.");
+    }
 
-  const parsed = AnalysisResultSchema.safeParse(toolUse.input);
-  if (!parsed.success) {
-    throw new Error(`analyzeFloorplan: نتيجة التحليل لا تطابق العقد المطلوب — ${parsed.error.message}`);
+    const parsed = AnalysisResultSchema.safeParse(toolUse.input);
+    if (!parsed.success) {
+      throw new Error(`analyzeFloorplan: نتيجة التحليل لا تطابق العقد المطلوب — ${parsed.error.message}`);
+    }
+    logAiCall({ op: "analyzeFloorplan", status: "ok", durationMs: Date.now() - started });
+    return parsed.data;
+  } catch (e) {
+    logAiCall({ op: "analyzeFloorplan", status: "error", durationMs: Date.now() - started, errorClass: e instanceof Error ? e.constructor.name : "unknown" });
+    if (e instanceof Error && e.message.startsWith("analyzeFloorplan:")) throw e;
+    throw await classifyAnthropicError(e, "analyzeFloorplan");
   }
-  return parsed.data;
 }

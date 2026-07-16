@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { RoomObject, RoomDesign } from "./types";
+import { getAnthropicClient, classifyAnthropicError, logAiCall } from "../ai/client";
 
 /**
  * Design Engine — خادم فقط. يولّد تصميمًا حقيقيًا لغرفة واحدة عبر Claude:
@@ -54,61 +55,63 @@ function roomContext(room: RoomObject): string {
 }
 
 export async function generateRoomDesign(room: RoomObject): Promise<RoomDesign> {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    throw new Error("generateRoomDesign: ANTHROPIC_API_KEY غير مضبوط — لا يمكن توليد تصميم حقيقي بدونه.");
-  }
-  const { default: Anthropic } = await import("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey });
-
-  const response = await client.messages.create({
-    model: "claude-sonnet-5",
-    max_tokens: 4096,
-    system: SYSTEM_PROMPT,
-    tools: [
-      {
-        name: "propose_room_design",
-        description: "اقتراح تصميم كامل لغرفة واحدة: أسلوب، لوحة ألوان، مواد، أثاث، إضاءة",
-        input_schema: {
-          type: "object",
-          properties: {
-            style_ar: { type: "string" },
-            summary_ar: { type: "string" },
-            palette: {
-              type: "array",
-              items: { type: "object", properties: { hex: { type: "string" }, role_ar: { type: "string" }, name_ar: { type: "string" } }, required: ["hex", "role_ar", "name_ar"] },
+  const started = Date.now();
+  try {
+    const client = await getAnthropicClient();
+    const response = await client.messages.create({
+      model: "claude-sonnet-5",
+      max_tokens: 4096,
+      system: SYSTEM_PROMPT,
+      tools: [
+        {
+          name: "propose_room_design",
+          description: "اقتراح تصميم كامل لغرفة واحدة: أسلوب، لوحة ألوان، مواد، أثاث، إضاءة",
+          input_schema: {
+            type: "object",
+            properties: {
+              style_ar: { type: "string" },
+              summary_ar: { type: "string" },
+              palette: {
+                type: "array",
+                items: { type: "object", properties: { hex: { type: "string" }, role_ar: { type: "string" }, name_ar: { type: "string" } }, required: ["hex", "role_ar", "name_ar"] },
+              },
+              materials: {
+                type: "array",
+                items: { type: "object", properties: { category_ar: { type: "string" }, name_ar: { type: "string" }, description_ar: { type: "string" } }, required: ["category_ar", "name_ar", "description_ar"] },
+              },
+              furniture: {
+                type: "array",
+                items: { type: "object", properties: { name_ar: { type: "string" }, category: { type: "string", enum: CATALOG_CATEGORIES as unknown as string[] }, qty: { type: "integer" }, spec_ar: { type: "string" } }, required: ["name_ar", "category", "qty", "spec_ar"] },
+              },
+              lighting: {
+                type: "array",
+                items: { type: "object", properties: { name_ar: { type: "string" }, type_ar: { type: "string" }, qty: { type: "integer" }, notes_ar: { type: "string" } }, required: ["name_ar", "type_ar", "qty", "notes_ar"] },
+              },
+              confidence: { type: "number", minimum: 0, maximum: 1 },
             },
-            materials: {
-              type: "array",
-              items: { type: "object", properties: { category_ar: { type: "string" }, name_ar: { type: "string" }, description_ar: { type: "string" } }, required: ["category_ar", "name_ar", "description_ar"] },
-            },
-            furniture: {
-              type: "array",
-              items: { type: "object", properties: { name_ar: { type: "string" }, category: { type: "string", enum: CATALOG_CATEGORIES as unknown as string[] }, qty: { type: "integer" }, spec_ar: { type: "string" } }, required: ["name_ar", "category", "qty", "spec_ar"] },
-            },
-            lighting: {
-              type: "array",
-              items: { type: "object", properties: { name_ar: { type: "string" }, type_ar: { type: "string" }, qty: { type: "integer" }, notes_ar: { type: "string" } }, required: ["name_ar", "type_ar", "qty", "notes_ar"] },
-            },
-            confidence: { type: "number", minimum: 0, maximum: 1 },
+            required: ["style_ar", "summary_ar", "palette", "materials", "furniture", "lighting", "confidence"],
           },
-          required: ["style_ar", "summary_ar", "palette", "materials", "furniture", "lighting", "confidence"],
         },
-      },
-    ],
-    tool_choice: { type: "tool", name: "propose_room_design" },
-    messages: [
-      { role: "user", content: `صمّم هذه الغرفة فقط باستخدام أداة propose_room_design: ${roomContext(room)}` },
-    ],
-  });
+      ],
+      tool_choice: { type: "tool", name: "propose_room_design" },
+      messages: [
+        { role: "user", content: `صمّم هذه الغرفة فقط باستخدام أداة propose_room_design: ${roomContext(room)}` },
+      ],
+    });
 
-  const toolUse = response.content.find((b) => b.type === "tool_use");
-  if (!toolUse || toolUse.type !== "tool_use") {
-    throw new Error("generateRoomDesign: لم يُرجع النموذج نتيجة أداة صالحة — فشل التوليد، لا نتيجة بديلة.");
+    const toolUse = response.content.find((b) => b.type === "tool_use");
+    if (!toolUse || toolUse.type !== "tool_use") {
+      throw new Error("generateRoomDesign: لم يُرجع النموذج نتيجة أداة صالحة — فشل التوليد، لا نتيجة بديلة.");
+    }
+    const parsed = RoomDesignSchema.safeParse(toolUse.input);
+    if (!parsed.success) {
+      throw new Error(`generateRoomDesign: نتيجة التصميم لا تطابق العقد المطلوب — ${parsed.error.message}`);
+    }
+    logAiCall({ op: "generateRoomDesign", status: "ok", durationMs: Date.now() - started });
+    return { room_id: room.id, ...parsed.data };
+  } catch (e) {
+    logAiCall({ op: "generateRoomDesign", status: "error", durationMs: Date.now() - started, errorClass: e instanceof Error ? e.constructor.name : "unknown" });
+    if (e instanceof Error && e.message.startsWith("generateRoomDesign:")) throw e;
+    throw await classifyAnthropicError(e, "generateRoomDesign");
   }
-  const parsed = RoomDesignSchema.safeParse(toolUse.input);
-  if (!parsed.success) {
-    throw new Error(`generateRoomDesign: نتيجة التصميم لا تطابق العقد المطلوب — ${parsed.error.message}`);
-  }
-  return { room_id: room.id, ...parsed.data };
 }

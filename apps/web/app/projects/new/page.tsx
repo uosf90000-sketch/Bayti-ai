@@ -46,7 +46,7 @@ export default function NewProject() {
       if (!flags.USE_MOCK_ANALYSIS) {
         setAnalyzing(true);
         const result = await analyzeFloorplanClient(file!);
-        twinStore.save({
+        await twinStore.save({
           project_id: p.id,
           source: "vlm",
           overall_confidence: result.overall_confidence,

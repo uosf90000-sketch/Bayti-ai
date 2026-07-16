@@ -51,14 +51,19 @@ export type ShoppingMatch =
 export type RoomCost = {
   room_id: string;
   matchedTotal: number;
-  matchedCount: number;
-  unmatchedCount: number;
+  /** مطابق بمنتج حقيقي وله سعر مؤكد — يدخل matchedTotal */
+  pricedCount: number;
+  /** مطابق بمنتج حقيقي لكن سعره غير مؤكد (منتج بلا سعر) — لا يدخل matchedTotal، منفصل عن "لا يوجد منتج" */
+  matchedUnpricedCount: number;
+  /** لا يوجد منتج مطابق إطلاقًا في الكتالوج */
+  noMatchCount: number;
 };
 
 export type ProjectCost = {
   total: number;
   byRoom: RoomCost[];
   byCategory: Record<string, number>;
+  /** كل عنصر غير محتسب في total — سواء بلا مطابقة أو مطابق بلا سعر مؤكد */
   unpricedItemCount: number;
 };
 

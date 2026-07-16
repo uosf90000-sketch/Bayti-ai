@@ -44,13 +44,13 @@ export default function Analysis({ params }: { params: Promise<{ id: string }> }
   useEffect(() => {
     let i = 0;
     let t: ReturnType<typeof setTimeout>;
-    const next = () => {
+    const next = async () => {
       if (i < STAGES.length) {
         setStage(i);
         t = setTimeout(() => { i += 1; next(); }, isMock ? STAGES[i]!.d : Math.round(STAGES[i]!.d * REAL_STAGE_SCALE));
       } else {
         if (isMock) {
-          setTwin(twinStore.seedMock(id));
+          setTwin(await twinStore.seedMock(id));
         } else {
           const real = twinStore.get(id);
           if (!real) { setMissing(true); return; }

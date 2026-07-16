@@ -80,6 +80,74 @@ export type CatalogOfferRow = {
   updated_at: string;
 };
 
+export type FloorplanAnalysisRow = {
+  id: string;
+  project_id: string;
+  source: "vlm" | "mock";
+  overall_confidence: number;
+  analyzed_at: string;
+  created_at: string;
+};
+
+export type RoomObjectRow = {
+  id: string;
+  project_id: string;
+  floorplan_analysis_id: string;
+  room_type: string;
+  name_ar: string;
+  area_m2: number | null;
+  dimensions: { width: number | null; length: number | null; height: number | null } | null;
+  confidence: number;
+  created_at: string;
+};
+
+export type RoomDesignRow = {
+  id: string;
+  room_id: string;
+  project_id: string;
+  style_ar: string;
+  summary_ar: string;
+  palette: unknown;
+  materials: unknown;
+  furniture: unknown;
+  lighting: unknown;
+  confidence: number;
+  created_at: string;
+};
+
+export type ShoppingMatchRow = {
+  id: string;
+  room_design_id: string;
+  project_id: string;
+  item: unknown;
+  matched: boolean;
+  product_id: string | null;
+  product_name: string | null;
+  price: number | null;
+  product_url: string | null;
+  merchant_name: string | null;
+  created_at: string;
+};
+
+export type CostSummaryRow = {
+  id: string;
+  project_id: string;
+  total: number;
+  by_room: unknown;
+  by_category: unknown;
+  unpriced_item_count: number;
+  computed_at: string;
+};
+
+export type ProjectVersionRow = {
+  id: string;
+  project_id: string;
+  version_number: number;
+  label: string | null;
+  snapshot: unknown;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -111,6 +179,42 @@ export type Database = {
         Row: CatalogOfferRow;
         Insert: Partial<CatalogOfferRow> & { id: string; canonical_product_id: string; merchant_name: string };
         Update: Partial<CatalogOfferRow>;
+        Relationships: [];
+      };
+      floorplan_analyses: {
+        Row: FloorplanAnalysisRow;
+        Insert: Partial<FloorplanAnalysisRow> & { project_id: string; source: "vlm" | "mock"; overall_confidence: number };
+        Update: Partial<FloorplanAnalysisRow>;
+        Relationships: [];
+      };
+      room_objects: {
+        Row: RoomObjectRow;
+        Insert: Partial<RoomObjectRow> & { id: string; project_id: string; floorplan_analysis_id: string; room_type: string; name_ar: string; confidence: number };
+        Update: Partial<RoomObjectRow>;
+        Relationships: [];
+      };
+      room_designs: {
+        Row: RoomDesignRow;
+        Insert: Partial<RoomDesignRow> & { room_id: string; project_id: string; style_ar: string; summary_ar: string; palette: unknown; materials: unknown; furniture: unknown; lighting: unknown; confidence: number };
+        Update: Partial<RoomDesignRow>;
+        Relationships: [];
+      };
+      shopping_matches: {
+        Row: ShoppingMatchRow;
+        Insert: Partial<ShoppingMatchRow> & { room_design_id: string; project_id: string; item: unknown; matched: boolean };
+        Update: Partial<ShoppingMatchRow>;
+        Relationships: [];
+      };
+      cost_summaries: {
+        Row: CostSummaryRow;
+        Insert: Partial<CostSummaryRow> & { project_id: string; total: number; by_room: unknown; by_category: unknown };
+        Update: Partial<CostSummaryRow>;
+        Relationships: [];
+      };
+      project_versions: {
+        Row: ProjectVersionRow;
+        Insert: Partial<ProjectVersionRow> & { project_id: string; version_number: number; snapshot: unknown };
+        Update: Partial<ProjectVersionRow>;
         Relationships: [];
       };
     };

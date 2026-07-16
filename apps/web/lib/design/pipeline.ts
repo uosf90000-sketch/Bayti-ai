@@ -1,5 +1,7 @@
 import type { RoomObject, RoomPipelineResult, ProjectPipeline } from "./types";
 import { runRoomPipeline } from "./client";
+import { computeProjectCost } from "./costEngine";
+import { flags } from "../flags";
 
 /**
  * AI Council الحقيقي — يعمل على كل غرفة على حدة بشكل مستقل تمامًا (طلب منفصل
@@ -20,8 +22,15 @@ export const pipelineStore = {
       return undefined;
     }
   },
-  save(pipeline: ProjectPipeline) {
+  /** يحفظ محليًا دائمًا (كاش فوري)، وإلى Supabase الحقيقي أيضًا عند تفعيل الوضع الحقيقي — Design Results + Shopping Matches + Cost Summary + إصدار جديد */
+  async save(pipeline: ProjectPipeline): Promise<void> {
     localStorage.setItem(`${KEY}:${pipeline.project_id}`, JSON.stringify(pipeline));
+    if (!flags.USE_MOCK_PROJECTS) {
+      const { pipelineRepo } = await import("../supabase/repositories/pipeline");
+      const cost = computeProjectCost(pipeline);
+      await pipelineRepo.savePipeline(pipeline, cost);
+      await pipelineRepo.saveVersion(pipeline.project_id, pipeline);
+    }
   },
 };
 
@@ -42,6 +51,6 @@ export async function runProjectPipeline(
     }),
   );
   const pipeline: ProjectPipeline = { project_id: projectId, rooms: results, generated_at: new Date().toISOString() };
-  pipelineStore.save(pipeline);
+  await pipelineStore.save(pipeline);
   return pipeline;
 }

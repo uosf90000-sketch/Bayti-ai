@@ -1,5 +1,6 @@
 import type { RoomType } from "@bayti/design-schema";
 import { NAJRES_ROOMS } from "./mock";
+import { flags } from "./flags";
 
 /**
  * التوأم الرقمي المبسّط لهذه الشريحة (P8: مصدر الحقيقة الوحيد لعدد/نوع الغرف).
@@ -29,6 +30,7 @@ export type AnalyzedTwin = {
 const KEY = "bayti.twin.v1";
 
 export const twinStore = {
+  /** قراءة محلية فورية (كاش هذا الجهاز) — تعمل في كلا الوضعين، لا تنتظر شبكة */
   get(projectId: string): AnalyzedTwin | undefined {
     if (typeof window === "undefined") return undefined;
     try {
@@ -38,11 +40,16 @@ export const twinStore = {
       return undefined;
     }
   },
-  save(twin: AnalyzedTwin) {
+  /** يحفظ محليًا دائمًا (كاش فوري)، وإلى Supabase الحقيقي أيضًا عند تفعيل الوضع الحقيقي — يفشل بوضوح إن لم يكن Supabase مهيّأً فعليًا */
+  async save(twin: AnalyzedTwin): Promise<void> {
     localStorage.setItem(`${KEY}:${twin.project_id}`, JSON.stringify(twin));
+    if (!flags.USE_MOCK_PROJECTS) {
+      const { pipelineRepo } = await import("./supabase/repositories/pipeline");
+      await pipelineRepo.saveTwin(twin);
+    }
   },
   /** يزرع توأمًا يطابق بيانات فيلا النرجس المرجعية — يُستخدم فقط في وضع mock أو مشروع "مثال" صريح */
-  seedMock(projectId: string): AnalyzedTwin {
+  async seedMock(projectId: string): Promise<AnalyzedTwin> {
     const typeByKey: Record<string, RoomType> = {
       majlis: "majlis_men", living: "living", kitchen: "kitchen",
       master: "bedroom_master", kids: "kids_room", dining: "dining",
@@ -57,7 +64,7 @@ export const twinStore = {
         dimensions_m: null, confidence: 0.97,
       })),
     };
-    this.save(twin);
+    await this.save(twin);
     return twin;
   },
 };

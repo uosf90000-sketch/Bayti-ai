@@ -8,6 +8,7 @@ import { runProjectPipeline, pipelineStore } from "@/lib/design/pipeline";
 import { computeProjectCost, costForRoom } from "@/lib/design/costEngine";
 import type { ProjectPipeline } from "@/lib/design/types";
 import { exportShoppingListCsv, exportBillOfMaterialsCsv } from "@/lib/design/exportCsv";
+import { isPipelineComplete } from "@/lib/design/complete";
 import { RoomScene3D } from "@/components/scene3d";
 import { sar } from "@/lib/mock";
 
@@ -61,6 +62,7 @@ export default function DesignPipeline({ params }: { params: Promise<{ id: strin
   }
 
   const cost = pipeline ? computeProjectCost(pipeline) : null;
+  const complete = isPipelineComplete(twin, pipeline);
 
   return (
     <RequireAuth>
@@ -68,7 +70,11 @@ export default function DesignPipeline({ params }: { params: Promise<{ id: strin
         <TopBar backHref={`/projects/${id}/preview`} />
         <section className="section shell">
           <div className="card anim-fade-up" style={{ padding: "22px 22px", marginBottom: 18 }}>
-            <h1 className="h-xl">خط الإنتاج الحقيقي 🏗️</h1>
+            <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
+              <h1 className="h-xl">خط الإنتاج الحقيقي 🏗️</h1>
+              {complete && <span className="chip chip-success">✅ المشروع مكتمل — {pipeline!.rooms.length} غرفة بتصميم ناجح كامل</span>}
+              {!complete && pipeline && !running && <span className="chip">⏳ غير مكتمل — راجع الغرف أدناه</span>}
+            </div>
             <p className="muted t-sm" style={{ marginTop: 4 }}>
               {rooms.length} غرفة مكتشفة فعليًا في مخططك — كل غرفة تُصمَّم بشكل مستقل تمامًا، ولا يُعرض أي عنصر تسوق بلا منتج حقيقي مطابق من الكتالوج.
             </p>
@@ -117,7 +123,7 @@ export default function DesignPipeline({ params }: { params: Promise<{ id: strin
                 <div key={room.id} className="card card-hover" style={{ padding: 18 }}>
                   <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8 }}>
                     <h3 className="h-lg">{room.name_ar}</h3>
-                    {rCost && rCost.matchedCount > 0 && <span className="chip chip-gold">{sar(rCost.matchedTotal)}</span>}
+                    {rCost && rCost.pricedCount > 0 && <span className="chip chip-gold">{sar(rCost.matchedTotal)}</span>}
                   </div>
 
                   {!result && <p className="dim t-sm" style={{ marginTop: 6 }}>لم يُولَّد تصميم لهذه الغرفة بعد.</p>}

@@ -14,7 +14,7 @@ export default function Projects() {
   async function openSample() {
     const p = await projectsService.create("فيلا حي النرجس — مثال");
     await projectsService.update(p.id, { status: "ready", fileName: "villa-najres-sample.pdf" });
-    twinStore.seedMock(p.id);
+    await twinStore.seedMock(p.id);
     window.location.href = `/projects/${p.id}/preview`;
   }
 

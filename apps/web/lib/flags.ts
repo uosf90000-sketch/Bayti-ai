@@ -12,6 +12,8 @@ export const flags = {
   USE_MOCK_RESULTS: on(process.env.NEXT_PUBLIC_USE_MOCK_RESULTS),
   /** VS-4: سجل المشاريع + Storage المخططات + checkpoints التحليل (Supabase). يتطلب أيضًا مصادقة حقيقية — راجع supabase/README.md */
   USE_MOCK_PROJECTS: on(process.env.NEXT_PUBLIC_USE_MOCK_PROJECTS),
+  /** الكتالوج الحقيقي (Bayti Catalog Builder): mock = ملفات JSON في packages/catalog-data/generated، false = جداول Supabase (catalog_products/catalog_offers) */
+  USE_MOCK_CATALOG: on(process.env.NEXT_PUBLIC_USE_MOCK_CATALOG),
 } as const;
 
 /**

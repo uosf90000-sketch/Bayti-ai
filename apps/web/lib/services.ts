@@ -106,3 +106,22 @@ export const floorplans = {
     return floorplansRepo.completeUpload({ floorplan_id: intent.floorplan_id });
   },
 };
+
+/**
+ * الكتالوج الحقيقي (Bayti Catalog Builder) — يمر عبر /api/catalog/* (Route Handlers) لا عبر استيراد
+ * catalogRepo مباشرة، لأن وضع JSON يستخدم node:fs (خادم فقط) ولا يجوز دخوله حزمة العميل — services.ts
+ * تُستورد من شاشات "use client" فتُبنى للمتصفح أيضًا. غير مربوط بشاشة Shopping الحالية بعد (تعتمد على
+ * lib/shop.ts المعتمدة وظيفيًا — ربطها بالكتالوج الحقيقي قرار منتج منفصل، راجع التقرير المرسل).
+ */
+export const catalog = {
+  async listProducts(): Promise<import("./catalog/types").CanonicalProduct[]> {
+    const res = await fetch("/api/catalog/products");
+    if (!res.ok) throw new Error(`catalog.listProducts: HTTP ${res.status}`);
+    return (await res.json()).products;
+  },
+  async listOffers(canonicalProductId: string): Promise<import("./catalog/types").MerchantOffer[]> {
+    const res = await fetch(`/api/catalog/offers/${canonicalProductId}`);
+    if (!res.ok) throw new Error(`catalog.listOffers: HTTP ${res.status}`);
+    return (await res.json()).offers;
+  },
+};

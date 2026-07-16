@@ -263,25 +263,30 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
     setApproximateNote(note);
 
     const camDist = radius * 1.5 + 2;
-    if (cameraMode === "top") {
-      camera.position.set(0, camDist * 1.3, 0.001);
-    } else {
-      camera.position.set(camDist * 0.7, camDist * 0.65, camDist * 0.7);
-    }
-    camera.lookAt(0, 0, 0);
+    let zoom = 1; // 0.4 (أقرب) .. 2.5 (أبعد) — عجلة الفأرة على سطح المكتب، Pinch على اللمس
+    const positionCamera = () => {
+      const d = camDist * zoom;
+      if (cameraMode === "top") camera.position.set(0, d * 1.3, 0.001);
+      else camera.position.set(d * 0.7, d * 0.65, d * 0.7);
+      camera.lookAt(0, 0, 0);
+    };
+    positionCamera();
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.7));
     const dir = new THREE.DirectionalLight(0xffffff, 0.6);
     dir.position.set(5, 8, 4);
     scene.add(dir);
 
-    // دوران بسيط بالسحب (Orbit يدوي خفيف — بلا اعتماد إضافي) — معطّل في المنظور العلوي
+    // دوران بالسحب (فأرة أو إصبع واحد — Pointer Events توحّد الاثنين) — معطّل في المنظور العلوي
     let dragging = false;
     let lastX = 0;
-    const onDown = (e: PointerEvent) => { dragging = true; lastX = e.clientX; };
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType === "touch" && activeTouches.size >= 2) return; // إصبعان = تقريب لا دوران
+      dragging = true; lastX = e.clientX;
+    };
     const onUp = () => { dragging = false; };
     const onMove = (e: PointerEvent) => {
-      if (!dragging || cameraMode === "top") return;
+      if (!dragging || cameraMode === "top" || activeTouches.size >= 2) return;
       const dx = e.clientX - lastX;
       lastX = e.clientX;
       group.rotation.y += dx * 0.01;
@@ -289,6 +294,43 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
     renderer.domElement.addEventListener("pointerdown", onDown);
     window.addEventListener("pointerup", onUp);
     window.addEventListener("pointermove", onMove);
+
+    // التقريب — عجلة الفأرة (سطح المكتب) و Pinch بإصبعين (لمس)
+    const applyZoom = (factor: number) => {
+      zoom = Math.min(2.5, Math.max(0.4, zoom * factor));
+      positionCamera();
+    };
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      applyZoom(e.deltaY > 0 ? 1.08 : 0.93);
+    };
+    renderer.domElement.addEventListener("wheel", onWheel, { passive: false });
+
+    const activeTouches = new Map<number, { x: number; y: number }>();
+    let pinchStartDist = 0;
+    const touchDist = () => {
+      const pts = [...activeTouches.values()];
+      return pts.length === 2 ? Math.hypot(pts[0]!.x - pts[1]!.x, pts[0]!.y - pts[1]!.y) : 0;
+    };
+    const onTouchDown = (e: PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activeTouches.size === 2) pinchStartDist = touchDist();
+    };
+    const onTouchMove = (e: PointerEvent) => {
+      if (e.pointerType !== "touch" || !activeTouches.has(e.pointerId)) return;
+      activeTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      if (activeTouches.size === 2) {
+        const d = touchDist();
+        if (pinchStartDist > 0 && d > 0) applyZoom(pinchStartDist / d);
+        pinchStartDist = d;
+      }
+    };
+    const onTouchUp = (e: PointerEvent) => { activeTouches.delete(e.pointerId); pinchStartDist = 0; };
+    renderer.domElement.addEventListener("pointerdown", onTouchDown);
+    window.addEventListener("pointermove", onTouchMove);
+    window.addEventListener("pointerup", onTouchUp);
+    window.addEventListener("pointercancel", onTouchUp);
 
     let raf = 0;
     const animate = () => {
@@ -310,8 +352,13 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
       renderer.domElement.removeEventListener("pointerdown", onDown);
+      renderer.domElement.removeEventListener("pointerdown", onTouchDown);
+      renderer.domElement.removeEventListener("wheel", onWheel);
       window.removeEventListener("pointerup", onUp);
       window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointermove", onTouchMove);
+      window.removeEventListener("pointerup", onTouchUp);
+      window.removeEventListener("pointercancel", onTouchUp);
       disposeObject(scene);
       renderer.dispose();
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
@@ -320,7 +367,7 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
-      <div ref={mountRef} style={{ width: "100%", height: "100%", cursor: "grab" }} />
+      <div ref={mountRef} style={{ width: "100%", height: "100%", cursor: "grab", touchAction: "none" }} />
       {approximateNote && (
         <div
           style={{

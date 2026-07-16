@@ -18,11 +18,6 @@ const STAGES = [
 ];
 const REAL_STAGE_SCALE = 0.12; // العمل الحقيقي منجز فعلًا — هذه حركة عرض فقط
 
-const FOUND_ROOMS = [
-  "مجلس الرجال", "المقلط", "المعيشة", "المطبخ", "نوم رئيسية",
-  "نوم أطفال ×3", "4 حمامات", "غرفة خادمة", "مدخل وممرات",
-];
-
 const ROOM_TYPE_AR: Record<string, string> = {
   majlis_men: "مجلس رجال", majlis_women: "مجلس نساء", muqallat: "مقلط", dining: "غرفة طعام",
   living: "معيشة", bedroom_master: "غرفة نوم رئيسية", bedroom: "غرفة نوم", kids_room: "غرفة أطفال",
@@ -109,19 +104,13 @@ export default function Analysis({ params }: { params: Promise<{ id: string }> }
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontSize: 44 }}>🎉</div>
                 <h1 className="h-xl" style={{ marginTop: 8 }}>فهمنا بيتك!</h1>
-                {isMock ? (
-                  <p className="muted" style={{ marginTop: 6 }}>
-                    اكتشفنا <b className="gold">14 غرفة</b> عبر دورين بمساحة <b className="num">380 م²</b> — بثقة <b className="num">96%</b>
-                  </p>
-                ) : (
-                  <p className="muted" style={{ marginTop: 6 }}>
-                    اكتشفنا <b className="gold">{twin?.rooms.length ?? 0} غرفة</b> فعليًا من مخططك
-                    {confidencePct !== null && <> — بثقة <b className="num">{confidencePct}%</b></>}
-                  </p>
-                )}
+                <p className="muted" style={{ marginTop: 6 }}>
+                  اكتشفنا <b className="gold">{twin?.rooms.length ?? 0} غرفة</b> فعليًا من مخططك
+                  {confidencePct !== null && <> — بثقة <b className="num">{confidencePct}%</b></>}
+                </p>
               </div>
               <div className="row" style={{ flexWrap: "wrap", justifyContent: "center", marginTop: 18, gap: 8 }}>
-                {(isMock ? FOUND_ROOMS : detectedNames).map((r, i) => <span key={`${r}-${i}`} className="chip">{r}</span>)}
+                {detectedNames.map((r, i) => <span key={`${r}-${i}`} className="chip">{r}</span>)}
               </div>
               <div className="stack" style={{ marginTop: 24 }}>
                 <button

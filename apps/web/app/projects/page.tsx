@@ -3,15 +3,16 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { TopBar, RequireAuth, StatusChip } from "@/components/ui";
 import { RoomScene } from "@/components/scene";
-import { store, type StoredProject } from "@/lib/mock";
+import type { StoredProject } from "@/lib/mock";
+import { projects as projectsService } from "@/lib/services";
 
 export default function Projects() {
   const [projects, setProjects] = useState<StoredProject[] | null>(null);
-  useEffect(() => setProjects(store.list()), []);
+  useEffect(() => { projectsService.list().then(setProjects); }, []);
 
-  function openSample() {
-    const p = store.create("فيلا حي النرجس — مثال");
-    store.update(p.id, { status: "ready", fileName: "villa-najres-sample.pdf" });
+  async function openSample() {
+    const p = await projectsService.create("فيلا حي النرجس — مثال");
+    await projectsService.update(p.id, { status: "ready", fileName: "villa-najres-sample.pdf" });
     window.location.href = `/projects/${p.id}/preview`;
   }
 

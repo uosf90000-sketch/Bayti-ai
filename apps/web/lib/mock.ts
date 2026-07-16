@@ -3,7 +3,7 @@
  * تطبّق عقود @bayti/contracts حرفيًا — الاستبدال بالخدمات الحقيقية يقلب flag فقط،
  * صفر تغيير في كود الشاشات (AC12-3). بيانات "فيلا حي النرجس" هي المرجع (PRD §6.19).
  */
-import type { CouncilSseEvent, AgentId } from "@bayti/contracts";
+import type { CouncilSseEvent, AgentId, ProjectStatus } from "@bayti/contracts";
 
 /* ————— الوكلاء (أسماء عرض عربية — قاعدة S8) ————— */
 export const AGENTS: { id: AgentId; name: string; specialty: string; emoji: string }[] = [
@@ -70,7 +70,7 @@ export const NAJRES_TOTALS = { budget: 280000, total: 271400, itemCount: 214, ro
 /* ————— مخزن محلي (يُستبدل بالـ API الحقيقي خلف نفس الواجهة) ————— */
 export type StoredProject = {
   id: string; title: string;
-  status: "uploaded" | "analyzing" | "needs_review" | "generating" | "ready";
+  status: ProjectStatus;
   fileName: string | null; createdAt: number;
 };
 

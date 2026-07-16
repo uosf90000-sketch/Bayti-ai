@@ -2,7 +2,7 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar, RequireAuth } from "@/components/ui";
-import { store } from "@/lib/mock";
+import { projects, floorplans } from "@/lib/services";
 
 const ACCEPTED = [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".dxf"];
 const MAX_MB = 50;
@@ -33,9 +33,9 @@ export default function NewProject() {
 
   const start = async () => {
     setBusy(true);
-    const p = store.create(title.trim() || "بيتي الجديد");
-    store.update(p.id, { fileName: file!.name, status: "analyzing" });
-    await new Promise((r) => setTimeout(r, 500)); // mock: presigned upload
+    const p = await projects.create(title.trim() || "بيتي الجديد");
+    await floorplans.upload(p.id, file!);
+    await projects.update(p.id, { fileName: file!.name, status: "analyzing" });
     router.push(`/projects/${p.id}/analysis`);
   };
 

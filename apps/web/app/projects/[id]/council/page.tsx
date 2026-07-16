@@ -2,7 +2,8 @@
 import { use, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar, RequireAuth } from "@/components/ui";
-import { AGENTS, COUNCIL_SCRIPT, store } from "@/lib/mock";
+import { AGENTS, COUNCIL_SCRIPT } from "@/lib/mock";
+import { projects } from "@/lib/services";
 import type { AgentId } from "@bayti/contracts";
 
 /* شاشة المجلس الحية — لحظة W3 (WOW_MOMENTS): "يشاهد فريقًا كاملًا يشتغل لأجله" */
@@ -43,7 +44,7 @@ export default function Council({ params }: { params: Promise<{ id: string }> })
           setFeed((f) => [...f, { id: seq, text: `🔒 اعتُمدت النسخة — ${e.summary_ar ?? (ev as { diff_summary_ar?: string }).diff_summary_ar}`, kind: "info" }]);
         } else if (e.type === "council_finished") {
           setFinished(true);
-          store.update(id, { status: "ready" });
+          projects.update(id, { status: "ready" });
         }
       }, at),
     );

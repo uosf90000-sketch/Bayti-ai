@@ -79,4 +79,30 @@ export const catalogRepo = {
     if (error) throw new Error(`catalog.listOffers: ${error.message}`);
     return (data ?? []).map(offerFromRow);
   },
+
+  /** منتجات جاهزة للعرض (جودة كافية) مع أفضل عرض حقيقي لكل واحد — استدعاء واحد بدل N+1 من الشاشة */
+  async listShoppableProducts(): Promise<Array<CanonicalProduct & { bestOffer: MerchantOffer | null }>> {
+    const { flags } = await import("../flags");
+    if (flags.USE_MOCK_CATALOG) {
+      const [products, offers] = await Promise.all([
+        readJson<CanonicalProduct[]>("canonical-products.json"),
+        readJson<MerchantOffer[]>("merchant-offers.json"),
+      ]);
+      return products
+        .filter((p) => p.qualityScore >= MIN_QUALITY)
+        .map((p) => {
+          const eligible = offers.filter(
+            (o) => o.canonicalProductId === p.id && o.qualityScore >= MIN_QUALITY && o.dataSource === "real" && !!o.productUrl,
+          );
+          const bestOffer = eligible.sort((a, b) => (b.price ?? -1) === (a.price ?? -1) ? b.qualityScore - a.qualityScore : (a.price ?? Infinity) - (b.price ?? Infinity))[0] ?? null;
+          return { ...p, bestOffer };
+        })
+        .filter((p) => p.bestOffer !== null);
+    }
+    const products = await catalogRepo.listProducts();
+    const withOffers = await Promise.all(
+      products.map(async (p) => ({ ...p, bestOffer: (await catalogRepo.listOffers(p.id))[0] ?? null })),
+    );
+    return withOffers.filter((p) => p.bestOffer !== null);
+  },
 };

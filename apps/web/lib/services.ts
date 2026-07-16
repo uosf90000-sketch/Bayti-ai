@@ -110,8 +110,9 @@ export const floorplans = {
 /**
  * الكتالوج الحقيقي (Bayti Catalog Builder) — يمر عبر /api/catalog/* (Route Handlers) لا عبر استيراد
  * catalogRepo مباشرة، لأن وضع JSON يستخدم node:fs (خادم فقط) ولا يجوز دخوله حزمة العميل — services.ts
- * تُستورد من شاشات "use client" فتُبنى للمتصفح أيضًا. غير مربوط بشاشة Shopping الحالية بعد (تعتمد على
- * lib/shop.ts المعتمدة وظيفيًا — ربطها بالكتالوج الحقيقي قرار منتج منفصل، راجع التقرير المرسل).
+ * تُستورد من شاشات "use client" فتُبنى للمتصفح أيضًا.
+ * قرار مؤسس: تُعرض فقط المنتجات التي اجتازت حد الجودة (quality_score>=60) — مطبَّق في catalogRepo نفسها
+ * في كل الأوضاع، لا في الشاشة، حتى لا يُخفَّض الحد بالخطأ لاحقًا من شاشة واحدة فقط.
  */
 export const catalog = {
   async listProducts(): Promise<import("./catalog/types").CanonicalProduct[]> {
@@ -123,5 +124,11 @@ export const catalog = {
     const res = await fetch(`/api/catalog/offers/${canonicalProductId}`);
     if (!res.ok) throw new Error(`catalog.listOffers: HTTP ${res.status}`);
     return (await res.json()).offers;
+  },
+  /** منتجات جاهزة للعرض فعليًا في Shopping (جودة كافية + عرض حقيقي واحد على الأقل) */
+  async listShoppable(): Promise<Array<import("./catalog/types").CanonicalProduct & { bestOffer: import("./catalog/types").MerchantOffer | null }>> {
+    const res = await fetch("/api/catalog/shoppable");
+    if (!res.ok) throw new Error(`catalog.listShoppable: HTTP ${res.status}`);
+    return (await res.json()).products;
   },
 };

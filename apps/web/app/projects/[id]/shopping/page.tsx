@@ -4,10 +4,14 @@ import Link from "next/link";
 import { TopBar, RequireAuth } from "@/components/ui";
 import { VariantSwitcher, useCountUp } from "@/components/variant";
 import { sar } from "@/lib/mock";
+import { catalog } from "@/lib/services";
+import type { CanonicalProduct, MerchantOffer } from "@/lib/catalog/types";
 import {
   SHOP_ITEMS, choicesStore, offerFor, savings, variantTotal,
   type VariantId, type Choice,
 } from "@/lib/shop";
+
+type ShoppableProduct = CanonicalProduct & { bestOffer: MerchantOffer | null };
 
 /* شريحة التسوق — W4 (تبديل النسخ) + W6 (عدّاد التوفير) + استبدال القطع (P4)
    المتاجر معلَّمة "تجريبي" بوضوح (قرار مؤسس): لا روابط تدّعي أنها حقيقية. */
@@ -16,8 +20,10 @@ export default function Shopping({ params }: { params: Promise<{ id: string }> }
   const { id } = use(params);
   const [variant, setVariant] = useState<VariantId>("balanced");
   const [choices, setChoices] = useState<Record<string, Choice>>({});
+  const [catalogProducts, setCatalogProducts] = useState<ShoppableProduct[] | null>(null);
 
   useEffect(() => { setChoices(choicesStore.get(id, variant)); }, [id, variant]);
+  useEffect(() => { catalog.listShoppable().then(setCatalogProducts); }, []);
 
   const pick = (itemId: string, c: Choice) => {
     const next = { ...choices, [itemId]: c };
@@ -132,6 +138,53 @@ export default function Shopping({ params }: { params: Promise<{ id: string }> }
             <Link href={`/projects/${id}/preview`} className="btn btn-ghost" style={{ marginTop: 10 }}>
               عودة للمعاينة
             </Link>
+          </div>
+
+          {/* الكتالوج الحقيقي (Bayti Catalog Builder) — منتجات حقيقية اجتازت حد الجودة فقط، منفصلة عن إجمالي المشروع أعلاه */}
+          <div style={{ marginTop: 28 }}>
+            <div className="row" style={{ justifyContent: "space-between", flexWrap: "wrap", gap: 8, marginBottom: 6 }}>
+              <h2 className="h-lg">الكتالوج الحقيقي</h2>
+              <span className="chip chip-success">منتجات حقيقية بروابط شراء رسمية</span>
+            </div>
+            <p className="muted t-sm" style={{ marginBottom: 14 }}>
+              من متاجر سعودية حقيقية — تُعرض فقط المنتجات التي اجتازت حد الجودة (سعر وحالة توفر موثّقان). لا تُحتسب هذه القائمة ضمن إجمالي المشروع أعلاه بعد.
+            </p>
+            {catalogProducts === null ? (
+              <div className="grid-cards">
+                {[1, 2, 3].map((i) => <div key={i} className="skeleton" style={{ height: 120 }} />)}
+              </div>
+            ) : catalogProducts.length === 0 ? (
+              <div className="card" style={{ padding: 20, textAlign: "center" }}>
+                <p className="muted t-sm">لا منتجات اجتازت حد الجودة بعد — قيد التحقق من الأسعار والمقاسات.</p>
+              </div>
+            ) : (
+              <div className="grid-cards">
+                {catalogProducts.map((p) => {
+                  const offer = p.bestOffer!;
+                  const name = p.canonicalNameAr || p.canonicalNameEn || "منتج";
+                  return (
+                    <div key={p.id} className="card card-hover" style={{ padding: 16 }}>
+                      <div className="row" style={{ justifyContent: "space-between", gap: 8 }}>
+                        <span className="chip">{p.category}</span>
+                        <span className="chip chip-gold t-sm">جودة {p.qualityScore}</span>
+                      </div>
+                      <h3 className="h-md" style={{ marginTop: 10 }}>{name}</h3>
+                      <p className="dim t-sm" style={{ marginTop: 2 }}>{offer.merchantName}</p>
+                      <div className="row" style={{ justifyContent: "space-between", marginTop: 12, alignItems: "center" }}>
+                        <span className="num gold" style={{ fontSize: 19, fontWeight: 800 }}>
+                          {offer.price != null ? sar(offer.price) : "السعر غير مؤكد"}
+                        </span>
+                        {offer.productUrl && (
+                          <a href={offer.productUrl} target="_blank" rel="noopener noreferrer" className="btn btn-ghost" style={{ minHeight: 38, padding: "0 14px", fontSize: 13 }}>
+                            صفحة المنتج ↗
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </section>
       </main>

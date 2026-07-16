@@ -1,8 +1,9 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { store } from "@/lib/mock";
+import { ThemeToggle } from "./theme";
 
 export function Brand() {
   return (
@@ -24,6 +25,7 @@ export function TopBar({ backHref, action }: { backHref?: string; action?: React
             رجوع
           </Link>
         )}
+        <ThemeToggle />
       </div>
     </header>
   );
@@ -36,6 +38,30 @@ export function RequireAuth({ children }: { children: React.ReactNode }) {
     if (!store.isAuthed()) router.replace("/login");
   }, [router]);
   return <>{children}</>;
+}
+
+/** شريط الوكلاء المتحرك — يضاعف المحتوى للحلقة السلسة، ويوقفها عند تفضيل تقليل الحركة */
+export function AgentMarquee({ agents }: { agents: { id: string; name: string; emoji: string }[] }) {
+  const [duplicate, setDuplicate] = useState(true);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setDuplicate(!mq.matches);
+    const handler = (e: MediaQueryListEvent) => setDuplicate(!e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+  const list = duplicate ? [...agents, ...agents] : agents;
+  return (
+    <div className="marquee">
+      <div className="marquee-track">
+        {list.map((a, i) => (
+          <span key={`${a.id}-${i}`} className="chip" aria-hidden={i >= agents.length || undefined}>
+            <span style={{ fontSize: 17 }}>{a.emoji}</span> {a.name}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function StatusChip({ status }: { status: string }) {

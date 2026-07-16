@@ -148,6 +148,18 @@ export type ProjectVersionRow = {
   created_at: string;
 };
 
+export type FloorGeometryRow = {
+  id: string;
+  project_id: string;
+  scale: unknown;
+  walls: unknown;
+  openings: unknown;
+  rooms: unknown;
+  overall_confidence: number;
+  analyzed_at: string;
+  created_at: string;
+};
+
 export type Database = {
   public: {
     Tables: {
@@ -215,6 +227,12 @@ export type Database = {
         Row: ProjectVersionRow;
         Insert: Partial<ProjectVersionRow> & { project_id: string; version_number: number; snapshot: unknown };
         Update: Partial<ProjectVersionRow>;
+        Relationships: [];
+      };
+      floor_geometries: {
+        Row: FloorGeometryRow;
+        Insert: Partial<FloorGeometryRow> & { project_id: string; scale: unknown; walls: unknown; openings: unknown; rooms: unknown; overall_confidence: number; analyzed_at: string };
+        Update: Partial<FloorGeometryRow>;
         Relationships: [];
       };
     };

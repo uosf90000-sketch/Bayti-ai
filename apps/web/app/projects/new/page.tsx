@@ -5,7 +5,8 @@ import { TopBar, RequireAuth } from "@/components/ui";
 import { projects, floorplans } from "@/lib/services";
 import { flags } from "@/lib/flags";
 import { twinStore } from "@/lib/twin";
-import { analyzeFloorplanClient } from "@/lib/vision/client";
+import { geometryStore } from "@/lib/geometry/store";
+import { analyzeFloorplanClient, splitAnalysisResult } from "@/lib/vision/client";
 
 const ACCEPTED = [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".dxf"];
 const MAX_MB = 50;
@@ -46,13 +47,15 @@ export default function NewProject() {
       if (!flags.USE_MOCK_ANALYSIS) {
         setAnalyzing(true);
         const result = await analyzeFloorplanClient(file!);
+        const { rooms, geometry } = splitAnalysisResult(result, p.id);
         await twinStore.save({
           project_id: p.id,
           source: "vlm",
           overall_confidence: result.overall_confidence,
           analyzed_at: new Date().toISOString(),
-          rooms: result.rooms.map((r, i) => ({ id: `room-${i}`, ...r })),
+          rooms,
         });
+        await geometryStore.save(geometry);
       }
       router.push(`/projects/${p.id}/analysis`);
     } catch (e) {

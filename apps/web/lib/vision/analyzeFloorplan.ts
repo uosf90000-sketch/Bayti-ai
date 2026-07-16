@@ -4,8 +4,10 @@ import { getAnthropicClient, classifyAnthropicError, logAiCall } from "../ai/cli
 
 /**
  * تحليل مخطط حقيقي عبر رؤية Claude — لا بيانات ثابتة، لا Demo (توجيه المؤسس).
- * صادق بحدوده: يستخرج عدد الغرف ونوعها وثقة الاكتشاف من صورة/PDF فعلي — لا يخترع
- * جدرانًا أو إحداثيات دقيقة (ذلك يحتاج مسح CAD حقيقي، خارج نطاق هذه الشريحة).
+ * صادق بحدوده: يستخرج عدد الغرف ونوعها وثقة الاكتشاف، بالإضافة إلى هندسة تقريبية
+ * (جدران/فتحات/حدود غرف) من صورة/PDF فعلي — نظام إحداثيات نسبي لأبعاد الصورة
+ * (0..1) ما لم يُعثر على نص مقياس/بُعد مكتوب صراحة (عندها scale.status="confirmed").
+ * هذا ليس مسح CAD دقيقًا — قرار نطاق موثّق في docs/CAD_ENGINE.md.
  * ملفات CAD (DWG/DXF) ليست صورًا قابلة للتحليل هنا — تُرفض بوضوح بدل التخمين.
  */
 
@@ -15,17 +17,52 @@ const DimensionsSchema = z.object({
   height: z.number().positive().nullable(),
 }).nullable();
 
+const Vec2Schema = z.tuple([z.number(), z.number()]);
+
 const AnalyzedRoomSchema = z.object({
   type: RoomType,
   name_ar: z.string().min(1),
   area_m2: z.number().positive().nullable(),
   dimensions_m: DimensionsSchema,
   confidence: z.number().min(0).max(1),
+  /** حدود الغرفة التقريبية (نظام إحداثيات نسبي 0..1) — null إن تعذّر تحديدها بثقة */
+  polygon: z.array(Vec2Schema).min(3).nullable(),
+  orientation_deg: z.number().nullable(),
+  geometry_confidence: z.number().min(0).max(1),
+});
+
+const WallSchema = z.object({
+  id: z.string(),
+  from: Vec2Schema,
+  to: Vec2Schema,
+  thickness_m: z.number().positive().nullable(),
+  height_m: z.number().positive().nullable(),
+  kind: z.enum(["exterior", "interior", "unknown"]),
+  confidence: z.number().min(0).max(1),
+});
+
+const OpeningSchema = z.object({
+  id: z.string(),
+  wall_id: z.string(),
+  type: z.enum(["door", "window"]),
+  position: Vec2Schema,
+  width_m: z.number().positive().nullable(),
+  confidence: z.number().min(0).max(1),
+});
+
+const ScaleSchema = z.object({
+  status: z.enum(["confirmed", "unconfirmed"]),
+  meters_per_unit: z.number().positive().nullable(),
+  source: z.enum(["written_dims", "scale_text", "missing"]),
 });
 
 const AnalysisResultSchema = z.object({
   rooms: z.array(AnalyzedRoomSchema).min(1),
   overall_confidence: z.number().min(0).max(1),
+  scale: ScaleSchema,
+  walls: z.array(WallSchema),
+  openings: z.array(OpeningSchema),
+  geometry_overall_confidence: z.number().min(0).max(1),
 });
 
 export type AnalysisResult = z.infer<typeof AnalysisResultSchema>;
@@ -35,17 +72,28 @@ const SUPPORTED_DOC_TYPES = ["application/pdf"];
 
 const ROOM_TYPES_LIST = RoomType.options.join(", ");
 
-const SYSTEM_PROMPT = `أنت مهندس معماري تحلّل مخططات منازل سعودية/خليجية حقيقية. مهمتك الوحيدة: عدّ الغرف الفعلية الظاهرة في المخطط وتصنيف نوع كل غرفة.
+const SYSTEM_PROMPT = `أنت مهندس معماري تحلّل مخططات منازل سعودية/خليجية حقيقية. مهمتك: عدّ الغرف الفعلية وتصنيف نوع كل غرفة، ثم استخراج هندسة تقريبية (جدران، فتحات، حدود كل غرفة) من نفس المخطط.
 
-قواعد صارمة:
+قواعد صارمة — تصنيف الغرف:
 - عدّ فقط الغرف الظاهرة فعليًا في هذا المخطط بالذات — لا تفترض غرفًا غير مرسومة.
 - لكل غرفة اختر نوعًا واحدًا فقط من هذه القائمة الثابتة: ${ROOM_TYPES_LIST}. إن لم تتأكد من النوع استخدم "unknown" ولا تخمّن.
-- المساحة (area_m2): فقط إن كانت مكتوبة صراحة على المخطط أو قابلة للاستنتاج بثقة من مقياس مرسوم — وإلا اجعلها null. لا تقدّر مساحة بلا سند.
-- الأبعاد (dimensions_m): فقط إن كانت أرقام العرض/الطول/الارتفاع مكتوبة صراحة على المخطط أو قابلة للقياس بثقة من مقياس مرسوم — وإلا اجعل dimensions_m كاملة null. لا تخمّن أبعادًا من شكل الغرفة فقط.
-- confidence لكل غرفة: رقم بين 0 و1 يعكس ثقتك الحقيقية في نوع الغرفة، لا رقمًا ثابتًا.
-- overall_confidence: ثقتك الإجمالية في قراءة المخطط ككل (جودة الصورة، وضوح الخطوط، اكتمال المخطط).
-- إن كان الملف PDF متعدد الصفحات: ركّز فقط على الصفحة/الصفحات التي تُظهر فعليًا مخطط الغرف (تجاهل أغلفة، جداول بيانات، مخططات موقع عامة لا تُظهر تقسيم غرف). إن وُجد أكثر من طابق في صفحات منفصلة، اجمع غرف كل الطوابق الظاهرة فعليًا كغرف مستقلة — لا تُكرر نفس الغرفة لكل صفحة.
-- إن كانت الصورة غير واضحة لدرجة يتعذّر معها تمييز الغرف بثقة معقولة: أعد أفضل قراءة ممكنة مع confidence منخفض صريح (أقل من 0.4) بدل رفض الاستجابة — overall_confidence المنخفض هو الإشارة الصادقة، لا رفض التحليل.
+- المساحة (area_m2) والأبعاد (dimensions_m): فقط إن كانت مكتوبة صراحة أو قابلة للاستنتاج بثقة من مقياس مرسوم — وإلا null.
+- confidence لكل غرفة: ثقتك الحقيقية في نوع الغرفة، لا رقمًا ثابتًا.
+- overall_confidence: ثقتك الإجمالية في قراءة المخطط ككل.
+
+قواعد صارمة — الهندسة (جدران/فتحات/حدود):
+- نظام الإحداثيات: نسبي لأبعاد الصورة كاملة — (0,0) الزاوية العلوية اليسرى، (1,1) الزاوية السفلية اليمنى. لا تستخدم أمتارًا للإحداثيات نفسها.
+- scale: اجعل status="confirmed" فقط إن وجدت نصًا صريحًا لمقياس رسم (مثل 1:100) أو بُعدًا مكتوبًا يمكن ربطه بمسافة في الصورة — واحسب meters_per_unit وفق ذلك. غير ذلك اجعلها status="unconfirmed", meters_per_unit=null, source="missing".
+- walls: ارسم فقط الجدران التي تراها فعليًا كخطوط واضحة في المخطط — from/to بإحداثيات نسبية لمركز الخط. thickness_m/height_m فقط إن وُجد سند رقمي حقيقي (نص/مقياس)، وإلا null. kind="exterior" للجدران الخارجية الواضحة، "interior" للداخلية، "unknown" إن لم تتأكد.
+- openings: كل باب/نافذة واضح في المخطط، برقم wall_id يشير لجدار من القائمة أعلاه. width_m فقط بسند حقيقي.
+- polygon لكل غرفة: حدود الغرفة التقريبية كنقاط متتالية (3 فأكثر) بنفس نظام الإحداثيات النسبي — استنتجها من الجدران المحيطة الظاهرة فعليًا. إن لم تستطع تحديد حدود الغرفة بثقة معقولة اجعل polygon=null ولا تخترعه.
+- orientation_deg لكل غرفة: فقط إن كان اتجاه الشمال مبينًا في المخطط (سهم شمال، بوصلة) ويمكن ربطه بالغرفة بثقة — وإلا null.
+- geometry_confidence لكل غرفة: ثقتك في دقة حدودها المكانية (منفصلة عن ثقة نوعها).
+- geometry_overall_confidence: ثقتك الإجمالية في جودة استخراج الهندسة الكاملة (وضوح خطوط الجدران، اكتمالها). إن كان المخطط رديء الجودة أو رسمًا يدويًا تقريبيًا بلا خطوط واضحة، أعد walls/openings فارغة و polygon=null لكل الغرف و geometry_overall_confidence منخفضة صراحة (أقل من 0.3) — لا تخترع هندسة وهمية لمجرد ملء الحقول.
+
+قواعد أخرى:
+- إن كان الملف PDF متعدد الصفحات: ركّز فقط على الصفحة/الصفحات التي تُظهر فعليًا مخطط الغرف. إن وُجد أكثر من طابق في صفحات منفصلة، اجمع غرف كل الطوابق كغرف مستقلة — لا تُكرر نفس الغرفة لكل صفحة.
+- إن كانت الصورة غير واضحة: أعد أفضل قراءة ممكنة مع confidence منخفض صريح بدل رفض الاستجابة.
 - استخدم أداة report_rooms فقط — لا نص حر خارجها.`;
 
 function assertSupported(mediaType: string): "image" | "document" {
@@ -55,6 +103,8 @@ function assertSupported(mediaType: string): "image" | "document" {
     `analyzeFloorplan: نوع الملف "${mediaType}" غير مدعوم للتحليل المباشر — ملفات CAD (DWG/DXF) تحتاج معالجة منفصلة غير مبنية بعد. ارفع صورة أو PDF من المخطط.`,
   );
 }
+
+const vec2Schema = { type: "array", items: { type: "number" }, minItems: 2, maxItems: 2 } as const;
 
 export async function analyzeFloorplan(base64Data: string, mediaType: string): Promise<AnalysisResult> {
   const kind = assertSupported(mediaType);
@@ -69,12 +119,12 @@ export async function analyzeFloorplan(base64Data: string, mediaType: string): P
 
     const response = await client.messages.create({
       model: "claude-sonnet-5",
-      max_tokens: 4096,
+      max_tokens: 8192,
       system: SYSTEM_PROMPT,
       tools: [
         {
           name: "report_rooms",
-          description: "الإبلاغ عن الغرف المكتشفة في المخطط مع نوع كل غرفة ومساحتها وثقة الاكتشاف",
+          description: "الإبلاغ عن الغرف المكتشفة في المخطط مع نوعها وهندستها التقريبية (جدران وفتحات وحدود كل غرفة)",
           input_schema: {
             type: "object",
             properties: {
@@ -96,13 +146,57 @@ export async function analyzeFloorplan(base64Data: string, mediaType: string): P
                       required: ["width", "length", "height"],
                     },
                     confidence: { type: "number", minimum: 0, maximum: 1 },
+                    polygon: { type: ["array", "null"], items: vec2Schema, minItems: 3 },
+                    orientation_deg: { type: ["number", "null"] },
+                    geometry_confidence: { type: "number", minimum: 0, maximum: 1 },
                   },
-                  required: ["type", "name_ar", "area_m2", "dimensions_m", "confidence"],
+                  required: ["type", "name_ar", "area_m2", "dimensions_m", "confidence", "polygon", "orientation_deg", "geometry_confidence"],
                 },
               },
               overall_confidence: { type: "number", minimum: 0, maximum: 1 },
+              scale: {
+                type: "object",
+                properties: {
+                  status: { type: "string", enum: ["confirmed", "unconfirmed"] },
+                  meters_per_unit: { type: ["number", "null"] },
+                  source: { type: "string", enum: ["written_dims", "scale_text", "missing"] },
+                },
+                required: ["status", "meters_per_unit", "source"],
+              },
+              walls: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    from: vec2Schema,
+                    to: vec2Schema,
+                    thickness_m: { type: ["number", "null"] },
+                    height_m: { type: ["number", "null"] },
+                    kind: { type: "string", enum: ["exterior", "interior", "unknown"] },
+                    confidence: { type: "number", minimum: 0, maximum: 1 },
+                  },
+                  required: ["id", "from", "to", "thickness_m", "height_m", "kind", "confidence"],
+                },
+              },
+              openings: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    id: { type: "string" },
+                    wall_id: { type: "string" },
+                    type: { type: "string", enum: ["door", "window"] },
+                    position: vec2Schema,
+                    width_m: { type: ["number", "null"] },
+                    confidence: { type: "number", minimum: 0, maximum: 1 },
+                  },
+                  required: ["id", "wall_id", "type", "position", "width_m", "confidence"],
+                },
+              },
+              geometry_overall_confidence: { type: "number", minimum: 0, maximum: 1 },
             },
-            required: ["rooms", "overall_confidence"],
+            required: ["rooms", "overall_confidence", "scale", "walls", "openings", "geometry_overall_confidence"],
           },
         },
       ],
@@ -112,7 +206,7 @@ export async function analyzeFloorplan(base64Data: string, mediaType: string): P
           role: "user",
           content: [
             ...content,
-            { type: "text", text: "حلّل هذا المخطط باستخدام أداة report_rooms فقط، وفق القواعد المذكورة في تعليمات النظام." },
+            { type: "text", text: "حلّل هذا المخطط باستخدام أداة report_rooms فقط، وفق القواعد المذكورة في تعليمات النظام — الغرف وهندستها التقريبية معًا." },
           ] as never,
         },
       ],

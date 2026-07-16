@@ -9,7 +9,9 @@ import { computeProjectCost, costForRoom } from "@/lib/design/costEngine";
 import type { ProjectPipeline } from "@/lib/design/types";
 import { exportShoppingListCsv, exportBillOfMaterialsCsv } from "@/lib/design/exportCsv";
 import { isPipelineComplete } from "@/lib/design/complete";
-import { RoomScene3D } from "@/components/scene3d";
+import { RoomScene3D, DEFAULT_LAYERS, type CameraMode, type LayerVisibility } from "@/components/scene3d";
+import { geometryStore } from "@/lib/geometry/store";
+import type { FloorGeometry } from "@/lib/geometry/types";
 import { sar } from "@/lib/mock";
 
 /**
@@ -21,13 +23,17 @@ export default function DesignPipeline({ params }: { params: Promise<{ id: strin
   const { id } = use(params);
   const [twin, setTwin] = useState<AnalyzedTwin | undefined>(undefined);
   const [pipeline, setPipeline] = useState<ProjectPipeline | undefined>(undefined);
+  const [geometry, setGeometry] = useState<FloorGeometry | undefined>(undefined);
   const [running, setRunning] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [view3d, setView3d] = useState<Record<string, boolean>>({});
+  const [activeRoomId, setActiveRoomId] = useState<string | null>(null);
+  const [cameraMode, setCameraMode] = useState<CameraMode>("perspective");
+  const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
 
   useEffect(() => {
     setTwin(twinStore.get(id));
     setPipeline(pipelineStore.get(id));
+    setGeometry(geometryStore.get(id));
   }, [id]);
 
   const rooms = twin ? roomObjectsFromTwin(twin) : [];
@@ -63,6 +69,13 @@ export default function DesignPipeline({ params }: { params: Promise<{ id: strin
 
   const cost = pipeline ? computeProjectCost(pipeline) : null;
   const complete = isPipelineComplete(twin, pipeline);
+  const designedRoomIds = rooms.filter((r) => pipeline?.rooms.find((pr) => pr.room.id === r.id)?.design).map((r) => r.id);
+  const activeIdx = activeRoomId ? designedRoomIds.indexOf(activeRoomId) : -1;
+  const goToRoom = (delta: number) => {
+    if (designedRoomIds.length === 0) return;
+    const next = ((activeIdx < 0 ? 0 : activeIdx) + delta + designedRoomIds.length) % designedRoomIds.length;
+    setActiveRoomId(designedRoomIds[next]!);
+  };
 
   return (
     <RequireAuth>
@@ -139,13 +152,36 @@ export default function DesignPipeline({ params }: { params: Promise<{ id: strin
 
                       <button
                         type="button" className="chip" style={{ marginTop: 10, cursor: "pointer", border: "none" }}
-                        onClick={() => setView3d((v) => ({ ...v, [room.id]: !v[room.id] }))}
+                        onClick={() => setActiveRoomId((v) => (v === room.id ? null : room.id))}
                       >
-                        {view3d[room.id] ? "🔽 إخفاء المعاينة ثلاثية الأبعاد" : "🧊 معاينة ثلاثية الأبعاد (تخطيطية)"}
+                        {activeRoomId === room.id ? "🔽 إخفاء المعاينة ثلاثية الأبعاد" : "🧊 معاينة ثلاثية الأبعاد (CAD)"}
                       </button>
-                      {view3d[room.id] && (
-                        <div style={{ height: 260, marginTop: 10, borderRadius: 12, overflow: "hidden" }}>
-                          <RoomScene3D room={room} design={result.design} />
+                      {activeRoomId === room.id && (
+                        <div style={{ marginTop: 10 }}>
+                          <div className="row" style={{ gap: 8, flexWrap: "wrap", marginBottom: 8, alignItems: "center" }}>
+                            <button type="button" className="chip" style={{ cursor: "pointer", border: "none" }} onClick={() => goToRoom(-1)} disabled={designedRoomIds.length < 2}>◀ الغرفة السابقة</button>
+                            <button type="button" className="chip" style={{ cursor: "pointer", border: "none" }} onClick={() => goToRoom(1)} disabled={designedRoomIds.length < 2}>الغرفة التالية ▶</button>
+                            <span style={{ width: 1, height: 18, background: "var(--line)" }} />
+                            <button
+                              type="button" className="chip" style={{ cursor: "pointer", border: "none" }}
+                              onClick={() => setCameraMode((m) => (m === "perspective" ? "top" : "perspective"))}
+                            >
+                              {cameraMode === "top" ? "🧭 منظور علوي" : "📷 منظور ثلاثي الأبعاد"}
+                            </button>
+                            <span style={{ width: 1, height: 18, background: "var(--line)" }} />
+                            {(["walls", "furniture", "lighting"] as const).map((layer) => (
+                              <label key={layer} className="chip" style={{ cursor: "pointer", display: "flex", gap: 5, alignItems: "center" }}>
+                                <input
+                                  type="checkbox" checked={layers[layer]}
+                                  onChange={(e) => setLayers((l) => ({ ...l, [layer]: e.target.checked }))}
+                                />
+                                {layer === "walls" ? "الجدران" : layer === "furniture" ? "الأثاث" : "الإضاءة"}
+                              </label>
+                            ))}
+                          </div>
+                          <div style={{ height: 300, borderRadius: 12, overflow: "hidden" }}>
+                            <RoomScene3D room={room} design={result.design} geometry={geometry} cameraMode={cameraMode} layers={layers} />
+                          </div>
                         </div>
                       )}
 

@@ -3,6 +3,9 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar, RequireAuth } from "@/components/ui";
 import { projects, floorplans } from "@/lib/services";
+import { flags } from "@/lib/flags";
+import { twinStore } from "@/lib/twin";
+import { analyzeFloorplanClient } from "@/lib/vision/client";
 
 const ACCEPTED = [".pdf", ".png", ".jpg", ".jpeg", ".webp", ".dwg", ".dxf"];
 const MAX_MB = 50;
@@ -15,6 +18,7 @@ export default function NewProject() {
   const [drag, setDrag] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
 
   const pick = (f: File | undefined) => {
     setError("");
@@ -33,10 +37,29 @@ export default function NewProject() {
 
   const start = async () => {
     setBusy(true);
-    const p = await projects.create(title.trim() || "بيتي الجديد");
-    await floorplans.upload(p.id, file!);
-    await projects.update(p.id, { fileName: file!.name, status: "analyzing" });
-    router.push(`/projects/${p.id}/analysis`);
+    setError("");
+    try {
+      const p = await projects.create(title.trim() || "بيتي الجديد");
+      await floorplans.upload(p.id, file!);
+      await projects.update(p.id, { fileName: file!.name, status: "analyzing" });
+
+      if (!flags.USE_MOCK_ANALYSIS) {
+        setAnalyzing(true);
+        const result = await analyzeFloorplanClient(file!);
+        twinStore.save({
+          project_id: p.id,
+          source: "vlm",
+          overall_confidence: result.overall_confidence,
+          analyzed_at: new Date().toISOString(),
+          rooms: result.rooms.map((r, i) => ({ id: `room-${i}`, ...r })),
+        });
+      }
+      router.push(`/projects/${p.id}/analysis`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "فشل تحليل المخطط — جرّب ملفًا آخر");
+      setBusy(false);
+      setAnalyzing(false);
+    }
   };
 
   return (
@@ -91,7 +114,7 @@ export default function NewProject() {
             )}
 
             <button className="btn btn-gold btn-block" disabled={!file || busy} onClick={start} style={{ minHeight: 54, fontSize: 17 }}>
-              {busy ? "جارٍ الرفع…" : "حلّل مخططي ✨"}
+              {analyzing ? "نحلل مخططك بالذكاء الاصطناعي… قد يستغرق ذلك حتى دقيقة" : busy ? "جارٍ الرفع…" : "حلّل مخططي ✨"}
             </button>
             <p className="dim" style={{ fontSize: 13, textAlign: "center" }}>
               💡 أفضل نتيجة: ملف PDF الأصلي من المطور، أو صورة عمودية بإضاءة جيدة

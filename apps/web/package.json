@@ -9,7 +9,9 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.111.0",
     "@bayti/contracts": "workspace:*",
+    "@bayti/design-schema": "workspace:*",
     "@bayti/ui": "workspace:*",
     "@supabase/supabase-js": "^2.110.6",
     "next": "^15.1.0",

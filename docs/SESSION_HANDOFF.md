@@ -1,6 +1,8 @@
 # SESSION HANDOFF — حالة المشروع للاستئناف الفوري
 
-> آخر تحديث: 2026-07-15 · الفرع: `claude/bayti-ai-platform-kf18m3` · **اقرأ هذا الملف أولًا عند فتح جلسة جديدة**، ثم [PROJECT_CONSTITUTION](PROJECT_CONSTITUTION.md) و[ENGINEERING_BACKLOG](../ENGINEERING_BACKLOG.md).
+> آخر تحديث: 2026-07-16 · الفرع: `claude/bayti-ai-platform-kf18m3` · **اقرأ هذا الملف أولًا عند فتح جلسة جديدة**، ثم [PROJECT_CONSTITUTION](PROJECT_CONSTITUTION.md) و[ENGINEERING_BACKLOG](../ENGINEERING_BACKLOG.md).
+>
+> **تحديث مهم:** منذ آخر تحديث لهذا الملف اكتملت أيضًا: VS-3 (المحادثة)، VS-4 (Supabase — جاهز بدون اتصال حي)، التحوّل من Vercel إلى Railway (المستودع جاهز، النشر يدوي)، Bayti Catalog Builder v1 (61 منتجًا حقيقيًا معتمدًا)، وتحليل المخططات الحقيقي (`docs/FLOORPLAN_ANALYSIS.md`). القسمان 2 و4 أدناه من الجولة الأولى ولم يُعاد كتابتهما بالكامل — المرجع الحي الدقيق هو `ENGINEERING_BACKLOG.md`.
 
 ## 1. ما تم إنجازه (مكتمل ومعتمد من المؤسس)
 

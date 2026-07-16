@@ -7,23 +7,35 @@ import { sar } from "@/lib/mock";
 import { catalog } from "@/lib/services";
 import type { CanonicalProduct, MerchantOffer } from "@/lib/catalog/types";
 import {
-  SHOP_ITEMS, choicesStore, offerFor, savings, variantTotal,
+  SHOP_ITEMS, choicesStore, offerFor, savings, variantTotal, variantTotalForRooms, shopItemsForKeys,
   type VariantId, type Choice,
 } from "@/lib/shop";
+import { twinStore, type AnalyzedTwin } from "@/lib/twin";
+import { resolveRooms, matchedTemplates } from "@/lib/rooms";
 
 type ShoppableProduct = CanonicalProduct & { bestOffer: MerchantOffer | null };
 
 /* شريحة التسوق — W4 (تبديل النسخ) + W6 (عدّاد التوفير) + استبدال القطع (P4)
-   المتاجر معلَّمة "تجريبي" بوضوح (قرار مؤسس): لا روابط تدّعي أنها حقيقية. */
+   المتاجر معلَّمة "تجريبي" بوضوح (قرار مؤسس): لا روابط تدّعي أنها حقيقية.
+   في التحليل الحقيقي (source: "vlm") تُعرض فقط عناصر التسوق لغرف مكتشفة فعليًا —
+   لا يُعرض تسوق لغرفة لم تُكتشف في التوأم الرقمي (يمنع قائمة تسوق لبيت من 15 غرفة لمخطط من غرفتين). */
 
 export default function Shopping({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [variant, setVariant] = useState<VariantId>("balanced");
   const [choices, setChoices] = useState<Record<string, Choice>>({});
   const [catalogProducts, setCatalogProducts] = useState<ShoppableProduct[] | null>(null);
+  const [twin, setTwin] = useState<AnalyzedTwin | undefined>(undefined);
 
   useEffect(() => { setChoices(choicesStore.get(id, variant)); }, [id, variant]);
   useEffect(() => { catalog.listShoppable().then(setCatalogProducts); }, []);
+  useEffect(() => { setTwin(twinStore.get(id)); }, [id]);
+
+  const isReal = twin?.source === "vlm";
+  const resolved = isReal ? resolveRooms(twin) : [];
+  const templates = isReal ? matchedTemplates(resolved) : [];
+  const unmatchedCount = resolved.length - templates.length;
+  const items = isReal ? shopItemsForKeys(new Set(templates.map((t) => t.key))) : SHOP_ITEMS;
 
   const pick = (itemId: string, c: Choice) => {
     const next = { ...choices, [itemId]: c };
@@ -31,14 +43,15 @@ export default function Shopping({ params }: { params: Promise<{ id: string }> }
     choicesStore.set(id, variant, next);
   };
 
-  const saved = useMemo(() => savings(variant, choices), [variant, choices]);
+  const saved = useMemo(() => savings(variant, choices, items), [variant, choices, items]);
   const total = useMemo(() => {
-    const swapDelta = SHOP_ITEMS.reduce((s, it) => {
+    const swapDelta = items.reduce((s, it) => {
       const c = choices[it.id] ?? "primary";
       return s + (offerFor(it, variant, c).price - it.offers[variant].price) * it.qty;
     }, 0);
-    return variantTotal(variant) + swapDelta;
-  }, [variant, choices]);
+    const base = isReal ? variantTotalForRooms(templates, variant) : variantTotal(variant);
+    return base + swapDelta;
+  }, [variant, choices, items, isReal, templates]);
 
   const animatedTotal = useCountUp(total);
   const animatedSaved = useCountUp(saved);
@@ -74,9 +87,19 @@ export default function Shopping({ params }: { params: Promise<{ id: string }> }
             </div>
           </div>
 
-          {/* العناصر */}
+          {/* العناصر — في الوضع الحقيقي: فقط عناصر تخص غرفًا مكتشفة فعليًا في مخططك */}
+          {isReal && items.length === 0 && (
+            <div className="card" style={{ padding: 20, marginTop: 16, textAlign: "center" }}>
+              <p className="muted t-sm">لا توجد قوائم تسوق جاهزة لأنواع الغرف المكتشفة في مخططك بعد.</p>
+            </div>
+          )}
+          {isReal && unmatchedCount > 0 && (
+            <p className="dim t-sm" style={{ marginTop: 10 }}>
+              {unmatchedCount} من الغرف المكتشفة ليس لها قائمة تسوق مخصصة بعد — قادمة قريبًا.
+            </p>
+          )}
           <div className="stack" style={{ marginTop: 16 }}>
-            {SHOP_ITEMS.map((it) => {
+            {items.map((it) => {
               const c = choices[it.id] ?? "primary";
               const current = offerFor(it, variant, c);
               const base = it.offers[variant];

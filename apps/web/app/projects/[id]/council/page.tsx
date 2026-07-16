@@ -1,9 +1,11 @@
 "use client";
-import { use, useEffect, useRef, useState } from "react";
+import { use, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar, RequireAuth } from "@/components/ui";
 import { AGENTS, COUNCIL_SCRIPT } from "@/lib/mock";
 import { projects } from "@/lib/services";
+import { twinStore } from "@/lib/twin";
+import { buildCouncilScript } from "@/lib/council";
 import type { AgentId } from "@bayti/contracts";
 
 /* شاشة المجلس الحية — لحظة W3 (WOW_MOMENTS): "يشاهد فريقًا كاملًا يشتغل لأجله" */
@@ -22,9 +24,15 @@ export default function Council({ params }: { params: Promise<{ id: string }> })
   const [lastDone, setLastDone] = useState<AgentId | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
 
+  // التوأم الرقمي الحقيقي (إن وجد) هو مصدر سيناريو المجلس — لا نص ثابت يخالف ما اكتُشف فعلًا
+  const script = useMemo(() => {
+    const twin = twinStore.get(id);
+    return twin?.source === "vlm" ? buildCouncilScript(twin) : COUNCIL_SCRIPT;
+  }, [id]);
+
   useEffect(() => {
     // مشغّل السيناريو — يحاكي SSE بنفس عقد CouncilSseEvent (sequence مضمون بالترتيب)
-    const timers = COUNCIL_SCRIPT.map(({ at, ev }, seq) =>
+    const timers = script.map(({ at, ev }, seq) =>
       setTimeout(() => {
         const e = ev as { type: string; agent_id?: AgentId; summary_ar?: string; severity?: string };
         if (e.type === "agent_started" && e.agent_id) {
@@ -49,7 +57,7 @@ export default function Council({ params }: { params: Promise<{ id: string }> })
       }, at),
     );
     return () => timers.forEach(clearTimeout);
-  }, [id]);
+  }, [id, script]);
 
   useEffect(() => {
     feedRef.current?.scrollTo({ top: feedRef.current.scrollHeight, behavior: "smooth" });

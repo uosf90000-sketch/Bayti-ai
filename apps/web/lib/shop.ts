@@ -2,7 +2,7 @@
  * شريحة النسخ الثلاث والتسوق — mock بعقود DesignVariant/ShoppingCandidate المجمدة.
  * قاعدة مؤسس: المتاجر هنا "تجريبية" معلنة بوضوح — لا روابط وهمية تدّعي أنها حقيقية.
  */
-import { NAJRES_ROOMS } from "./mock";
+import { NAJRES_ROOMS, type RoomPreview } from "./mock";
 
 export type VariantId = "economy" | "balanced" | "luxury";
 
@@ -16,8 +16,9 @@ export const VARIANTS: { id: VariantId; label: string; desc: string; icon: strin
 const MULT: Record<VariantId, number> = { economy: 0.72, balanced: 1, luxury: 1.55 };
 
 export const roomCost = (base: number, v: VariantId) => Math.round((base * MULT[v]) / 100) * 100;
-export const variantTotal = (v: VariantId) =>
-  NAJRES_ROOMS.reduce((s, r) => s + roomCost(r.cost, v), 0);
+export const variantTotalForRooms = (rooms: RoomPreview[], v: VariantId) =>
+  rooms.reduce((s, r) => s + roomCost(r.cost, v), 0);
+export const variantTotal = (v: VariantId) => variantTotalForRooms(NAJRES_ROOMS, v);
 
 /* ————— عناصر التسوق البارزة (Hero Items) ————— */
 export type ProductOffer = { name: string; store: string; price: number };
@@ -103,12 +104,15 @@ export const offerFor = (item: ShopItem, v: VariantId, c: Choice): ProductOffer 
   c === "cheaper" ? item.cheaper[v] : c === "premium" ? item.premium[v] : item.offers[v];
 
 /** التوفير (W6): مجموع ما وفره المستخدم باختيار بدائل أرخص في النسخة الحالية */
-export const savings = (v: VariantId, choices: Choices) =>
-  SHOP_ITEMS.reduce((s, it) => {
+export const savings = (v: VariantId, choices: Choices, items: ShopItem[] = SHOP_ITEMS) =>
+  items.reduce((s, it) => {
     if (choices[it.id] === "cheaper") s += (it.offers[v].price - it.cheaper[v].price) * it.qty;
     return s;
   }, 0);
 
 /** إجمالي العناصر البارزة بعد الاختيارات (يُستخدم لعرض أثر الاستبدال) */
-export const heroTotal = (v: VariantId, choices: Choices) =>
-  SHOP_ITEMS.reduce((s, it) => s + offerFor(it, v, choices[it.id] ?? "primary").price * it.qty, 0);
+export const heroTotal = (v: VariantId, choices: Choices, items: ShopItem[] = SHOP_ITEMS) =>
+  items.reduce((s, it) => s + offerFor(it, v, choices[it.id] ?? "primary").price * it.qty, 0);
+
+/** يُبقي فقط عناصر التسوق التي تخص غرفًا مكتشفة فعليًا (لا تسوق لغرفة لم تُكتشف — التوأم الرقمي مصدر الحقيقة) */
+export const shopItemsForKeys = (keys: Set<string>) => SHOP_ITEMS.filter((it) => keys.has(it.roomKey));

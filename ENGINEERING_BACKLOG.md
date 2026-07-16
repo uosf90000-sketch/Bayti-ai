@@ -56,8 +56,8 @@
 |---------|--------|
 | VS-1: الرحلة الأساسية (landing→login→dashboard→upload→analysis→council→preview) | ✅ **v0.1-preview** (tag محلي — دفع الـ tags محجوب من الـ proxy بـ403؛ المرجع commit bd7abe3) |
 | VS-2: النسخ الثلاث + التسوق (W4 تبديل فوري، W6 عدّاد التوفير، استبدال أرخص/أفخم P4، متاجر معلَّمة "تجريبي") + Feature Flags + تأمين OTP للإنتاج | ✅ هذه الدفعة |
-| VS-3: المحادثة (غيّر الكنبة/أفخم/خفّض 10% + معاينة قبل الاعتماد + فرق التكلفة + إصدارات ورجوع) | 🔶 **التالي** — الأساس المنطقي جاهز (`apps/web/lib/chat.ts`: intent parser + versions store، **غير موصول بأي شاشة**)؛ المتبقي: شاشة `/projects/[id]/chat` + الربط |
-| VS-4: أول خدمة حقيقية — Supabase (Storage للمخطط + سجل المشروع + حالة التحليل بـ checkpoint) قبل أي AI حقيقي | ⬜ بعد VS-3 |
+| VS-3: المحادثة (غيّر الكنبة/أفخم/خفّض 10% + معاينة قبل الاعتماد + فرق التكلفة + إصدارات ورجوع) | ✅ شاشة `/projects/[id]/chat` موصولة — معاينة → اعتماد = إصدار جديد → خط زمني ورجوع (P7 — لا حذف، الاستعادة تنشئ إصدارًا جديدًا) |
+| VS-4: أول خدمة حقيقية — Supabase (Storage للمخطط + سجل المشروع + حالة التحليل بـ checkpoint) قبل أي AI حقيقي | ⬜ **التالي** — بحاجة لمشروع Supabase من المؤسس (URL + anon key) |
 | النشر على Vercel (رابط تجريبي للجوال) | ⬜ بعد VS-4 |
 | جولة UI Polish مخصصة (انظر UI_POLISH_BACKLOG) | ⬜ بعد Vercel — آخر خطوة قبل الإطلاق التجريبي |
 | **إعادة بناء 4 شاشات** (Landing/Dashboard/AI Council/Project Results) — Bayti Design System v2 (ثيم مزدوج، Hero SVG متحرك، Marquee للوكلاء، حلقة تقدم المجلس، مشاهد غرف SVG، لمسة W7 ليل/نهار) | ✅ **Functional Approved** — ⬜ **Visual Direction: Needs Further Iteration (ليست Production UI)** — انظر [UI_POLISH_BACKLOG](docs/UI_POLISH_BACKLOG.md) للبنود المؤجلة، تُنفَّذ بعد VS-3/VS-4/Vercel |

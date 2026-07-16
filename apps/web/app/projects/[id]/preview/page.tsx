@@ -99,7 +99,10 @@ export default function Preview({ params }: { params: Promise<{ id: string }> })
               قادم تباعًا: الصور الواقعية لكل غرفة، التعديل بالمحادثة، تقرير PDF، والنموذج ثلاثي الأبعاد.
             </p>
             <div className="row" style={{ justifyContent: "center", marginTop: 14, flexWrap: "wrap", gap: 8 }}>
-              {["💬 عدّل بالمحادثة", "📄 تقرير PDF", "🏠 جولة 3D", "🖼️ صور واقعية"].map((x) => (
+              <Link href={`/projects/${id}/chat`} className="chip chip-gold" style={{ cursor: "pointer" }}>
+                💬 عدّل بالمحادثة
+              </Link>
+              {["📄 تقرير PDF", "🏠 جولة 3D", "🖼️ صور واقعية"].map((x) => (
                 <span key={x} className="chip">{x}</span>
               ))}
             </div>

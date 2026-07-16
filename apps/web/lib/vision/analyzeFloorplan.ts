@@ -8,10 +8,17 @@ import { RoomType } from "@bayti/design-schema";
  * ملفات CAD (DWG/DXF) ليست صورًا قابلة للتحليل هنا — تُرفض بوضوح بدل التخمين.
  */
 
+const DimensionsSchema = z.object({
+  width: z.number().positive().nullable(),
+  length: z.number().positive().nullable(),
+  height: z.number().positive().nullable(),
+}).nullable();
+
 const AnalyzedRoomSchema = z.object({
   type: RoomType,
   name_ar: z.string().min(1),
   area_m2: z.number().positive().nullable(),
+  dimensions_m: DimensionsSchema,
   confidence: z.number().min(0).max(1),
 });
 
@@ -33,6 +40,7 @@ const SYSTEM_PROMPT = `أنت مهندس معماري تحلّل مخططات م
 - عدّ فقط الغرف الظاهرة فعليًا في هذا المخطط بالذات — لا تفترض غرفًا غير مرسومة.
 - لكل غرفة اختر نوعًا واحدًا فقط من هذه القائمة الثابتة: ${ROOM_TYPES_LIST}. إن لم تتأكد من النوع استخدم "unknown" ولا تخمّن.
 - المساحة (area_m2): فقط إن كانت مكتوبة صراحة على المخطط أو قابلة للاستنتاج بثقة من مقياس مرسوم — وإلا اجعلها null. لا تقدّر مساحة بلا سند.
+- الأبعاد (dimensions_m): فقط إن كانت أرقام العرض/الطول/الارتفاع مكتوبة صراحة على المخطط أو قابلة للقياس بثقة من مقياس مرسوم — وإلا اجعل dimensions_m كاملة null. لا تخمّن أبعادًا من شكل الغرفة فقط.
 - confidence لكل غرفة: رقم بين 0 و1 يعكس ثقتك الحقيقية في نوع الغرفة، لا رقمًا ثابتًا.
 - overall_confidence: ثقتك الإجمالية في قراءة المخطط ككل (جودة الصورة، وضوح الخطوط، اكتمال المخطط).
 - استخدم أداة report_rooms فقط — لا نص حر خارجها.`;
@@ -78,9 +86,18 @@ export async function analyzeFloorplan(base64Data: string, mediaType: string): P
                   type: { type: "string", enum: RoomType.options },
                   name_ar: { type: "string" },
                   area_m2: { type: ["number", "null"] },
+                  dimensions_m: {
+                    type: ["object", "null"],
+                    properties: {
+                      width: { type: ["number", "null"] },
+                      length: { type: ["number", "null"] },
+                      height: { type: ["number", "null"] },
+                    },
+                    required: ["width", "length", "height"],
+                  },
                   confidence: { type: "number", minimum: 0, maximum: 1 },
                 },
-                required: ["type", "name_ar", "area_m2", "confidence"],
+                required: ["type", "name_ar", "area_m2", "dimensions_m", "confidence"],
               },
             },
             overall_confidence: { type: "number", minimum: 0, maximum: 1 },

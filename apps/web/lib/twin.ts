@@ -13,6 +13,8 @@ export type AnalyzedRoom = {
   type: RoomType;
   name_ar: string;
   area_m2: number | null;
+  /** أبعاد إن استُنتجت بثقة من نص/مقياس مكتوب على المخطط — وإلا null (لا تخمين — P9) */
+  dimensions_m: { width: number | null; length: number | null; height: number | null } | null;
   confidence: number; // 0..1
 };
 
@@ -51,7 +53,8 @@ export const twinStore = {
       overall_confidence: 0.97,
       analyzed_at: new Date().toISOString(),
       rooms: NAJRES_ROOMS.map((r) => ({
-        id: r.key, type: typeByKey[r.key] ?? "unknown", name_ar: r.name, area_m2: r.area, confidence: 0.97,
+        id: r.key, type: typeByKey[r.key] ?? "unknown", name_ar: r.name, area_m2: r.area,
+        dimensions_m: null, confidence: 0.97,
       })),
     };
     this.save(twin);

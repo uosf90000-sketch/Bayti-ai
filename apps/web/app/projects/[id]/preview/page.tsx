@@ -262,17 +262,18 @@ function RealPreview({ id, twin, variant, setVariant, night, setNight }: {
           </div>
 
           <div className="card" style={{ padding: "22px 20px", marginTop: 22, textAlign: "center" }}>
-            <h3 className="h-lg">🚧 هذه أول نظرة فقط</h3>
+            <h3 className="h-lg">🎨 خط الإنتاج الحقيقي لكل غرفة</h3>
             <p className="muted t-sm" style={{ maxWidth: 560, margin: "8px auto 0" }}>
-              قادم تباعًا: تصميم تفصيلي لكل نوع غرفة مكتشف، الصور الواقعية، التعديل بالمحادثة، تقرير PDF، والنموذج ثلاثي الأبعاد.
+              تصميم تفصيلي حقيقي لكل غرفة (ألوان، مواد، أثاث، إضاءة) مطابق فعليًا بمنتجات الكتالوج، ومعاينة ثلاثية الأبعاد تخطيطية، وتصدير قائمة تسوق/جدول كميات/تقرير PDF.
             </p>
             <div className="row" style={{ justifyContent: "center", marginTop: 14, flexWrap: "wrap", gap: 8 }}>
-              <Link href={`/projects/${id}/chat`} className="chip chip-gold" style={{ cursor: "pointer" }}>
+              <Link href={`/projects/${id}/design`} className="chip chip-gold" style={{ cursor: "pointer" }}>
+                🏗️ ابدأ خط الإنتاج الحقيقي
+              </Link>
+              <Link href={`/projects/${id}/chat`} className="chip" style={{ cursor: "pointer" }}>
                 💬 عدّل بالمحادثة
               </Link>
-              {["📄 تقرير PDF", "🏠 جولة 3D", "🖼️ صور واقعية"].map((x) => (
-                <span key={x} className="chip">{x}</span>
-              ))}
+              <span className="chip">🖼️ صور واقعية — قادم</span>
             </div>
           </div>
         </section>

@@ -69,9 +69,27 @@ function disposeObject(obj: THREE.Object3D) {
   });
 }
 
+type DebugInfo = {
+  hasGeometry: boolean;
+  geometryOverallConfidence: number | null;
+  scaleStatus: string | null;
+  totalWallsInProject: number;
+  totalRoomsWithPolygon: number;
+  hasRoomGeom: boolean;
+  roomPolygonPoints: number;
+  roomGeometryConfidence: number | null;
+  wallsMatchedToRoom: number;
+  roomAreaM2: number | null;
+  roomDimensionsM: { width: number | null; length: number | null; height: number | null } | null;
+  usable: boolean;
+  metersPerUnit: number | null;
+};
+
 export function RoomScene3D({ room, design, geometry, cameraMode = "perspective", layers = DEFAULT_LAYERS }: Props) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [approximateNote, setApproximateNote] = useState<string | null>(null);
+  const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
+  const [debugOpen, setDebugOpen] = useState(false);
 
   useEffect(() => {
     const mount = mountRef.current;
@@ -107,7 +125,25 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
 
     const roomGeom: RoomGeometry | undefined = geometry?.rooms.find((r) => r.room_id === room.id);
     const usable = roomHasUsableGeometry(geometry, room.id);
-    const metersPerUnit = usable && geometry && roomGeom ? metersPerUnitForRoom(geometry, roomGeom, room.area_m2) : undefined;
+    const metersPerUnit = usable && geometry && roomGeom ? metersPerUnitForRoom(geometry, roomGeom, room.area_m2, room.dimensions_m) : undefined;
+    const roomWallsAll = geometry && roomGeom ? wallsForRoom(geometry.walls, roomGeom) : [];
+
+    // تشخيص مؤقت — يوضّح أين ينقطع خط البيانات بين التحليل وCAD بلا حاجة لوصول سجلات الخادم
+    setDebugInfo({
+      hasGeometry: !!geometry,
+      geometryOverallConfidence: geometry?.overall_confidence ?? null,
+      scaleStatus: geometry?.scale.status ?? null,
+      totalWallsInProject: geometry?.walls.length ?? 0,
+      totalRoomsWithPolygon: geometry?.rooms.length ?? 0,
+      hasRoomGeom: !!roomGeom,
+      roomPolygonPoints: roomGeom?.polygon.length ?? 0,
+      roomGeometryConfidence: roomGeom?.confidence ?? null,
+      wallsMatchedToRoom: roomWallsAll.length,
+      roomAreaM2: room.area_m2,
+      roomDimensionsM: room.dimensions_m,
+      usable,
+      metersPerUnit: metersPerUnit ?? null,
+    });
 
     if (usable && geometry && roomGeom && metersPerUnit != null && metersPerUnit > 0) {
       // ── مشهد CAD حقيقي من الهندسة المستخرجة فعليًا ──
@@ -116,7 +152,7 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
       const centerV = (bbox.minY + bbox.maxY) / 2;
       const toLocal = ([u, v]: Vec2): [number, number] => [(u - centerU) * metersPerUnit, (v - centerV) * metersPerUnit];
 
-      const roomWalls = wallsForRoom(geometry.walls, roomGeom);
+      const roomWalls = roomWallsAll;
       const roomOpenings = openingsForWalls(geometry.openings, roomWalls);
 
       // الأرضية — شكل المضلّع الفعلي، لا مستطيل تقريبي
@@ -377,6 +413,42 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
           }}
         >
           {approximateNote}
+        </div>
+      )}
+      {debugInfo && (
+        <div style={{ position: "absolute", top: 6, insetInlineStart: 6, maxWidth: "calc(100% - 12px)" }}>
+          <button
+            type="button" onClick={() => setDebugOpen((v) => !v)}
+            style={{
+              fontSize: 10.5, background: "rgba(20,16,10,0.72)", color: "#f3ece0", border: "none",
+              borderRadius: 6, padding: "3px 8px", cursor: "pointer",
+            }}
+          >
+            🔧 {debugOpen ? "إخفاء" : "بيانات الهندسة الخام"}
+          </button>
+          {debugOpen && (
+            <pre
+              dir="ltr"
+              style={{
+                marginTop: 4, fontSize: 10, lineHeight: 1.5, background: "rgba(20,16,10,0.85)", color: "#e8dfce",
+                padding: "8px 10px", borderRadius: 8, whiteSpace: "pre-wrap", maxHeight: 220, overflow: "auto",
+              }}
+            >
+{`hasGeometry: ${debugInfo.hasGeometry}
+geometry.overall_confidence: ${debugInfo.geometryOverallConfidence ?? "—"}
+scale.status: ${debugInfo.scaleStatus ?? "—"}
+totalWalls (project): ${debugInfo.totalWallsInProject}
+totalRoomsWithPolygon (project): ${debugInfo.totalRoomsWithPolygon}
+hasRoomGeom (this room): ${debugInfo.hasRoomGeom}
+room.polygon.length: ${debugInfo.roomPolygonPoints}
+room.geometry_confidence: ${debugInfo.roomGeometryConfidence ?? "—"}
+wallsMatchedToRoom: ${debugInfo.wallsMatchedToRoom}
+room.area_m2: ${debugInfo.roomAreaM2 ?? "—"}
+room.dimensions_m: ${debugInfo.roomDimensionsM ? JSON.stringify(debugInfo.roomDimensionsM) : "—"}
+roomHasUsableGeometry: ${debugInfo.usable}
+metersPerUnit: ${debugInfo.metersPerUnit ?? "—"}`}
+            </pre>
+          )}
         </div>
       )}
     </div>

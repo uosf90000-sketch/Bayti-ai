@@ -1,0 +1,30 @@
+<svg width="1400" height="900" viewBox="0 0 1400 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="1400" height="900" fill="#EDE1CF"/>
+<g stroke="#6E4E37" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M170 135H1220V755H170V135Z"/>
+<path d="M170 390H510V135"/>
+<path d="M510 135V560H840V135"/>
+<path d="M840 405H1220"/>
+<path d="M840 405V755"/>
+<path d="M510 560H170"/>
+<path d="M510 560V755"/>
+<path d="M170 640H510"/>
+<path d="M975 405V755"/>
+<path d="M1095 405V755"/>
+<path d="M295 390V560"/>
+<path d="M650 560V755"/>
+</g>
+<g stroke="#B78A63" stroke-width="3" opacity=".8">
+<path d="M188 153H1202V737H188V153Z"/>
+<path d="M530 155V540H820V155"/>
+<path d="M860 425H1200"/>
+</g>
+<g fill="#6E4E37" font-family="Tahoma, 'Segoe UI', 'Noto Sans Arabic', sans-serif" font-size="28">
+<text x="285" y="285">المجلس</text>
+<text x="610" y="315">الصالة</text>
+<text x="975" y="270">المطبخ</text>
+<text x="270" y="500">غرفة نوم</text>
+<text x="590" y="675">غرفة نوم</text>
+<text x="900" y="600">الخدمات</text>
+</g>
+</svg>

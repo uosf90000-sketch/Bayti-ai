@@ -57,6 +57,12 @@ type Props = {
   geometry?: FloorGeometry;
   cameraMode?: CameraMode;
   layers?: LayerVisibility;
+  /** الوضع الاحترافي فقط: يظهر زر بيانات الهندسة الخام — مخفي عن المستخدم العادي (Progressive Disclosure) */
+  proMode?: boolean;
+  /** نقر (لا سحب) على قطعة أثاث — يُمرَّر فهرسها في design.furniture لفتح بطاقة المنتج الحقيقية */
+  onFurnitureClick?: (furnitureIndex: number) => void;
+  /** سقف نسبة البكسل حسب درجة أداء الجهاز (High/Balanced/Lite) — 1 على الأجهزة الضعيفة */
+  maxPixelRatio?: number;
 };
 
 function disposeObject(obj: THREE.Object3D) {
@@ -85,7 +91,7 @@ type DebugInfo = {
   metersPerUnit: number | null;
 };
 
-export function RoomScene3D({ room, design, geometry, cameraMode = "perspective", layers = DEFAULT_LAYERS }: Props) {
+export function RoomScene3D({ room, design, geometry, cameraMode = "perspective", layers = DEFAULT_LAYERS, proMode = false, onFurnitureClick, maxPixelRatio = 2 }: Props) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [approximateNote, setApproximateNote] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
@@ -102,9 +108,9 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
     const h = mount.clientHeight || 220;
     const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: maxPixelRatio > 1, alpha: true });
     renderer.setSize(w, h);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
     mount.appendChild(renderer.domElement);
 
     const group = new THREE.Group();
@@ -206,9 +212,9 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
       }
 
       // الأثاث — يوضع وفق قواعد تصميم (CATEGORY_STYLE) مع منع التداخل مع الجدران/الفتحات
-      const candidates = (design?.furniture ?? []).flatMap((f) => {
+      const candidates = (design?.furniture ?? []).flatMap((f, sourceIndex) => {
         const style = CATEGORY_STYLE[f.category] ?? CATEGORY_STYLE.other!;
-        return Array.from({ length: Math.min(f.qty, 4) }, () => ({ width: style.w, depth: style.d, height: style.h, category: f.category }));
+        return Array.from({ length: Math.min(f.qty, 4) }, () => ({ width: style.w, depth: style.d, height: style.h, category: f.category, sourceIndex }));
       });
       const placedItems = placeFurniture(roomGeom, roomWalls, roomOpenings, candidates, metersPerUnit);
       placedItems.forEach((p, i) => {
@@ -220,6 +226,7 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
         );
         box.position.set(lx, style.h / 2, lz);
         box.rotation.y = -(p.rotationDeg * Math.PI) / 180;
+        box.userData.furnitureIndex = candidates[i]?.sourceIndex;
         furnitureGroup.add(box);
       });
 
@@ -261,7 +268,7 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
       sideWall.position.set(-width / 2, wallHeight / 2, 0);
       wallsGroup.add(sideWall);
 
-      const items = (design?.furniture ?? []).flatMap((f) => Array.from({ length: Math.min(f.qty, 4) }, () => f));
+      const items = (design?.furniture ?? []).flatMap((f, sourceIndex) => Array.from({ length: Math.min(f.qty, 4) }, () => ({ ...f, sourceIndex })));
       const margin = 0.4;
       const cols = Math.max(1, Math.ceil(Math.sqrt(items.length)));
       const cellW = (width - margin * 2) / cols;
@@ -276,6 +283,7 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
           new THREE.BoxGeometry(Math.min(style.w, cellW * 0.9), style.h, Math.min(style.d, cellD * 0.9)),
           new THREE.MeshStandardMaterial({ color: style.color }),
         );
+        box.userData.furnitureIndex = item.sourceIndex;
         box.position.set(x, style.h / 2, z);
         furnitureGroup.add(box);
       });
@@ -316,11 +324,27 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
     // دوران بالسحب (فأرة أو إصبع واحد — Pointer Events توحّد الاثنين) — معطّل في المنظور العلوي
     let dragging = false;
     let lastX = 0;
+    let downX = 0;
+    let downY = 0;
     const onDown = (e: PointerEvent) => {
       if (e.pointerType === "touch" && activeTouches.size >= 2) return; // إصبعان = تقريب لا دوران
       dragging = true; lastX = e.clientX;
+      downX = e.clientX; downY = e.clientY;
     };
-    const onUp = () => { dragging = false; };
+    const raycaster = new THREE.Raycaster();
+    const pointerNdc = new THREE.Vector2();
+    const onUp = (e: PointerEvent) => {
+      dragging = false;
+      // نقرة حقيقية (بلا سحب يُذكر) على قطعة أثاث — لا تفتح بطاقة منتج أثناء تدوير الكاميرا
+      if (onFurnitureClick && Math.hypot(e.clientX - downX, e.clientY - downY) < 6) {
+        const rect = renderer.domElement.getBoundingClientRect();
+        pointerNdc.set(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
+        raycaster.setFromCamera(pointerNdc, camera);
+        const hit = raycaster.intersectObjects(furnitureGroup.children, false)[0];
+        const idx = hit?.object.userData.furnitureIndex;
+        if (typeof idx === "number") onFurnitureClick(idx);
+      }
+    };
     const onMove = (e: PointerEvent) => {
       if (!dragging || cameraMode === "top" || activeTouches.size >= 2) return;
       const dx = e.clientX - lastX;
@@ -399,7 +423,7 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
       renderer.dispose();
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
     };
-  }, [room, design, geometry, cameraMode, layers.walls, layers.furniture, layers.lighting]);
+  }, [room, design, geometry, cameraMode, layers.walls, layers.furniture, layers.lighting, onFurnitureClick, maxPixelRatio]);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>
@@ -415,7 +439,7 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
           {approximateNote}
         </div>
       )}
-      {debugInfo && (
+      {proMode && debugInfo && (
         <div style={{ position: "absolute", top: 6, insetInlineStart: 6, maxWidth: "calc(100% - 12px)" }}>
           <button
             type="button" onClick={() => setDebugOpen((v) => !v)}

@@ -1,0 +1,12 @@
+# يمدّد قواعد gitleaks الافتراضية (لا يستبدلها) — كل قواعد كشف الأسرار الفعلية تبقى فعّالة.
+# القائمة أدناه استثناءات مؤكَّدة يدويًا لسلاسل غير حساسة أثارت "generic-api-key" بسبب
+# نتيجة entropy فقط — راجع كل إضافة قبل الدمج، ولا تُستخدم لإخفاء سرّ فعلي أبدًا.
+[extend]
+useDefault = true
+
+[allowlist]
+regexes = [
+  # apps/web/lib/motion/usePerformanceTier.ts — مفتاح localStorage (bayti.<name>.v1)،
+  # نفس نمط بقية مفاتيح bayti.*.v1 في lib/twin.ts وlib/mock.ts وlib/chat.ts وغيرها.
+  '''bayti\.perfTier\.v1''',
+]

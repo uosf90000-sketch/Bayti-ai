@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 
 export type PerformanceTier = "high" | "balanced" | "lite";
-const KEY = "bayti.perfTier.v1";
+const KEY = "bayti.perfTier.v1"; // gitleaks:allow — مفتاح localStorage لا سرّ (نفس نمط بقية مفاتيح bayti.*.v1 في المشروع)
 
 /**
  * تصنيف تلقائي لقدرة الجهاز (نواة المعالج/الذاكرة إن توفرت + الجوال كإشارة)،

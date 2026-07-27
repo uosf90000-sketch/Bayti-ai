@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TopBar, AgentMarquee } from "@/components/ui";
 import { HeroScene } from "@/components/scene";
+import { RevealSection } from "@/components/cinematic/RevealSection";
 import { AGENTS } from "@/lib/mock";
 
 const steps = [
@@ -20,14 +21,17 @@ export default function Landing() {
         }
       />
 
-      {/* Hero — W1: المخطط ينبض بالحياة */}
-      <section className="section shell" style={{ textAlign: "center" }}>
-        <div className="stagger" style={{ maxWidth: 720, margin: "0 auto" }}>
+      {/* المشهد الأول — Hero ملء الشاشة: المخطط ينبض بالحياة خلف النص */}
+      <section className="scene-full">
+        <div className="scene-bg-blueprint" aria-hidden>
+          <HeroScene />
+        </div>
+        <div className="scene-content reveal-stagger in-view" style={{ maxWidth: 720 }}>
           <span className="chip chip-gold">✦ أول مجلس ذكاء اصطناعي لتصميم المنازل في السعودية</span>
           <h1 className="h-display" style={{ marginTop: 18 }}>
             من <span className="text-gradient">مخططك الورقي</span>
             <br />
-            إلى بيت جاهز للتنفيذ
+            إلى بيت يمكنك أن تعيشه قبل تنفيذه
           </h1>
           <p className="muted h-hero-sub" style={{ maxWidth: 560, margin: "16px auto 0" }}>
             ارفع مخطط منزلك، وخلال دقائق يصمم لك مجلس من خبراء الذكاء الاصطناعي
@@ -36,20 +40,23 @@ export default function Landing() {
           </p>
           <div className="row" style={{ justifyContent: "center", marginTop: 28, flexWrap: "wrap" }}>
             <Link href="/login" className="btn btn-gold" style={{ fontSize: 17, minHeight: 54, padding: "0 34px" }}>
-              ابدأ بمخططك مجانًا
+              ابدأ تصميم منزلك
             </Link>
-            <span className="dim t-sm">غرفة كاملة هدية — بلا بطاقة</span>
+            <Link href="#journey" className="btn btn-ghost" style={{ fontSize: 15, minHeight: 54, padding: "0 26px" }}>
+              شاهد كيف يعمل
+            </Link>
           </div>
+          <span className="dim t-sm" style={{ display: "block", marginTop: 10 }}>غرفة كاملة هدية — بلا بطاقة</span>
         </div>
-
-        <div className="card" style={{ maxWidth: 640, margin: "40px auto 0", padding: "26px 22px 0", overflow: "hidden" }}>
-          <HeroScene />
+        <div className="scroll-cue" aria-hidden>
+          <span>مرّر للأسفل</span>
+          <span className="dot" />
         </div>
       </section>
 
       {/* الرحلة */}
-      <section className="section shell" style={{ paddingTop: 0 }}>
-        <div className="grid-cards stagger">
+      <RevealSection id="journey" className="section shell">
+        <div className="grid-cards reveal-stagger">
           {steps.map((s, i) => (
             <div key={s.title} className="card card-hover" style={{ padding: 22 }}>
               <div className="row" style={{ justifyContent: "space-between" }}>
@@ -61,10 +68,10 @@ export default function Landing() {
             </div>
           ))}
         </div>
-      </section>
+      </RevealSection>
 
       {/* المجلس */}
-      <section className="section shell" style={{ paddingTop: 0 }}>
+      <RevealSection className="section shell" style={{ paddingTop: 0 }}>
         <h2 className="h-xl" style={{ textAlign: "center" }}>
           مجلسك الخاص من <span className="gold">١٣ خبيرًا</span>
         </h2>
@@ -72,10 +79,10 @@ export default function Landing() {
           كل خبير متخصص في شيء واحد يتقنه — ويعملون معًا على بيتك أنت
         </p>
         <AgentMarquee agents={AGENTS} />
-      </section>
+      </RevealSection>
 
       {/* الوعد */}
-      <section className="section shell" style={{ paddingTop: 0, textAlign: "center" }}>
+      <RevealSection className="section shell" style={{ paddingTop: 0, textAlign: "center" }}>
         <div className="spotlight" style={{ padding: "38px 22px" }}>
           <h2 className="h-xl">كل قطعة نقترحها <span className="gold">تدخل مكانها فعلًا</span></h2>
           <p className="muted t-body" style={{ maxWidth: 520, margin: "14px auto 0" }}>
@@ -89,7 +96,7 @@ export default function Landing() {
         <p className="dim t-sm" style={{ marginTop: 28 }}>
           بيتي AI — نسخة تجريبية مبكرة · صُنعت بفخر في السعودية 🇸🇦
         </p>
-      </section>
+      </RevealSection>
     </main>
   );
 }

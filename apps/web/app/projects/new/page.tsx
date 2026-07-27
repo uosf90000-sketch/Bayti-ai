@@ -2,6 +2,8 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { TopBar, RequireAuth } from "@/components/ui";
+import { ArchTable } from "@/components/cinematic/ArchTable";
+import { HeroScene } from "@/components/scene";
 import { projects, floorplans } from "@/lib/services";
 import { flags } from "@/lib/flags";
 import { twinStore } from "@/lib/twin";
@@ -69,24 +71,26 @@ export default function NewProject() {
     <RequireAuth>
       <main>
         <TopBar backHref="/projects" />
-        <section className="shell" style={{ paddingTop: 24, paddingBottom: 48, maxWidth: 640 }}>
-          <div className="stagger">
-            <h1 className="h-xl">مشروع جديد</h1>
-            <p className="muted" style={{ marginBottom: 8 }}>سمِّ بيتك، ثم ارفع مخططه — وخلّ الباقي علينا</p>
+        <section className="scene-full" style={{ minHeight: "calc(100dvh - 70px)", paddingTop: 24 }}>
+          <div className="stagger" style={{ maxWidth: 640, width: "100%" }}>
+            <div style={{ textAlign: "center" }}>
+              <h1 className="h-xl">ارفع مخططك… واترك الباقي لبيتي</h1>
+              <p className="muted" style={{ marginBottom: 20 }}>سمِّ بيتك، ثم ارفع مخططه فوق الطاولة أدناه</p>
+            </div>
 
             <input
               className="field" placeholder="اسم المشروع — مثال: فيلا حي النرجس"
               value={title} onChange={(e) => setTitle(e.target.value)} maxLength={60}
               aria-label="اسم المشروع"
+              style={{ marginBottom: 18 }}
             />
 
-            <div
-              className="dropzone" data-drag={drag}
+            <ArchTable
+              drag={drag}
               onClick={() => fileRef.current?.click()}
               onDragOver={(e) => { e.preventDefault(); setDrag(true); }}
               onDragLeave={() => setDrag(false)}
               onDrop={(e) => { e.preventDefault(); setDrag(false); pick(e.dataTransfer.files[0]); }}
-              role="button" tabIndex={0} aria-label="رفع المخطط"
               onKeyDown={(e) => e.key === "Enter" && fileRef.current?.click()}
             >
               <input
@@ -95,8 +99,10 @@ export default function NewProject() {
               />
               {file ? (
                 <div className="anim-fade-in">
-                  <div style={{ fontSize: 38 }}>📄</div>
-                  <div style={{ fontWeight: 700, marginTop: 6 }}>{file.name}</div>
+                  <div style={{ maxWidth: 240, margin: "0 auto 8px" }} aria-hidden>
+                    <HeroScene />
+                  </div>
+                  <div style={{ fontWeight: 700 }}>{file.name}</div>
                   <div className="dim" style={{ fontSize: 13 }}>{(file.size / 1024 / 1024).toFixed(1)} م.ب — اضغط للتغيير</div>
                 </div>
               ) : (
@@ -108,18 +114,18 @@ export default function NewProject() {
                   </div>
                 </div>
               )}
-            </div>
+            </ArchTable>
 
             {error && (
-              <div className="glass" style={{ padding: 14, borderColor: "rgba(224,92,92,0.4)" }}>
+              <div className="glass" style={{ padding: 14, marginTop: 16, borderColor: "rgba(224,92,92,0.4)" }}>
                 <span style={{ color: "var(--danger)", fontSize: 14 }}>⚠ {error}</span>
               </div>
             )}
 
-            <button className="btn btn-gold btn-block" disabled={!file || busy} onClick={start} style={{ minHeight: 54, fontSize: 17 }}>
+            <button className="btn btn-gold btn-block" disabled={!file || busy} onClick={start} style={{ minHeight: 54, fontSize: 17, marginTop: 18 }}>
               {analyzing ? "نحلل مخططك بالذكاء الاصطناعي… قد يستغرق ذلك حتى دقيقة" : busy ? "جارٍ الرفع…" : "حلّل مخططي ✨"}
             </button>
-            <p className="dim" style={{ fontSize: 13, textAlign: "center" }}>
+            <p className="dim" style={{ fontSize: 13, textAlign: "center", marginTop: 8 }}>
               💡 أفضل نتيجة: ملف PDF الأصلي من المطور، أو صورة عمودية بإضاءة جيدة
             </p>
           </div>

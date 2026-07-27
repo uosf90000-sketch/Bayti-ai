@@ -57,6 +57,8 @@ type Props = {
   geometry?: FloorGeometry;
   cameraMode?: CameraMode;
   layers?: LayerVisibility;
+  /** الوضع الاحترافي فقط: يظهر زر بيانات الهندسة الخام — مخفي عن المستخدم العادي (Progressive Disclosure) */
+  proMode?: boolean;
 };
 
 function disposeObject(obj: THREE.Object3D) {
@@ -85,7 +87,7 @@ type DebugInfo = {
   metersPerUnit: number | null;
 };
 
-export function RoomScene3D({ room, design, geometry, cameraMode = "perspective", layers = DEFAULT_LAYERS }: Props) {
+export function RoomScene3D({ room, design, geometry, cameraMode = "perspective", layers = DEFAULT_LAYERS, proMode = false }: Props) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [approximateNote, setApproximateNote] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
@@ -415,7 +417,7 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
           {approximateNote}
         </div>
       )}
-      {debugInfo && (
+      {proMode && debugInfo && (
         <div style={{ position: "absolute", top: 6, insetInlineStart: 6, maxWidth: "calc(100% - 12px)" }}>
           <button
             type="button" onClick={() => setDebugOpen((v) => !v)}

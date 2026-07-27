@@ -389,6 +389,52 @@ body {
 .stage-rail .seg[data-state="done"] { background: var(--success); border-color: transparent; }
 .stage-rail .seg[data-state="active"] { background: var(--accent); border-color: transparent; }
 
+/* ————— جولة استكشاف الغرف (بديل صندوق الـ3D التقليدي) ————— */
+.tour-stage {
+  position: relative; width: 100%; height: 100dvh; overflow: hidden;
+  background: var(--bg-2);
+}
+.tour-visual { position: absolute; inset: 0; }
+.tour-overlay {
+  position: absolute; inset-inline: 0; bottom: 0; z-index: 2; pointer-events: none;
+  padding: 100px 22px 28px;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--bg) 78%, transparent) 55%, color-mix(in srgb, var(--bg) 94%, transparent));
+}
+.tour-overlay > * { pointer-events: auto; }
+.tour-nav {
+  position: absolute; inset-inline: 0; top: 0; z-index: 3;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 14px 16px;
+}
+.tour-rail {
+  display: flex; gap: 6px; overflow-x: auto; max-width: 60vw; padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.tour-rail::-webkit-scrollbar { display: none; }
+.tour-rail .dot {
+  flex: none; width: 8px; height: 8px; border-radius: 999px; background: var(--surface-2);
+  border: 1px solid var(--line); cursor: pointer; transition: background var(--dur-micro), transform var(--dur-micro) var(--ease-spring), width var(--dur-standard) var(--ease);
+}
+.tour-rail .dot[data-active="true"] { background: var(--accent); border-color: transparent; width: 22px; }
+.tour-side-nav {
+  position: absolute; inset-block: 0; z-index: 3; display: flex; align-items: center;
+  width: 64px; justify-content: center; background: transparent; border: none; cursor: pointer;
+  color: var(--text); opacity: 0.55; transition: opacity var(--dur-micro) var(--ease);
+}
+.tour-side-nav:hover { opacity: 1; }
+.tour-side-nav[data-side="prev"] { inset-inline-start: 0; }
+.tour-side-nav[data-side="next"] { inset-inline-end: 0; }
+.tour-side-nav svg { width: 30px; height: 30px; }
+
+.mode-toggle { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); }
+.mode-toggle button {
+  border: none; background: transparent; padding: 6px 16px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  color: var(--text-2); cursor: pointer; transition: background var(--dur-micro) var(--ease), color var(--dur-micro);
+}
+.mode-toggle button[data-active="true"] { background: var(--accent); color: var(--on-accent); }
+
+.pro-panel { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
+
 /* reduced motion — بديل كامل بلا حركة */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

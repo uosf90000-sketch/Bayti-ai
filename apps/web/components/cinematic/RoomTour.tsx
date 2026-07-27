@@ -42,7 +42,7 @@ export function RoomTour({
   return (
     <div style={{ position: "relative" }}>
       <div className="tour-nav">
-        <Link href={backHref} className="btn btn-ghost" style={{ minHeight: 40, padding: "0 16px", fontSize: 13.5, background: "color-mix(in srgb, var(--bg) 55%, transparent)" }}>
+        <Link href={backHref} className="btn btn-ghost" style={{ flex: "none", minHeight: 40, padding: "0 16px", fontSize: 13.5, background: "color-mix(in srgb, var(--bg) 55%, transparent)" }}>
           رجوع
         </Link>
         <div className="tour-rail" role="tablist" aria-label="الغرف">
@@ -53,7 +53,7 @@ export function RoomTour({
             />
           ))}
         </div>
-        <div className="row" style={{ gap: 8 }}>
+        <div className="tour-actions">
           {projectCost && (
             <button type="button" className="btn btn-ghost" style={{ minHeight: 40, padding: "0 14px", fontSize: 13, background: "color-mix(in srgb, var(--bg) 55%, transparent)" }} onClick={() => setShowBudget((v) => !v)}>
               💰 الميزانية

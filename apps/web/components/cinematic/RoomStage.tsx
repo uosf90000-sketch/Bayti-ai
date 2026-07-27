@@ -2,9 +2,12 @@
 import { useState } from "react";
 import { RoomScene3D, DEFAULT_LAYERS, type CameraMode, type LayerVisibility } from "@/components/scene3d";
 import { ProductPanel } from "@/components/cinematic/ProductPanel";
+import { usePerformanceTier } from "@/lib/motion/usePerformanceTier";
 import type { RoomObject, RoomDesign, RoomCost, ShoppingMatch } from "@/lib/design/types";
 import type { FloorGeometry } from "@/lib/geometry/types";
 import { sar } from "@/lib/mock";
+
+const PIXEL_RATIO_BY_TIER = { high: 2, balanced: 1.5, lite: 1 } as const;
 
 /**
  * مشهد غرفة واحدة ملء الشاشة — بديل صندوق الـ3D الصغير القابل للطي.
@@ -20,6 +23,7 @@ export function RoomStage({
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const [showDetails, setShowDetails] = useState(false);
   const [selectedFurniture, setSelectedFurniture] = useState<number | null>(null);
+  const [tier] = usePerformanceTier();
 
   return (
     <div className="tour-stage">
@@ -27,6 +31,7 @@ export function RoomStage({
         <RoomScene3D
           room={room} design={design} geometry={geometry} cameraMode={cameraMode} layers={layers} proMode={proMode}
           onFurnitureClick={(i) => setSelectedFurniture(i)}
+          maxPixelRatio={PIXEL_RATIO_BY_TIER[tier]}
         />
       </div>
 

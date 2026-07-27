@@ -61,6 +61,8 @@ type Props = {
   proMode?: boolean;
   /** نقر (لا سحب) على قطعة أثاث — يُمرَّر فهرسها في design.furniture لفتح بطاقة المنتج الحقيقية */
   onFurnitureClick?: (furnitureIndex: number) => void;
+  /** سقف نسبة البكسل حسب درجة أداء الجهاز (High/Balanced/Lite) — 1 على الأجهزة الضعيفة */
+  maxPixelRatio?: number;
 };
 
 function disposeObject(obj: THREE.Object3D) {
@@ -89,7 +91,7 @@ type DebugInfo = {
   metersPerUnit: number | null;
 };
 
-export function RoomScene3D({ room, design, geometry, cameraMode = "perspective", layers = DEFAULT_LAYERS, proMode = false, onFurnitureClick }: Props) {
+export function RoomScene3D({ room, design, geometry, cameraMode = "perspective", layers = DEFAULT_LAYERS, proMode = false, onFurnitureClick, maxPixelRatio = 2 }: Props) {
   const mountRef = useRef<HTMLDivElement>(null);
   const [approximateNote, setApproximateNote] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<DebugInfo | null>(null);
@@ -106,9 +108,9 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
     const h = mount.clientHeight || 220;
     const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 100);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: maxPixelRatio > 1, alpha: true });
     renderer.setSize(w, h);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
     mount.appendChild(renderer.domElement);
 
     const group = new THREE.Group();
@@ -421,7 +423,7 @@ export function RoomScene3D({ room, design, geometry, cameraMode = "perspective"
       renderer.dispose();
       if (renderer.domElement.parentNode === mount) mount.removeChild(renderer.domElement);
     };
-  }, [room, design, geometry, cameraMode, layers.walls, layers.furniture, layers.lighting, onFurnitureClick]);
+  }, [room, design, geometry, cameraMode, layers.walls, layers.furniture, layers.lighting, onFurnitureClick, maxPixelRatio]);
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%" }}>

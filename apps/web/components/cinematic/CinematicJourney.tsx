@@ -6,6 +6,13 @@ import { OrbitControls } from "@react-three/drei";
 import { useGSAP } from "@gsap/react";
 import { gsap, ScrollTrigger } from "@/lib/motion/gsap";
 import { HouseScene } from "@/components/cinematic/HouseScene";
+import { usePerformanceTier } from "@/lib/motion/usePerformanceTier";
+
+const CANVAS_QUALITY = {
+  high: { dpr: [1, 2] as [number, number], antialias: true, fog: true },
+  balanced: { dpr: [1, 1.5] as [number, number], antialias: true, fog: true },
+  lite: { dpr: [1, 1] as [number, number], antialias: false, fog: false },
+};
 
 const BEATS = [
   { from: 0.0, to: 0.08, title: "من مخططك الورقي", sub: "إلى بيت يمكنك أن تعيشه قبل تنفيذه" },
@@ -25,6 +32,8 @@ export function CinematicJourney() {
   const [beatIndex, setBeatIndex] = useState(0);
   const [interactive, setInteractive] = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [tier] = usePerformanceTier();
+  const quality = CANVAS_QUALITY[tier];
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -69,13 +78,14 @@ export function CinematicJourney() {
     <div ref={wrapperRef} style={{ position: "relative", height: reducedMotion ? "100dvh" : "700vh" }}>
       <div className="cine-pin" style={{ position: "relative", height: "100dvh", overflow: "hidden", background: "var(--bg)" }}>
         <Canvas
-          dpr={[1, 1.6]}
+          dpr={quality.dpr}
           camera={{ fov: 42, near: 0.1, far: 100, position: [0, 20, 0.01] }}
-          gl={{ antialias: true }}
+          gl={{ antialias: quality.antialias }}
           style={{ position: "absolute", inset: 0 }}
+          aria-hidden="true"
         >
           <color attach="background" args={["#0a0f1e"]} />
-          <fog attach="fog" args={["#0a0f1e", 14, 34]} />
+          {quality.fog && <fog attach="fog" args={["#0a0f1e", 14, 34]} />}
           <HouseScene progressRef={progressRef} />
           {interactive && <OrbitControls enablePan={false} minDistance={3} maxDistance={10} maxPolarAngle={Math.PI / 2.1} />}
         </Canvas>

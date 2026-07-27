@@ -411,6 +411,23 @@ body {
   scrollbar-width: none;
 }
 .tour-rail::-webkit-scrollbar { display: none; }
+
+/* مجموعة أزرار الشريط العلوي (ميزانية/تصدير/الوضع) — تتمرر أفقيًا بدل أن تفيض خارج الشاشة */
+.tour-actions {
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+  overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; padding-inline-end: 4px;
+  /* التجاوز يمتد نحو نهاية السطر المنطقية (يسار الشاشة في RTL) — التلاشي هناك، لا يمينًا */
+  -webkit-mask-image: linear-gradient(to left, #000 92%, transparent);
+  mask-image: linear-gradient(to left, #000 92%, transparent);
+}
+.tour-actions::-webkit-scrollbar { display: none; }
+.tour-actions > * { flex: none; }
+
+@media (max-width: 640px) {
+  .tour-nav { padding: 10px 12px; gap: 6px; }
+  .tour-rail { max-width: 22vw; }
+  .tour-overlay { padding-top: 84px; }
+}
 .tour-rail .dot {
   flex: none; width: 8px; height: 8px; border-radius: 999px; background: var(--surface-2);
   border: 1px solid var(--line); cursor: pointer; transition: background var(--dur-micro), transform var(--dur-micro) var(--ease-spring), width var(--dur-standard) var(--ease);

@@ -10,11 +10,11 @@ import { twinStore, type AnalyzedTwin } from "@/lib/twin";
    التحليل الفعلي يكون قد اكتمل بالفعل (استُدعي في شاشة الرفع) وهذه مجرد
    حركة عرض قصيرة قبل كشف النتائج الحقيقية المخزّنة في twinStore. */
 const STAGES = [
-  { key: "quality", label: "فحص جودة الملف", d: 1400 },
-  { key: "walls", label: "كشف الجدران والفتحات", d: 2600 },
-  { key: "rooms", label: "تحديد الغرف ومساحاتها", d: 2800 },
-  { key: "labels", label: "قراءة الأسماء العربية", d: 2200 },
-  { key: "twin", label: "بناء التوأم الرقمي لبيتك", d: 1800 },
+  { key: "quality", label: "فحص جودة الملف", icon: "🔍", d: 1400 },
+  { key: "walls", label: "كشف الجدران والفتحات", icon: "🧱", d: 2600 },
+  { key: "rooms", label: "تحديد الغرف ومساحاتها", icon: "📐", d: 2800 },
+  { key: "labels", label: "قراءة الأسماء العربية", icon: "🔤", d: 2200 },
+  { key: "twin", label: "بناء التوأم الرقمي لبيتك", icon: "🏛️", d: 1800 },
 ];
 const REAL_STAGE_SCALE = 0.12; // العمل الحقيقي منجز فعلًا — هذه حركة عرض فقط
 
@@ -67,7 +67,7 @@ export default function Analysis({ params }: { params: Promise<{ id: string }> }
     <RequireAuth>
       <main>
         <TopBar backHref="/projects" />
-        <section className="shell" style={{ paddingTop: 28, paddingBottom: 48, maxWidth: 620 }}>
+        <section className="shell" style={{ paddingTop: 28, paddingBottom: 48, maxWidth: 620, minHeight: "calc(100dvh - 140px)", display: "flex", flexDirection: "column", justifyContent: "center" }}>
           {missing ? (
             <div className="glass anim-fade-up" style={{ padding: "30px 24px", textAlign: "center" }}>
               <div style={{ fontSize: 40 }}>⚠</div>
@@ -80,22 +80,16 @@ export default function Analysis({ params }: { params: Promise<{ id: string }> }
               </button>
             </div>
           ) : !done ? (
-            <div className="glass anim-fade-up" style={{ padding: "30px 24px" }}>
-              <h1 className="h-xl" style={{ textAlign: "center" }}>نقرأ مخططك الآن…</h1>
-              <p className="muted" style={{ textAlign: "center", fontSize: 14, marginTop: 4 }}>
-                يمكنك المغادرة والعودة — لن تفقد شيئًا
-              </p>
-              <div className="progress-track" style={{ marginTop: 22 }}>
+            <div className="stage-cinema anim-fade-up" style={{ padding: "40px 10px" }}>
+              <span className="dim t-sm">يمكنك المغادرة والعودة — لن تفقد شيئًا</span>
+              <div key={STAGES[stage]!.key} className="stage-icon anim-fade-in">{STAGES[stage]!.icon}</div>
+              <h1 className="h-xl">{STAGES[stage]!.label}</h1>
+              <div className="progress-track" style={{ width: "min(100%, 360px)" }}>
                 <div className="progress-fill" style={{ width: `${progress}%` }} />
               </div>
-              <div className="stack" style={{ marginTop: 22, gap: 10 }}>
+              <div className="stage-rail" role="progressbar" aria-valuenow={stage + 1} aria-valuemin={1} aria-valuemax={STAGES.length}>
                 {STAGES.map((s, i) => (
-                  <div key={s.key} className="agent-card" data-state={i < stage ? "done" : i === stage ? "working" : undefined}>
-                    <span className="agent-avatar" style={{ fontSize: 15 }}>
-                      {i < stage ? "✓" : i === stage ? "⏳" : "·"}
-                    </span>
-                    <span style={{ fontWeight: i === stage ? 700 : 500, fontSize: 15 }}>{s.label}</span>
-                  </div>
+                  <span key={s.key} className="seg" data-state={i < stage ? "done" : i === stage ? "active" : undefined} />
                 ))}
               </div>
             </div>

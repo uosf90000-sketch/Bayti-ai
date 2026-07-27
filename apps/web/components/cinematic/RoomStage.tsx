@@ -1,7 +1,8 @@
 "use client";
 import { useState } from "react";
 import { RoomScene3D, DEFAULT_LAYERS, type CameraMode, type LayerVisibility } from "@/components/scene3d";
-import type { RoomObject, RoomDesign, RoomCost } from "@/lib/design/types";
+import { ProductPanel } from "@/components/cinematic/ProductPanel";
+import type { RoomObject, RoomDesign, RoomCost, ShoppingMatch } from "@/lib/design/types";
 import type { FloorGeometry } from "@/lib/geometry/types";
 import { sar } from "@/lib/mock";
 
@@ -11,19 +12,33 @@ import { sar } from "@/lib/mock";
  * المدمج فعلًا) — لا صور فوتوغرافية زائفة (P8)، فقط مكبَّرًا لملء الشاشة.
  */
 export function RoomStage({
-  room, design, geometry, cost, proMode,
+  room, design, geometry, cost, proMode, shopping,
 }: {
-  room: RoomObject; design: RoomDesign; geometry?: FloorGeometry; cost: RoomCost | null; proMode: boolean;
+  room: RoomObject; design: RoomDesign; geometry?: FloorGeometry; cost: RoomCost | null; proMode: boolean; shopping: ShoppingMatch[];
 }) {
   const [cameraMode, setCameraMode] = useState<CameraMode>("perspective");
   const [layers, setLayers] = useState<LayerVisibility>(DEFAULT_LAYERS);
   const [showDetails, setShowDetails] = useState(false);
+  const [selectedFurniture, setSelectedFurniture] = useState<number | null>(null);
 
   return (
     <div className="tour-stage">
       <div className="tour-visual">
-        <RoomScene3D room={room} design={design} geometry={geometry} cameraMode={cameraMode} layers={layers} proMode={proMode} />
+        <RoomScene3D
+          room={room} design={design} geometry={geometry} cameraMode={cameraMode} layers={layers} proMode={proMode}
+          onFurnitureClick={(i) => setSelectedFurniture(i)}
+        />
       </div>
+
+      {selectedFurniture != null && shopping[selectedFurniture] && (
+        <ProductPanel match={shopping[selectedFurniture]!} onClose={() => setSelectedFurniture(null)} />
+      )}
+
+      {selectedFurniture == null && (
+        <span className="chip" style={{ position: "absolute", top: 84, insetInlineEnd: 16, zIndex: 3, background: "color-mix(in srgb, var(--bg) 55%, transparent)" }}>
+          👆 انقر أي قطعة أثاث لمعرفة سعرها
+        </span>
+      )}
 
       <div className="tour-overlay">
         <div className="shell" style={{ padding: 0, maxWidth: 760 }}>

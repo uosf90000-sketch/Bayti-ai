@@ -69,7 +69,7 @@ export default function DesignPipeline({ params }: { params: Promise<{ id: strin
   const tourRooms = rooms.flatMap((room) => {
     const result = pipeline?.rooms.find((r) => r.room.id === room.id);
     if (!result?.design) return [];
-    return [{ room, design: result.design, cost: pipeline ? costForRoom(pipeline, room.id) : null }];
+    return [{ room, design: result.design, cost: pipeline ? costForRoom(pipeline, room.id) : null, shopping: result.shopping }];
   });
 
   // الجولة ملء الشاشة تحل محل لوحة الغرف/الصندوق الثلاثي الأبعاد القابل للطي بمجرد توفر تصميم لغرفة واحدة على الأقل
@@ -81,6 +81,8 @@ export default function DesignPipeline({ params }: { params: Promise<{ id: strin
             rooms={tourRooms}
             geometry={geometry}
             backHref={`/projects/${id}/preview`}
+            projectId={id}
+            projectCost={cost}
             exportActions={
               <>
                 {complete && (

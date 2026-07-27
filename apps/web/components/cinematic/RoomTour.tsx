@@ -2,10 +2,12 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { RoomStage } from "@/components/cinematic/RoomStage";
-import type { RoomObject, RoomDesign, RoomCost } from "@/lib/design/types";
+import { BudgetReveal } from "@/components/cinematic/BudgetReveal";
+import { EditAssistant } from "@/components/cinematic/EditAssistant";
+import type { RoomObject, RoomDesign, RoomCost, ShoppingMatch, ProjectCost } from "@/lib/design/types";
 import type { FloorGeometry } from "@/lib/geometry/types";
 
-type TourRoom = { room: RoomObject; design: RoomDesign; cost: RoomCost | null };
+type TourRoom = { room: RoomObject; design: RoomDesign; cost: RoomCost | null; shopping: ShoppingMatch[] };
 
 /**
  * جولة استكشاف الغرف ملء الشاشة — غرفة واحدة نشطة في كل مرة (محرك 3D واحد
@@ -13,10 +15,14 @@ type TourRoom = { room: RoomObject; design: RoomDesign; cost: RoomCost | null };
  * يتعارض مع سحب الكاميرا داخل المشهد نفسه (اللمس/العجلة داخل الغرفة للتقريب والدوران فقط).
  */
 export function RoomTour({
-  rooms, geometry, backHref, exportActions,
-}: { rooms: TourRoom[]; geometry?: FloorGeometry; backHref: string; exportActions?: React.ReactNode }) {
+  rooms, geometry, backHref, exportActions, projectId, projectCost,
+}: {
+  rooms: TourRoom[]; geometry?: FloorGeometry; backHref: string; exportActions?: React.ReactNode;
+  projectId: string; projectCost: ProjectCost | null;
+}) {
   const [index, setIndex] = useState(0);
   const [proMode, setProMode] = useState(false);
+  const [showBudget, setShowBudget] = useState(false);
 
   const go = (delta: number) => setIndex((i) => (i + delta + rooms.length) % rooms.length);
 
@@ -48,6 +54,11 @@ export function RoomTour({
           ))}
         </div>
         <div className="row" style={{ gap: 8 }}>
+          {projectCost && (
+            <button type="button" className="btn btn-ghost" style={{ minHeight: 40, padding: "0 14px", fontSize: 13, background: "color-mix(in srgb, var(--bg) 55%, transparent)" }} onClick={() => setShowBudget((v) => !v)}>
+              💰 الميزانية
+            </button>
+          )}
           {exportActions}
           <div className="mode-toggle" role="tablist" aria-label="مستوى التفاصيل">
             <button type="button" data-active={!proMode} onClick={() => setProMode(false)}>بسيط</button>
@@ -55,6 +66,9 @@ export function RoomTour({
           </div>
         </div>
       </div>
+
+      {showBudget && projectCost && <BudgetReveal cost={projectCost} onClose={() => setShowBudget(false)} />}
+      <EditAssistant projectId={projectId} realTotal={projectCost?.total} />
 
       {/* الأزرار تشير للخارج نحو حافتها (اصطلاح معارض الصور المعتاد، مستقل عن اتجاه القراءة) */}
       <button type="button" className="tour-side-nav" data-side="prev" aria-label="الغرفة السابقة" onClick={() => go(1)}>
@@ -64,7 +78,7 @@ export function RoomTour({
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M15 6l-6 6 6 6" /></svg>
       </button>
 
-      <RoomStage key={current.room.id} room={current.room} design={current.design} geometry={geometry} cost={current.cost} proMode={proMode} />
+      <RoomStage key={current.room.id} room={current.room} design={current.design} geometry={geometry} cost={current.cost} proMode={proMode} shopping={current.shopping} />
     </div>
   );
 }

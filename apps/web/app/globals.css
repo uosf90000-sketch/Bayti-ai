@@ -417,7 +417,8 @@ body {
 }
 .tour-rail .dot[data-active="true"] { background: var(--accent); border-color: transparent; width: 22px; }
 .tour-side-nav {
-  position: absolute; inset-block: 0; z-index: 3; display: flex; align-items: center;
+  /* يتوقف دون شريط التنقل العلوي وقبل تراكب التسمية السفلي — لا يعترض نقراتهما أبدًا */
+  position: absolute; top: 76px; bottom: 200px; z-index: 1; display: flex; align-items: center;
   width: 64px; justify-content: center; background: transparent; border: none; cursor: pointer;
   color: var(--text); opacity: 0.55; transition: opacity var(--dur-micro) var(--ease);
 }

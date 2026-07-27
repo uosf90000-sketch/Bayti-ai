@@ -1,0 +1,9 @@
+<svg width="1400" height="900" viewBox="0 0 1400 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="1400" height="900" rx="42" fill="#F5EEE5"/>
+<g opacity=".22" stroke="#8D684D" stroke-width="1"><path d="M0 90H1400M0 180H1400M0 270H1400M0 360H1400M0 450H1400M0 540H1400M0 630H1400M0 720H1400M0 810H1400"/><path d="M100 0V900M200 0V900M300 0V900M400 0V900M500 0V900M600 0V900M700 0V900M800 0V900M900 0V900M1000 0V900M1100 0V900M1200 0V900M1300 0V900"/></g>
+<g stroke="#5D3D2D" stroke-width="10" stroke-linecap="round" stroke-linejoin="round">
+<path d="M150 120H1240V760H150V120Z"/><path d="M150 420H480V120"/><path d="M480 120V570H850V120"/><path d="M850 390H1240"/><path d="M850 390V760"/><path d="M480 570H150"/><path d="M480 570V760"/><path d="M1020 390V760"/><path d="M1140 390V760"/><path d="M650 570V760"/>
+</g>
+<g stroke="#B58C6C" stroke-width="4"><path d="M175 145H1215V735H175V145Z"/><path d="M505 145V545H825V145"/><path d="M875 415H1215"/></g>
+<g fill="#5D3D2D" font-family="Arial" font-size="28"><text x="245" y="300">المجلس</text><text x="600" y="315">المعيشة</text><text x="1000" y="270">المطبخ</text><text x="245" y="505">غرفة نوم</text><text x="560" y="680">غرفة نوم</text><text x="920" y="590">الخدمات</text></g>
+</svg>

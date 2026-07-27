@@ -1,0 +1,17 @@
+[project]
+name = "bayti-ai"
+version = "0.1.0"
+description = "Bayti AI — AI pipeline: floorplan analysis, agent council, rendering (PRD frozen specs)"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2.9",
+]
+
+[tool.uv]
+dev-dependencies = [
+  "pytest>=8",
+]
+
+# البنية وفق §07 المعتمد:
+#   orchestrator/  agents/  prompts/  floorplan/  matching/  rendering/  llm/  evals/  workers/
+# schemas بايثون تُولَّد/تُطابَق مع @bayti/design-schema — مصدر الحقيقة واحد (ADR-030)

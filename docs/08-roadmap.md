@@ -1,3 +1,5 @@
+> ⚠️ **لافتة Architecture Freeze v1.0:** هذه وثيقة تأسيسية من الجيل الأول. عند أي تعارض مع أقسام الـ PRD المعتمدة ([docs/02-prd.md](02-prd.md)) أو القاموس الرسمي في [ARCHITECTURE_FREEZE_v1.md](ARCHITECTURE_FREEZE_v1.md)، **فالـ PRD هو المرجع** (مثال: DigitalTwin لا FloorPlanGraph، وDesignVariant لا tier). إعادة كتابتها الرسمية ضمن أقسام PRD 7–12 (TD-01).
+
 # 8. Development Roadmap — خارطة الطريق
 
 > فرضية الفريق المبدئي: 1 CTO + 2 مهندسين full-stack + 1 مهندس AI/ML (يُوظف بنهاية المرحلة 0) + مصمم منتج جزئي.

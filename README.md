@@ -10,8 +10,16 @@ Bayti AI هي منصة ذكاء اصطناعي تحوّل أي مخطط منزل
 
 ## 📚 الوثائق التأسيسية
 
+> 🔒 **Architecture v1.0 (Frozen)** — ابدأ القراءة من [**دستور المشروع**](docs/PROJECT_CONSTITUTION.md)، ثم [الـ PRD الرسمي](docs/02-prd.md) (المرجع عند أي تعارض)، و[سجل القرارات ADR](docs/ADR.md) و[تقرير الـ Freeze](docs/ARCHITECTURE_FREEZE_v1.md).
+
 | # | الوثيقة | الوصف |
 |---|---------|-------|
+| ⭐ | [PROJECT_CONSTITUTION](docs/PROJECT_CONSTITUTION.md) | الدستور المختصر — يُقرأ أولًا |
+| ⭐ | [ADR](docs/ADR.md) | سجل القرارات المعمارية (32 قرارًا — Frozen) |
+| ⭐ | [ARCHITECTURE_FREEZE_v1](docs/ARCHITECTURE_FREEZE_v1.md) | تقرير التجميد: قاموس، مخاطر، ديون، جاهزية 89/100 |
+| ⭐ | [ARCHITECTURE_RELEASE_NOTES_v1.0](docs/ARCHITECTURE_RELEASE_NOTES_v1.0.md) | مذكرة إصدار المعمارية: ما أُنجز، ما تغيّر، ولماذا |
+| ⭐ | [ENGINEERING_BOOTSTRAP](docs/ENGINEERING_BOOTSTRAP.md) | خطة الانطلاق: ترتيب الأقسام 7–12، Sprint 0، البوابات، ومتى يبدأ الكود |
+| ⭐ | [WOW_MOMENTS](docs/WOW_MOMENTS.md) | هوية التجربة: لحظات الانبهار ولغة الفخامة — مرجع كل قرارات الواجهة |
 | 1 | [Product Vision](docs/01-product-vision.md) | الرؤية، الرسالة، ولماذا سنفوز |
 | 2 | [PRD](docs/02-prd.md) | متطلبات المنتج التفصيلية ورحلة المستخدم |
 | 3 | [Software Architecture](docs/03-software-architecture.md) | المعمارية البرمجية للنظام |
@@ -57,10 +65,42 @@ Bayti AI هي منصة ذكاء اصطناعي تحوّل أي مخطط منزل
 | **Cost Engineer AI** | حساب التكلفة بندًا بندًا وموازنتها مع ميزانية العميل |
 | **Shopping AI** | مطابقة كل عنصر بمنتجات حقيقية من المتاجر السعودية |
 
-## 🚀 البدء السريع (للمطورين)
+## 🚀 التشغيل — Sprint 1 Preview (v0.1)
 
-> الكود لم يبدأ بعد — نحن في مرحلة التأسيس الوثائقي عمدًا.
-> اقرأ الوثائق بالترتيب: Vision → PRD → Architecture → MVP، ثم راجع [Roadmap](docs/08-roadmap.md) لمعرفة Sprint 0.
+> **نسخة تعمل الآن!** واجهة فاخرة كاملة فوق خدمات محاكاة (Mock) بعقود مجمدة — تُستبدل بالخدمات الحقيقية تدريجيًا دون تغيير الواجهة.
+
+```bash
+pnpm install
+cd apps/web && pnpm dev
+# افتح http://localhost:3000 — ومن جوالك: http://<IP جهازك>:3000
+```
+
+**الدخول التجريبي:** أي رقم بصيغة `05XXXXXXXX` → رمز التحقق **`1234`**
+> ⚠️ الرمز التجريبي يعمل في development فقط — في production معطّل بنيويًا (يُفعَّل لبيئات المعاينة حصريًا عبر `NEXT_PUBLIC_ALLOW_TEST_OTP=true`).
+
+### الرحلة التي تعمل حاليًا
+`الصفحة الرئيسية → دخول OTP → لوحة المشاريع → مشروع جديد + رفع المخطط → التحليل المرحلي → 🏛️ مجلس الذكاء الحي (13 خبيرًا + تعارض يُحسم أمامك) → المعاينة الأولى → النسخ الثلاث (اقتصادي/متوازن/فاخر) بتبديل فوري → قائمة التسوق مع عدّاد التوفير واستبدال القطع (أرخص/أفخم)`
+
+### ما هو Mock وما هو حقيقي
+
+| المكوّن | الحالة | الـ Flag |
+|---------|--------|----------|
+| الواجهة كاملة (RTL، جوال، Bayti Glass) | ✅ **حقيقي** | — |
+| العقود (`packages/contracts` + `design-schema`) | ✅ **حقيقية ومجمدة** — الـ mocks تطبّقها حرفيًا | — |
+| الدخول OTP | 🎭 Mock | `NEXT_PUBLIC_USE_MOCK_AUTH` |
+| تحليل المخطط | 🎭 Mock (سيناريو يطابق مراحل §4.12) | `NEXT_PUBLIC_USE_MOCK_ANALYSIS` |
+| مجلس الوكلاء | 🎭 Mock (سيناريو فيلا النرجس §6.19 بعقد SSE) | `NEXT_PUBLIC_USE_MOCK_COUNCIL` |
+| النتائج والتسوق | 🎭 Mock — **المتاجر مُعلَّمة "تجريبي" بوضوح، لا روابط تدّعي أنها حقيقية** | `NEXT_PUBLIC_USE_MOCK_RESULTS` |
+
+قلب أي flag إلى `false` يوجّه الشاشة للخدمة الحقيقية (يفشل بوضوح إن لم تُربط بعد) — **صفر تغيير في كود الشاشات** (AC12-3).
+
+الإصدار: **`v0.1-preview`** (tag محلي — راجع [ENGINEERING_BACKLOG](ENGINEERING_BACKLOG.md) لحالة الشرائح).
+
+### لقطات من النسخة الحالية (جوال 390px)
+
+| الرئيسية | المجلس الحي (W3) | النسخ الثلاث (W4) | التسوق + التوفير (W6) |
+|---|---|---|---|
+| ![Landing](docs/assets/01-landing.png) | ![Council](docs/assets/02-council.png) | ![Preview](docs/assets/03-preview.png) | ![Shopping](docs/assets/04-shopping.png) |
 
 ---
 

@@ -1,0 +1,35 @@
+# بيئة التطوير الكاملة بأمر واحد (معيار §07): docker compose -f infra/compose.dev.yml up -d
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: bayti
+      POSTGRES_PASSWORD: bayti_dev # dev فقط — الإنتاج عبر Secrets Manager (§11.2)
+      POSTGRES_DB: bayti
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U bayti"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: bayti
+      MINIO_ROOT_PASSWORD: bayti_dev_secret
+    ports: ["9000:9000", "9001:9001"]
+    volumes: [miniodata:/data]
+
+volumes:
+  pgdata:
+  miniodata:

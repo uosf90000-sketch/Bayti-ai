@@ -1,0 +1,835 @@
+[
+  {
+    "id": "ikea-sa-40337694",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "403.376.94",
+    "name_ar": "وحدة تلفزيون BRIMNES بيضاء",
+    "name_en": "BRIMNES TV bench white",
+    "category": "tv-media",
+    "subcategory": "tv-bench",
+    "price_sar": 399,
+    "previous_price_sar": 499,
+    "availability": "available",
+    "dimensions": "120×41×53 سم",
+    "style_tags": [
+      "white",
+      "storage",
+      "modern"
+    ],
+    "room_tags": [
+      "living-room",
+      "majlis"
+    ],
+    "tier": "economic",
+    "product_url": "https://www.ikea.com/sa/en/p/brimnes-tv-bench-white-40337694/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-00450088",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "004.500.88",
+    "name_ar": "وحدة تلفزيون LACK بيضاء",
+    "name_en": "LACK TV bench white",
+    "category": "tv-media",
+    "subcategory": "tv-bench",
+    "price_sar": 99,
+    "previous_price_sar": null,
+    "availability": "available",
+    "dimensions": "90×26×45 سم",
+    "style_tags": [
+      "white",
+      "minimal",
+      "budget"
+    ],
+    "room_tags": [
+      "living-room",
+      "bedroom"
+    ],
+    "tier": "economic",
+    "product_url": "https://www.ikea.com/sa/en/p/lack-tv-bench-white-00450088/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-30269129",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "302.691.29",
+    "name_ar": "وحدة تلفزيون BESTÅ BURS أبيض لامع",
+    "name_en": "BESTÅ BURS TV bench high-gloss white",
+    "category": "tv-media",
+    "subcategory": "tv-bench",
+    "price_sar": 995,
+    "previous_price_sar": 1295,
+    "availability": "available",
+    "dimensions": "180×41×49 سم",
+    "style_tags": [
+      "white",
+      "high-gloss",
+      "modern"
+    ],
+    "room_tags": [
+      "living-room",
+      "majlis"
+    ],
+    "tier": "balanced",
+    "product_url": "https://www.ikea.com/sa/en/p/besta-burs-tv-bench-high-gloss-white-30269129/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-80227797",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "802.277.97",
+    "name_ar": "وحدة تلفزيون BYÅS أبيض لامع",
+    "name_en": "BYÅS TV bench high-gloss white",
+    "category": "tv-media",
+    "subcategory": "tv-bench",
+    "price_sar": 479,
+    "previous_price_sar": 599,
+    "availability": "available",
+    "dimensions": "160×42×45 سم",
+    "style_tags": [
+      "white",
+      "high-gloss",
+      "storage"
+    ],
+    "room_tags": [
+      "living-room"
+    ],
+    "tier": "economic",
+    "product_url": "https://www.ikea.com/sa/en/p/byas-tv-bench-high-gloss-white-80227797/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-80542857",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "805.428.57",
+    "name_ar": "وحدة تلفزيون VIHALS بيضاء",
+    "name_en": "VIHALS TV bench white",
+    "category": "tv-media",
+    "subcategory": "tv-bench",
+    "price_sar": null,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "176.3×37×50 سم",
+    "style_tags": [
+      "white",
+      "modern",
+      "drawers"
+    ],
+    "room_tags": [
+      "living-room",
+      "majlis"
+    ],
+    "tier": "balanced",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-tv-bench-white-80542857/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-00543672",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "005.436.72",
+    "name_ar": "وحدة تلفزيون VIHALS رمادي داكن",
+    "name_en": "VIHALS TV bench dark grey",
+    "category": "tv-media",
+    "subcategory": "tv-bench",
+    "price_sar": 499,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "146×37×50 سم",
+    "style_tags": [
+      "dark-grey",
+      "modern",
+      "drawers"
+    ],
+    "room_tags": [
+      "living-room"
+    ],
+    "tier": "balanced",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-tv-bench-dark-grey-00543672/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s29597377",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S295.973.77",
+    "name_ar": "وحدة تلفزيون BESTÅ بأبواب بيضاء",
+    "name_en": "BESTÅ TV bench with doors white",
+    "category": "tv-media",
+    "subcategory": "tv-bench-with-doors",
+    "price_sar": 1140,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "120×42×74 سم",
+    "style_tags": [
+      "white",
+      "closed-storage",
+      "modern"
+    ],
+    "room_tags": [
+      "living-room",
+      "majlis"
+    ],
+    "tier": "balanced",
+    "product_url": "https://www.ikea.com/sa/en/p/besta-tv-bench-with-doors-white-foervaltare-white-s29597377/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-70562087",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "705.620.87",
+    "name_ar": "وحدة تلفزيون KALLAX بيضاء",
+    "name_en": "KALLAX TV bench white",
+    "category": "tv-media",
+    "subcategory": "tv-bench",
+    "price_sar": 399,
+    "previous_price_sar": 499,
+    "availability": "available",
+    "dimensions": "147×60 سم",
+    "style_tags": [
+      "white",
+      "open-storage",
+      "modular"
+    ],
+    "room_tags": [
+      "living-room",
+      "bedroom"
+    ],
+    "tier": "economic",
+    "product_url": "https://www.ikea.com/sa/en/p/kallax-tv-bench-white-70562087/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s99521157",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S995.211.57",
+    "name_ar": "تشكيلة تلفزيون وتخزين VIHALS بيضاء",
+    "name_en": "VIHALS TV/storage combination white",
+    "category": "tv-media",
+    "subcategory": "tv-storage-combination",
+    "price_sar": null,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "275×47×90 سم",
+    "style_tags": [
+      "white",
+      "modular",
+      "storage"
+    ],
+    "room_tags": [
+      "living-room",
+      "majlis"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-tv-storage-combination-white-s99521157/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s49521112",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S495.211.12",
+    "name_ar": "تشكيلة تلفزيون وتخزين VIHALS بيضاء",
+    "name_en": "VIHALS TV/storage combination white",
+    "category": "tv-media",
+    "subcategory": "tv-storage-combination",
+    "price_sar": null,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "275×37×140 سم",
+    "style_tags": [
+      "white",
+      "modular",
+      "storage"
+    ],
+    "room_tags": [
+      "living-room"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-tv-storage-combination-white-s49521112/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s99440613",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S994.406.13",
+    "name_ar": "تشكيلة تلفزيون وتخزين VIHALS بيضاء",
+    "name_en": "VIHALS TV/storage combination white",
+    "category": "tv-media",
+    "subcategory": "tv-storage-combination",
+    "price_sar": null,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "251×37×140 سم",
+    "style_tags": [
+      "white",
+      "modular",
+      "storage"
+    ],
+    "room_tags": [
+      "living-room"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-tv-storage-combination-white-s99440613/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s09521072",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S095.210.72",
+    "name_ar": "تشكيلة تلفزيون وتخزين VIHALS رمادي داكن",
+    "name_en": "VIHALS TV/storage combination dark grey",
+    "category": "tv-media",
+    "subcategory": "tv-storage-combination",
+    "price_sar": 1098,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "242×37×90 سم",
+    "style_tags": [
+      "dark-grey",
+      "modular",
+      "storage"
+    ],
+    "room_tags": [
+      "living-room"
+    ],
+    "tier": "balanced",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-tv-storage-combination-dark-grey-s09521072/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s89521073",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S895.210.73",
+    "name_ar": "تشكيلة تلفزيون وتخزين VIHALS رمادي داكن",
+    "name_en": "VIHALS TV/storage combination dark grey",
+    "category": "tv-media",
+    "subcategory": "tv-storage-combination",
+    "price_sar": 1897,
+    "previous_price_sar": 2097,
+    "availability": "unknown",
+    "dimensions": "337×37×200 سم",
+    "style_tags": [
+      "dark-grey",
+      "large-storage",
+      "modern"
+    ],
+    "room_tags": [
+      "living-room",
+      "majlis"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-tv-storage-combination-dark-grey-s89521073/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s09440679",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S094.406.79",
+    "name_ar": "تشكيلة تلفزيون وتخزين VIHALS بيضاء",
+    "name_en": "VIHALS TV/storage combination white",
+    "category": "tv-media",
+    "subcategory": "tv-storage-combination",
+    "price_sar": 1797,
+    "previous_price_sar": 1897,
+    "availability": "unknown",
+    "dimensions": "337×47×200 سم",
+    "style_tags": [
+      "white",
+      "large-storage",
+      "modern"
+    ],
+    "room_tags": [
+      "living-room",
+      "majlis"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-tv-storage-combination-white-s09440679/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s69521074",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S695.210.74",
+    "name_ar": "تشكيلة تلفزيون وتخزين VIHALS رمادي داكن",
+    "name_en": "VIHALS TV/storage combination dark grey",
+    "category": "tv-media",
+    "subcategory": "tv-storage-combination",
+    "price_sar": null,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "337×47×200 سم",
+    "style_tags": [
+      "dark-grey",
+      "large-storage",
+      "modern"
+    ],
+    "room_tags": [
+      "living-room"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-tv-storage-combination-dark-grey-s69521074/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s59440610",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S594.406.10",
+    "name_ar": "تشكيلة تلفزيون وتخزين VIHALS بيضاء",
+    "name_en": "VIHALS TV/storage combination white",
+    "category": "tv-media",
+    "subcategory": "tv-storage-combination",
+    "price_sar": 1897,
+    "previous_price_sar": 2097,
+    "availability": "unknown",
+    "dimensions": "337×37×200 سم",
+    "style_tags": [
+      "white",
+      "large-storage",
+      "modern"
+    ],
+    "room_tags": [
+      "living-room"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-tv-storage-combination-white-s59440610/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-20293766",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "202.937.66",
+    "name_ar": "طاولة طعام MÖRBYLÅNGA",
+    "name_en": "MÖRBYLÅNGA Table oak veneer brown stained",
+    "category": "dining",
+    "subcategory": "dining-table",
+    "price_sar": 3195,
+    "previous_price_sar": 3995,
+    "availability": "available",
+    "dimensions": "220×100 سم",
+    "style_tags": [
+      "oak",
+      "brown",
+      "solid-wood"
+    ],
+    "room_tags": [
+      "dining-room",
+      "majlis"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/moerbylanga-table-oak-veneer-brown-stained-20293766/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s99578511",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S995.785.11",
+    "name_ar": "طاولة VIHALS أخضر/أبيض",
+    "name_en": "VIHALS Table green/white",
+    "category": "dining",
+    "subcategory": "dining-table",
+    "price_sar": 304,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "125×74 سم",
+    "style_tags": [
+      "green",
+      "white",
+      "minimal"
+    ],
+    "room_tags": [
+      "dining-room",
+      "kitchen"
+    ],
+    "tier": "economic",
+    "product_url": "https://www.ikea.com/sa/en/p/vihals-table-green-white-s99578511/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-70576720",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "705.767.20",
+    "name_ar": "طاولة HAUGA رمادي/قشرة بتولا",
+    "name_en": "HAUGA Table grey/birch veneer",
+    "category": "dining",
+    "subcategory": "dining-table",
+    "price_sar": null,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "74×74 سم",
+    "style_tags": [
+      "grey",
+      "birch",
+      "traditional"
+    ],
+    "room_tags": [
+      "dining-room",
+      "kitchen"
+    ],
+    "tier": "economic",
+    "product_url": "https://www.ikea.com/sa/en/p/hauga-table-grey-birch-veneer-70576720/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-90576719",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "905.767.19",
+    "name_ar": "طاولة HAUGA أبيض/قشرة بتولا",
+    "name_en": "HAUGA Table white/birch veneer",
+    "category": "dining",
+    "subcategory": "dining-table",
+    "price_sar": 449,
+    "previous_price_sar": null,
+    "availability": "available",
+    "dimensions": "74×74 سم",
+    "style_tags": [
+      "white",
+      "birch",
+      "traditional"
+    ],
+    "room_tags": [
+      "dining-room",
+      "kitchen"
+    ],
+    "tier": "economic",
+    "product_url": "https://www.ikea.com/sa/en/p/hauga-table-white-birch-veneer-90576719/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s79579984",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S795.799.84",
+    "name_ar": "طاولة STOCKHOLM 2025 قشرة بلوط",
+    "name_en": "STOCKHOLM 2025 Table oak veneer",
+    "category": "dining",
+    "subcategory": "dining-table",
+    "price_sar": 2995,
+    "previous_price_sar": null,
+    "availability": "available",
+    "dimensions": "230×90 سم",
+    "style_tags": [
+      "oak",
+      "premium",
+      "oval"
+    ],
+    "room_tags": [
+      "dining-room",
+      "majlis"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/stockholm-2025-table-oak-veneer-oak-veneer-s79579984/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-10590125",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "105.901.25",
+    "name_ar": "سطح طاولة STOCKHOLM 2025 قشرة بلوط",
+    "name_en": "STOCKHOLM 2025 Table top oak veneer",
+    "category": "dining",
+    "subcategory": "table-top",
+    "price_sar": 2395,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "230×90 سم",
+    "style_tags": [
+      "oak",
+      "premium",
+      "table-top"
+    ],
+    "room_tags": [
+      "dining-room"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/stockholm-2025-table-top-oak-veneer-10590125/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s99574853",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S995.748.53",
+    "name_ar": "طاولة HAUGA مع كرسيين أبيض",
+    "name_en": "HAUGA / HAUGA Table and 2 chairs white",
+    "category": "dining",
+    "subcategory": "dining-set",
+    "price_sar": null,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "74×74 سم",
+    "style_tags": [
+      "white",
+      "compact",
+      "2-seat"
+    ],
+    "room_tags": [
+      "dining-room",
+      "kitchen"
+    ],
+    "tier": "balanced",
+    "product_url": "https://www.ikea.com/sa/en/p/hauga-hauga-table-and-2-chairs-white-white-s99574853/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s19574908",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S195.749.08",
+    "name_ar": "طاولة HAUGA مع كرسيين رمادي",
+    "name_en": "HAUGA / HAUGA Table and 2 chairs grey",
+    "category": "dining",
+    "subcategory": "dining-set",
+    "price_sar": null,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "74×74 سم",
+    "style_tags": [
+      "grey",
+      "compact",
+      "2-seat"
+    ],
+    "room_tags": [
+      "dining-room",
+      "kitchen"
+    ],
+    "tier": "balanced",
+    "product_url": "https://www.ikea.com/sa/en/p/hauga-hauga-table-and-2-chairs-grey-grey-s19574908/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s39574912",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S395.749.12",
+    "name_ar": "طاولة HAUGA مع كرسيين STEFAN",
+    "name_en": "HAUGA / STEFAN Table and 2 chairs",
+    "category": "dining",
+    "subcategory": "dining-set",
+    "price_sar": 799,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "74×74 سم",
+    "style_tags": [
+      "grey",
+      "brown-black",
+      "upholstered"
+    ],
+    "room_tags": [
+      "dining-room",
+      "kitchen"
+    ],
+    "tier": "balanced",
+    "product_url": "https://www.ikea.com/sa/en/p/hauga-stefan-table-and-2-chairs-grey-brown-black-knisa-grey-beige-s39574912/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s09579987",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S095.799.87",
+    "name_ar": "طاولة STOCKHOLM 2025 مع 6 كراسي جلد بني داكن",
+    "name_en": "STOCKHOLM 2025 Table and 6 chairs dark brown leather",
+    "category": "dining",
+    "subcategory": "dining-set",
+    "price_sar": 8389,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "230×90 سم",
+    "style_tags": [
+      "oak",
+      "dark-brown",
+      "leather"
+    ],
+    "room_tags": [
+      "dining-room",
+      "majlis"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/stockholm-2025-stockholm-2025-table-and-6-chairs-oak-veneer-dark-brown-leather-s09579987/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s29579986",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S295.799.86",
+    "name_ar": "طاولة STOCKHOLM 2025 مع 6 كراسي جلد بلوط",
+    "name_en": "STOCKHOLM 2025 Table and 6 chairs oak leather",
+    "category": "dining",
+    "subcategory": "dining-set",
+    "price_sar": 7789,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "230×90 سم",
+    "style_tags": [
+      "oak",
+      "leather",
+      "premium"
+    ],
+    "room_tags": [
+      "dining-room",
+      "majlis"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/stockholm-2025-stockholm-2025-table-and-6-chairs-oak-veneer-oak-leather-s29579986/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-s89579988",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "S895.799.88",
+    "name_ar": "طاولة STOCKHOLM 2025 مع 6 كراسي راتان",
+    "name_en": "STOCKHOLM 2025 Table and 6 chairs oak rattan",
+    "category": "dining",
+    "subcategory": "dining-set",
+    "price_sar": 7189,
+    "previous_price_sar": null,
+    "availability": "unknown",
+    "dimensions": "230×90 سم",
+    "style_tags": [
+      "oak",
+      "rattan",
+      "premium"
+    ],
+    "room_tags": [
+      "dining-room",
+      "majlis"
+    ],
+    "tier": "luxury",
+    "product_url": "https://www.ikea.com/sa/en/p/stockholm-2025-stockholm-2025-table-and-6-chairs-oak-veneer-oak-rattan-s89579988/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-90485597",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "904.855.97",
+    "name_ar": "مرآة LINDBYN ذهبية",
+    "name_en": "LINDBYN Mirror gold-colour",
+    "category": "mirrors",
+    "subcategory": "wall-mirror",
+    "price_sar": 229,
+    "previous_price_sar": 279,
+    "availability": "unknown",
+    "dimensions": "60×120 سم",
+    "style_tags": [
+      "gold",
+      "rounded",
+      "elegant"
+    ],
+    "room_tags": [
+      "living-room",
+      "bedroom",
+      "hallway"
+    ],
+    "tier": "balanced",
+    "product_url": "https://www.ikea.com/sa/en/p/lindbyn-mirror-gold-colour-90485597/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  },
+  {
+    "id": "ikea-sa-00396242",
+    "store": "IKEA Saudi Arabia",
+    "brand": "IKEA",
+    "sku": "003.962.42",
+    "name_ar": "مرآة واقفة KNAPPER بيضاء",
+    "name_en": "KNAPPER Standing mirror white",
+    "category": "mirrors",
+    "subcategory": "standing-mirror",
+    "price_sar": 249,
+    "previous_price_sar": 295,
+    "availability": "unknown",
+    "dimensions": "48×160 سم",
+    "style_tags": [
+      "white",
+      "standing",
+      "storage-hooks"
+    ],
+    "room_tags": [
+      "bedroom",
+      "dressing-room"
+    ],
+    "tier": "balanced",
+    "product_url": "https://www.ikea.com/sa/en/p/knapper-standing-mirror-white-00396242/",
+    "source_checked_at": "2026-07-16",
+    "needs_live_recheck": true,
+    "data_source": "real"
+  }
+]

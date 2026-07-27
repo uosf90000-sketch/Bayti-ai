@@ -1,0 +1,27 @@
+{
+  "name": "@bayti/catalog-builder",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {"bayti-catalog": "./dist/cli.js"},
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx src/cli.ts",
+    "import-review": "tsx src/import-review.ts",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.50.0",
+    "csv-parse": "^5.6.0",
+    "csv-stringify": "^6.5.2",
+    "fast-glob": "^3.3.3",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}

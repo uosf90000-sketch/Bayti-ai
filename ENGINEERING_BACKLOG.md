@@ -1,0 +1,71 @@
+# Engineering Backlog — Bayti AI
+
+> أداة عمل حية (ليست وثيقة تصميم). المرجع: PRD المعتمد كاملًا + ENGINEERING_BOOTSTRAP. البوابات G-0…G-5 حاكمة.
+
+## Epics (مربوطة بأقسام الـ PRD المعتمدة)
+
+| Epic | المرجع | البوابة |
+|------|--------|---------|
+| E1 Foundation & Contracts | Bootstrap Sprint 0 + §1.10 | G-0 |
+| E2 Floorplan → Digital Twin | §4 | G-1 |
+| E3 Intake & Style | §5 | G-1 |
+| E4 Agent Council & Merge | §6 | G-2 |
+| E5 Commerce Platform | §7 | G-3 |
+| E6 Outputs & Rendering | §8 | G-4 |
+| E7 Conversation & Editing | §9 | G-4 |
+| E8 Billing & Plans | §10 | G-5 |
+| E9 Security & Ops | §11 | G-5 |
+| E10 UI/UX (Bayti Glass + الشاشات) | §12 + §3 + WOW | G-4 |
+| E-Debt | TD-01 (تحديث وثائق الجيل الأول أثناء التنفيذ) · TD-02 (traceability CSV) · TD-08 (تقسيم PRD لملفات) | مستمر |
+
+## Sprint 0 — "الأساس والقياس" (أسبوعان — جارٍ الآن)
+
+| # | المهمة | الحالة |
+|---|--------|--------|
+| S0-1 | Monorepo skeleton (pnpm workspaces، tsconfig base، بنية §07) | ✅ هذه الدفعة |
+| S0-2 | `packages/design-schema`: العقود المجمدة كـ Zod (Twin، AgentRun، Proposal، DecisionExplanation، StyleVector، IntakeBundle) | ✅ v0 هذه الدفعة — التوسعة تباعًا |
+| S0-3 | `packages/contracts`: عقود API لشاشات Sprint 1 (auth/projects/upload/council-events) | ✅ v0 هذه الدفعة |
+| S0-4 | `packages/ui`: Bayti Glass tokens (§12.1) | ✅ v0 هذه الدفعة |
+| S0-5 | `infra/compose.dev.yml` (postgres+pgvector، redis، minio) | ✅ هذه الدفعة |
+| S0-6 | CI: install + typecheck + secret scanning hook | ✅ v0 هذه الدفعة |
+| S0-7 | Turborepo pipeline | ⬜ |
+| S0-8 | scaffold `apps/web` (Next.js RTL) + `apps/api` (NestJS) | ⬜ التالي مباشرة |
+| S0-9 | طبقة LLM الموحدة (`ai/llm`): providers، cost logging، prompt versioning | ⬜ |
+| S0-10 | **Spike القياس (بوابة G-0):** تحليل 20 مخططًا حقيقيًا + مجلس مصغر — تقرير دقة/زمن/تكلفة مقابل الميزانيات | ⬜ يحتاج مخططات Golden Set |
+| S0-11 | Golden Set: جمع وتوسيم 30+ مخططًا (عمل بيانات — بدأ خلال مرحلة الوثائق) | 🔶 مستمر |
+| S0-12 | MSW mock layer + بيانات فيلا النرجس المرجعية (§12.2) | ⬜ |
+
+## Sprint 1 — "أول نسخة تعمل" (أولويات المؤسس — الواجهة أولًا فوق Mocks)
+
+| # | التسليم | المرجع |
+|---|---------|--------|
+| S1-1 | تسجيل الدخول OTP (S1) — mock ثم مزود SMS | §3-S1 |
+| S1-2 | لوحة المشاريع (S2) بحالتها الفارغة ومشروع المثال | §3-S2 |
+| S1-3 | إنشاء مشروع + رفع المخطط (S3) بمعاينة وحالات الفشل | §3-S3 |
+| S1-4 | شاشة التحليل (S4) بمراحل حية (mock stream) | §3-S4 |
+| S1-5 | **واجهة مجلس الذكاء الحية (S8)** — 11 بطاقة وكيل، لحظة W3 | §3-S8 + WOW |
+| S1-6 | Bayti Glass: البطاقات الزجاجية المتحركة + motion presets | §12.1 |
+| S1-7 | RTL كامل + جوال أولًا (كل الشاشات أعلاه) | §3.2 |
+| S1-8 | كل الشاشات فوق MSW بعقود `contracts` الثابتة — **صفر تغيير لاحق عند ربط الخدمات** | §12.2 / AC12-3 |
+
+**Definition of Done لكل مهمة واجهة:** Storybook بحالاتها + RTL + جوال + فشل/فارغ/تحميل + reduced-motion.
+
+## حالة الشرائح (Vertical Slices — تحديث حي)
+
+| الشريحة | الحالة |
+|---------|--------|
+| VS-1: الرحلة الأساسية (landing→login→dashboard→upload→analysis→council→preview) | ✅ **v0.1-preview** (tag محلي — دفع الـ tags محجوب من الـ proxy بـ403؛ المرجع commit bd7abe3) |
+| VS-2: النسخ الثلاث + التسوق (W4 تبديل فوري، W6 عدّاد التوفير، استبدال أرخص/أفخم P4، متاجر معلَّمة "تجريبي") + Feature Flags + تأمين OTP للإنتاج | ✅ هذه الدفعة |
+| VS-3: المحادثة (غيّر الكنبة/أفخم/خفّض 10% + معاينة قبل الاعتماد + فرق التكلفة + إصدارات ورجوع) | ✅ شاشة `/projects/[id]/chat` موصولة — معاينة → اعتماد = إصدار جديد → خط زمني ورجوع (P7 — لا حذف، الاستعادة تنشئ إصدارًا جديدًا) |
+| VS-4: أول خدمة حقيقية — Supabase (Storage للمخطط + سجل المشروع + حالة التحليل بـ checkpoint) قبل أي AI حقيقي | ✅ **جاهزة كاملة بدون اتصال حي** (Schema+RLS، عميل مصنَّف، repositories، Storage، الشاشات موصولة بـ `services.ts`) — المتبقي فقط: `NEXT_PUBLIC_SUPABASE_URL`/`ANON_KEY` من المؤسس + مصادقة Supabase حقيقية (خارج نطاق VS-4). راجع `supabase/README.md` |
+| النشر — **تحوّل من Vercel إلى Railway** (قرار مؤسس) | ✅ **المستودع جاهز بالكامل للنشر** (`railway.json` + `/api/health` + `docs/RAILWAY_DEPLOY.md`) — ⬜ **النشر الفعلي يدوي من لوحة Railway** (لم يُنفَّذ تلقائيًا بأمر صريح من المؤسس). التفاصيل الكاملة (Root Directory/Build/Start/Env/Health/Port) في `docs/RAILWAY_DEPLOY.md` |
+| جولة UI Polish مخصصة (انظر UI_POLISH_BACKLOG) | ⬜ بعد النشر على Railway — آخر خطوة قبل الإطلاق التجريبي |
+| **إعادة بناء 4 شاشات** (Landing/Dashboard/AI Council/Project Results) — Bayti Design System v2 (ثيم مزدوج، Hero SVG متحرك، Marquee للوكلاء، حلقة تقدم المجلس، مشاهد غرف SVG، لمسة W7 ليل/نهار) | ✅ **Functional Approved** — ⬜ **Visual Direction: Needs Further Iteration (ليست Production UI)** — انظر [UI_POLISH_BACKLOG](docs/UI_POLISH_BACKLOG.md) للبنود المؤجلة، تُنفَّذ بعد VS-3/VS-4/النشر |
+| **Bayti Catalog Builder v1** — `packages/catalog-builder` + `packages/catalog-data` + `CatalogRepository` خلف `/api/catalog/*` | 🏁 **مُثبَّت رسميًا: Catalog Beta Scope = 61 منتجًا حقيقيًا** (من 388 كنسيًا) — كافٍ للنسخة التجريبية، حد الجودة (60+) لا يُخفَّض. 327 منتجًا في Review Queue غير ظاهرة وغير محتسبة في أي إجمالي/توصية. مسار CSV Import مبني ومُختبَر (`import-review.ts`)؛ Merchant Feed/API رسمي/لوحة إدارة موثّقة كمسارات مستقبلية فقط. **إكمال الـ327 متوقف بقرار مؤسس** — العمل عليها لا يُستأنف إلا بقرار جديد. التقرير الكامل: `docs/CATALOG_INTEGRATION.md` |
+| **تحليل المخططات الحقيقي** (الأولوية الأولى) — `lib/vision/analyzeFloorplan.ts` (Claude Vision + forced tool-use) خلف `/api/analysis` + `lib/twin.ts` (توأم رقمي مبسّط: عدد/نوع/ثقة الغرف) + `lib/rooms.ts`/`lib/council.ts` (كل الشاشات التالية تتفرّع على `twin.source==="vlm"` — لا غرفة تُعرض إن لم تُكتشف فعليًا) | ✅ **جاهز كاملًا بدون اتصال حي** — Typecheck+Build أخضران، تدفّق mock كامل مُختبَر عبر متصفح حقيقي (بلا تغيير عن المعتمد سابقًا)، تدفّق حقيقي بلا مفتاح مُختبَر (يفشل بوضوح برسالة عربية، بلا انهيار). المتبقي فقط: `ANTHROPIC_API_KEY` من المؤسس (نفس نمط حاجز Supabase في VS-4). التقرير الكامل: `docs/FLOORPLAN_ANALYSIS.md` |
+| **خط الإنتاج الحقيقي (Real Design Pipeline)** — `lib/design/{types,room,designEngine,shoppingEngine,costEngine,pipeline,client,exportCsv}.ts` + `components/scene3d.tsx` (Three.js) + `/api/pipeline/room` + شاشتا `app/projects/[id]/design{,/print}` | ✅ **جاهز كاملًا بدون اتصال حي** — Room Object مستقل لكل غرفة مكتشفة، AI Council يعمل لكل غرفة على حدة (بلا دمج/اختراع)، Design Engine (Claude لكل غرفة)، Shopping Engine (مطابقة الكتالوج الحقيقي فقط — "لا يوجد منتج مطابق" صراحة بلا اختراع)، Cost Engine (من عروض حقيقية فقط)، 3D Engine (انظر السطر التالي — تُرقّي إلى CAD/BIM حقيقي)، Export (CSV تسوق/كميات + PDF عبر صفحة طباعة HTML — لا مكتبة PDF لاتينية تكسر العربية). Typecheck+Build أخضران، مُختبَر فعليًا عبر متصفح حقيقي (6 غرف، فشل واضح بلا مفتاح API، تصدير CSV يعمل، صفحة الطباعة تعرض بشكل صحيح). **قرار نطاق موثّق:** لا يطبّق عقد `AgentProposal`/`AgentRun` المجمَّد حرفيًا (يحتاج محرك قواعد غير مبني بعد) — التفاصيل الكاملة: `docs/DESIGN_PIPELINE.md`. المتبقي: `ANTHROPIC_API_KEY` (نفس الحاجز أعلاه) |
+| **محرك CAD/BIM حقيقي** (استبدال الـ3D التخطيطي) — `lib/geometry/{types,scale,placement,store}.ts` + `lib/vision/analyzeFloorplan.ts`/`client.ts` (موسَّعان لاستخراج الهندسة) + `components/scene3d.tsx` (مُعاد بناؤه بالكامل) + `supabase/migrations/0004_floor_geometry.sql` | ✅ **جاهز كاملًا بدون اتصال حي** — هندسة طابق حقيقية (جدران/أبواب/نوافذ/مضلّع غرفة/اتجاه) تُستخرج من نفس استدعاء Claude Vision الحالي (بلا استدعاء إضافي)، مع ثقة حقيقية لكل عنصر ومقياس رسم مؤكَّد أو مُعايَر من مساحة معروفة فعليًا (بلا اختلاق مقياس). مشهد Three.js يُبنى من الهندسة نفسها لكل غرفة على حدة (`roomHasUsableGeometry` يُقيَّم لكل غرفة، لا للمشروع كاملًا) — أرضية بشكل المضلّع الفعلي، جدران حقيقية بفجوات فعلية عند كل باب/نافذة، أثاث موضوع وفق قواعد تصميم مع منع التداخل مع الجدران/الفتحات/بعضه (قطعة يتعذّر وضعها بلا تصادم تُحذف لا تُترك متراكبة). منظوران (ثلاثي الأبعاد/علوي)، تنقل بين الغرف، إظهار/إخفاء 3 طبقات (Walls/Furniture/Lighting). بديل تخطيطي صريح برسالة تحذير واضحة لأي غرفة لا تسمح دقة مخططها ببناء CAD كامل. Typecheck+Build أخضران، اختبار وحدة حقيقي لكل دالة هندسية (كشف وأصلح باگ حقيقي في حساب اتجاه وضع الأثاث ضد الجدار)، تحقق متصفح حقيقي (Playwright) لكل من: مشهد CAD كامل لغرفة، بديل تخطيطي لغرفة أخرى بنفس المشروع، تبديل المنظور، التنقل، إخفاء الطبقات. التفاصيل الكاملة: `docs/CAD_ENGINE.md`. المتبقي: `ANTHROPIC_API_KEY` (نفس الحاجز أعلاه) |
+
+## قواعد التنفيذ (من المجمد — تذكير دائم)
+
+لا PR بلا مراجعة + أخضر كامل · كل عتبة في config · كل schema بإصدار · القواعد الهندسية في Rule Engine لا prompts · أي تغيير معماري = ADR جديد بمصادقة المؤسس.
